@@ -163,12 +163,61 @@ pub fn disassemble(opcode: u16) -> u8
                 {
                     print!("MVN R{}, R{}", rd(), rs());
                 },
-
-                // 
+                // ADD Rd, Hs 
                 0b10001 =>
                 {
                     print!("ADD R{}, R{}", rd(), rs());
-                }
+                }, 
+                // ADD Hd, Rs 
+                0b10010 =>
+                {
+                    print!("ADD R{}, R{}", rd(), rs());
+                }, 
+                // ADD Hd, Hs 
+                0b10011 =>
+                {
+                    print!("ADD R{}, R{}", rd(), rs());
+                }, 
+                // CMP Rd, Hs 
+                0b10101 =>
+                {
+                    print!("CMP R{}, R{}", rd(), rs());
+                }, 
+                // CMP Hd, Rs 
+                0b10110 =>
+                {
+                    print!("CMP R{}, R{}", rd(), rs());
+                }, 
+                // CMP Hd, Hs 
+                0b10111 =>
+                {
+                    print!("CMP R{}, R{}", rd(), rs());
+                }, 
+                // MOV Rd, Hs 
+                0b11001 =>
+                {
+                    print!("MOV R{}, R{}", rd(), rs());
+                }, 
+                // MOV Hd, Rs 
+                0b11010 =>
+                {
+                    print!("MOV R{}, R{}", rd(), rs());
+                }, 
+                // MOV Hd, Hs 
+                0b11011 =>
+                {
+                    print!("MOV R{}, R{}", rd(), rs());
+                }, 
+                // BX Rs
+                0b11100 =>
+                {
+                    print!("BX R{}", rs());
+                }, 
+                //  BX Hs
+                0b11101 =>
+                {
+                    print!("BX R{}", rs());
+                }, 
                 _       => (),
             }
         },
@@ -197,19 +246,5 @@ pub fn disassemble(opcode: u16) -> u8
         _       => print!("invalid opcode!"),
     }
 
-    let bxmask: u16  = 0b0100011100000000;
-    let cribit: u16  = 0b1111111100000000;
-    let h2mask: u16  = 0b0000000001000000;
-    let rsmask: u16  = 0b0000000000111000;
-    let rdmask: u16  = 0b0000000000000111;
-
-    if opcode & cribit == bxmask
-    {
-        let h2 = (opcode & h2mask) >> 6;
-        // print!("BX R{}", ((opcode & rsmask) >> 3) << h2);
-        return opcode as u8 & 1;
-    }
-
     return 1;
 }
-
