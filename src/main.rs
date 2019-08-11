@@ -26,12 +26,12 @@ fn main()
         // print!("{:02x} ", file[i]);
         // i += 1;
 
-        // if i % 0x100 == 0 && i > 0
-        // {
-        //     println!("{}th byte, press any key to continue", i);
-        //     let mut input = String::new();
-        //     io::stdin().read_line(&mut input).unwrap();
-        // }
+        if i % 0x100 == 0 && i > 0
+        {
+            println!("{}th byte, press any key to continue", i);
+            let mut input = String::new();
+            io::stdin().read_line(&mut input).unwrap();
+        }
 
         match cpu0.mode
         {
