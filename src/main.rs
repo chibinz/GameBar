@@ -1,10 +1,13 @@
 pub mod cpu;
 
 use std::{env, fs, io};
+use std::time::{Duration, Instant};
 use cpu::{register::Register, arm, thumb};
 
 fn main() 
 {
+    let start = Instant::now();
+
     let args: Vec<String> = env::args().collect();
 
     if args.len() == 1
@@ -23,8 +26,8 @@ fn main()
     let mut i = 0;
     while i < file.len()
     {
-        // print!("{:02x} ", file[i]);
-        // i += 1;
+        print!("{:02x} ", file[i]);
+        i += 1;
 
         if i % 0x100 == 0 && i > 0
         {
@@ -66,4 +69,7 @@ fn main()
             }
         };
     }
+
+    println!("time elapsed: {:?}", start.elapsed());
 }
+
