@@ -1,62 +1,177 @@
 pub fn disassemble(opcode: u16) -> u8
 {
-    /*
-        Thumb Binary Opcode Format
-        |_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
-        |_0___0___0___0___0_|_______Offset______|____Rs_____|____Rd_____|LSL
-        |_0___0___0___0___1_|_______Offset______|____Rs_____|____Rd_____|LSR
-        |_0___0___0___1___0_|_______Offset______|____Rs_____|____Rd_____|ASR
-        |_0___0___0___1___1_|_I,_Op_|___Rn/nn___|____Rs_____|____Rd_____|ADD/SUB
-        |_0___0___1___0___0_|____Rd_____|_____________Offset____________|MOV
-        |_0___0___1___0___1_|____Rd_____|_____________Offset____________|CMP
-        |_0___0___1___1___0_|____Rd_____|_____________Offset____________|ADD
-        |_0___0___1___1___1_|____Rd_____|_____________Offset____________|SUB
-        |_0___1___0___0___0___0_|______Op_______|____Rs_____|____Rd_____|AluOp
-        |_0___1___0___0___0___1_|__Op___|Hd_|Hs_|____Rs_____|____Rd_____|HiReg/BX
-        |_0___1___0___0___1_|____Rd_____|_____________Word______________|LDR PC
-        |_0___1___0___1___0_|_B_|_0_|___Ro______|____Rb_____|____Rd_____|STR/STRB
-        |_0___1___0___1___0___0___1_|___Ro______|____Rb_____|____Rd_____|STRH
-        |_0___1___0___1___0___1___1_|___Ro______|____Rb_____|____Rd_____|LDSB
-        |_0___1___0___1___1_|_B_|_0_|___Ro______|____Rb_____|____Rd_____|LDR/LDRB
-        |_0___1___0___1___1___0___1_|___Ro______|____Rb_____|____Rd_____|LDRH
-        |_0___1___0___1___1___1___1_|___Ro______|____Rb_____|____Rd_____|LDSH
-        |_0___1___1___0___0_|_______Offset______|____Rb_____|____Rd_____|STR imm
-        |_0___1___1___0___1_|_______Offset______|____Rb_____|____Rd_____|STRB imm
-        |_0___1___1___1___0_|_______Offset______|____Rb_____|____Rd_____|LDR imm
-        |_0___1___1___1___1_|_______Offset______|____Rb_____|____Rd_____|LDRB imm
-        |_1___0___0___0___0_|_______Offset______|____Rb_____|____Rd_____|STRH imm
-        |_1___0___0___0___1_|_______Offset______|____Rb_____|____Rd_____|LDRH imm
-        |_1___0___0___1___0_|____Rd_____|_____________Word______________|STR SP
-        |_1___0___0___1___1_|____Rd_____|_____________Word______________|LDR SP
-        |_1___0___1___0___0_|____Rd_____|_____________Word______________|ADD PC
-        |_1___0___1___0___1_|____Rd_____|_____________Word______________|ADD SP
-        |_1___0___1___1___0___0___0___0_|_S_|___________Word____________|ADD SP,nn
-        |_1___0___1___1___0___1___0_|_R_|____________Rlist______________|PUSH
-        |_1___0___1___1___1___1___0_|_R_|____________Rlist______________|POP
-        |_1___1___0___0___0_|____Rb_____|____________Rlist______________|STMIA
-        |_1___1___0___0___1_|____Rb_____|____________Rlist______________|LBMIA
-        |_1___1___0___1___0_|___Cond____|_________Signed_Offset_________|BEQ-BVC
-        |_1___1___0___1___1_|___Cond____|_________Signed_Offset_________|BHI-BLE
-        |_1___1___0___1___1___1___1___1_|___________User_Data___________|SWI
-        |_1___1___1___0___0_|________________Offset_____________________|B
-        |_1___1___1___1___0_|______________Offset_Low/High______________|BL-0
-        |_1___1___1___1___1_|______________Offset_Low/High______________|BL-1
-    */ 
-
     // decode the instructions using higher 5 bits
+    let b15_11: u8 = (opcode >> 11) as u8;
 
-    let h5: u8 = (opcode >> 11) as u8;
-    match h5
+    // use closures to inline calculation
+    let offset5 = || -> u8 {(opcode >> 6 & 0b00011111) as u8};
+    let offset8 = || -> u8 {opcode as u8};
+    let b10_6 = || -> u8 {(opcode >> 6 & 0b00011111) as u8};
+    let b10_9 = || -> u8 {(opcode >> 9 & 0b00000011) as u8};
+    let rdb = || -> u8 {(opcode >> 8 & 0b00000111) as u8};
+    let rn = || -> u8 {(opcode >> 6 & 0b00000111) as u8};
+    let rs = || -> u8 {(opcode >> 3 & 0b00000111) as u8};
+    let rd = || -> u8 {(opcode & 0b00000111) as u8};
+
+    match b15_11 
     {
-        0b00000 => print!("LSL"),
-        0b00001 => print!("LSR"),
-        0b00010 => print!("ASR"),
-        0b00011 => print!("ADD/SUB"),
-        0b00100 => print!("MOV"),
-        0b00101 => print!("CMP"),
-        0b00110 => print!("ADD"),
-        0b00111 => print!("SUB"),
-        0b01000 => print!("AluOp/HiReg/BX"),
+        // LSL Rd, Rs, #Offset5
+        0b00000 =>
+        {
+            print!("LSL R{}, R{}, #{}", rd(), rs(), offset5());
+        },
+        // LSR Rd, Rs, #Offset5
+        0b00001 =>
+        {
+            print!("LSL R{}, R{}, #{}", rd(), rs(), offset5());
+        },
+        // ASR Rd, Rs, #Offset5
+        0b00010 =>
+        {
+            print!("ASR R{}, R{}, #{}", rd(), rs(), offset5());
+        }
+        // ADD/SUB
+        0b00011 =>
+        {
+            match b10_9()
+            {
+                // ADD Rd, Rs, Rn
+                0b00 =>
+                {
+                    print!("ADD R{}, R{}, R{}", rd(), rs(), rn());
+                },
+                // SUB Rd, Rs, Rn
+                0b01 =>
+                {
+                    print!("SUB R{}, R{}, R{}", rd(), rs(), rn());
+                },
+                // ADD Rd, Rs, #Offset3
+                0b10 =>
+                {
+                    print!("ADD R{}, R{}, #{}", rd(), rs(), rn());
+                },
+                // SUB Rd, Rs, #Offset3
+                0b11 =>
+                {
+                    print!("SUB R{}, R{}, #{}", rd(), rs(), rn());
+                },
+                _    => (),
+            }
+        },
+        // MOV Rd, #Offset8
+        0b00100 =>
+        {
+            print!("MOV R{}, #{}", rdb(), offset8());
+        },
+        // CMP Rd, #Offset8
+        0b00101 =>
+        {
+            print!("CMP R{}, #{}", rdb(), offset8());
+        },
+        // ADD Rd, #Offset8
+        0b00110 =>
+        {
+            print!("ADD R{}, #{}", rdb(), offset8());
+        },
+        // SUB Rd, #Offset8
+        0b00111 =>
+        {
+            print!("SUB R{}, #{}", rdb(), offset8());
+        },
+        // AluOp/HiReg/BX
+        0b01000 =>
+        {
+            match b10_6()
+            {
+                // AND Rd, Rs
+                0b00000 =>
+                {
+                    print!("ADD R{}, R{}", rd(), rs());
+                },
+                // EOR Rd, Rs
+                0b00001 =>
+                {
+                    print!("EOR R{}, R{}", rd(), rs());
+                },
+                // LSL Rd, Rs
+                0b00010 =>
+                {
+                    print!("LSL R{}, R{}", rd(), rs());
+                },
+                // LSR Rd, Rs
+                0b00011 =>
+                {
+                    print!("LSR R{}, R{}", rd(), rs());
+                },
+                // ASR Rd, Rs
+                0b00100 =>
+                {
+                    print!("ASR R{}, R{}", rd(), rs());
+                },
+                // ADC Rd, Rs
+                0b00101 =>
+                {
+                    print!("ADC R{}, R{}", rd(), rs());
+                },
+                // SBC Rd, Rs
+                0b00110 =>
+                {
+                    print!("SBC R{}, R{}", rd(), rs());
+                },
+                // ROR Rd, Rs
+                0b00111 =>
+                {
+                    print!("ROR R{}, R{}", rd(), rs());
+                },
+                // TST Rd, Rs
+                0b01000 =>
+                {
+                    print!("TST R{}, R{}", rd(), rs());
+                },
+                // NEG Rd, Rs
+                0b01001 =>
+                {
+                    print!("NEG R{}, R{}", rd(), rs());
+                },
+                // CMP Rd, Rs
+                0b01010 =>
+                {
+                    print!("CMP R{}, R{}", rd(), rs());
+                },
+                // CMN Rd, Rs
+                0b01011 =>
+                {
+                    print!("CMN R{}, R{}", rd(), rs());
+                },
+                // ORR Rd, Rs
+                0b01100 =>
+                {
+                    print!("ORR R{}, R{}", rd(), rs());
+                },
+                // MUL Rd, Rs
+                0b01101 =>
+                {
+                    print!("MUL R{}, R{}", rd(), rs());
+                },
+                // BIC Rd, Rs
+                0b01110 =>
+                {
+                    print!("BIC R{}, R{}", rd(), rs());
+                },
+                // MVN Rd, Rs
+                0b01111 =>
+                {
+                    print!("MVN R{}, R{}", rd(), rs());
+                },
+
+                // 
+                0b10001 =>
+                {
+                    print!("ADD R{}, R{}", rd(), rs());
+                }
+                _       => (),
+            }
+        },
         0b01001 => print!("LDR PC"),
         0b01010 => print!("STR/STRB/STRH/LDSB"),
         0b01011 => print!("LDR/LDRB/LDRH/LDSH"),
@@ -73,13 +188,13 @@ pub fn disassemble(opcode: u16) -> u8
         0b10110 => print!("ADD SP imm/PUSH"),
         0b10111 => print!("POP"),
         0b11000 => print!("STMIA"),
-        0b11001 => print!("LBMIA"),
+        0b11001 => print!("LDMIA"),
         0b11010 => print!("BEQ-BVC"),
         0b11011 => print!("BHI-BLE/SWI"),
         0b11100 => print!("B"),
         0b11110 => print!("BL-0"),
         0b11111 => print!("BL-1"),
-        _0      => print!("invalid opcode!"),
+        _       => print!("invalid opcode!"),
     }
 
     let bxmask: u16  = 0b0100011100000000;
