@@ -1,7 +1,7 @@
 pub mod cpu;
 
 use std::{env, fs, io};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use cpu::{register::Register, arm, thumb};
 
 fn main() 
@@ -24,6 +24,11 @@ fn main()
     println!("{:?}", cpu::Mode::ARM);
 
     let mut i = 0;
+
+    // let u: u16 = 0b10000011;
+    // let v = u as i8;
+    // println!("{}", v);
+
     while i < file.len()
     {
         // print!("{:02x} ", file[i]);
@@ -59,8 +64,7 @@ fn main()
                 let halfword: u16 = (file[i] as u16) + ((file[i + 1] as u16) << 8);
 
                 // print!("{:08x}: {:04x} | {:016b} ", i, halfword, halfword);
-                thumb::disassemble(halfword);
-                // print!("\n");
+                // print!("{}\n", thumb::disassemble(halfword));
 
                 i += 2;
         //     }
