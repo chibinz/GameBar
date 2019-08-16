@@ -27,5 +27,5 @@ impl CPU
             mode: Mode::ARM,
         }
     }
-}
 
+}
