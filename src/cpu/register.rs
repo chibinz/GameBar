@@ -16,4 +16,14 @@ impl Register
             spsr: 0,
         }
     }
+
+    pub fn get_cpsr_t(&self) -> bool
+    {
+        self.cpsr & 0b00010000 == 1
+    }
+
+    pub fn set_cpsr_t(&mut self, t: bool)
+    {
+        if t {self.cpsr |= 0b00010000};
+    }
 }
