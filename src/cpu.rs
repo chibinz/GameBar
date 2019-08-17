@@ -4,17 +4,16 @@ pub mod thumb;
 
 use register::Register;
 
-#[derive(Debug)]
-pub enum Mode
-{
-    ARM,
-    THUMB,
-}
+// #[derive(Debug)]
+// pub enum Mode
+// {
+//     ARM,
+//     THUMB,
+// }
 
 pub struct CPU
 {
     pub register: Register,
-    pub mode: Mode,
 }
 
 impl CPU
@@ -24,8 +23,6 @@ impl CPU
         Self
         {
             register: Register::new(),
-            mode: Mode::ARM,
         }
     }
-
 }

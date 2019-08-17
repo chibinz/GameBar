@@ -171,11 +171,6 @@ pub fn disassemble(opcode: u32) -> String
         }
     };
 
-    let single_data_transfer = ||
-    {
-
-    };
-
     match b27_25
     {
         0b000 =>
