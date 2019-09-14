@@ -1,7 +1,5 @@
 pub fn disassemble(opcode: u32) -> String
 {
-
-
     // use bits 27 to 25 to decode opcode
     let b27_25 = opcode >> 25 & 0b00000111;
 
@@ -260,7 +258,8 @@ pub fn disassemble(opcode: u32) -> String
             }
         },
         0b001 => data_process_imm(),
-        0b010 | 0b011 => single_data_transfer(),
+        0b010 |
+        0b011 => single_data_transfer(),
         0b100 => format!("Block Data Transfer"),
         0b101 => branch(),
         0b110 => format!("Coprocessor"),
