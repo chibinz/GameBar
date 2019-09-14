@@ -45,6 +45,3 @@ fn main()
 
     println!("time elapsed: {:?}", start.elapsed());
 }
-
-
-
