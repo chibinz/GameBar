@@ -16,7 +16,7 @@ pub struct Memory
 
 impl Memory
 {
-    /// initializes memory to zeroes
+    /// Initializes memory to zeroes
     pub fn new() -> Self
     {
         Memory
@@ -33,7 +33,7 @@ impl Memory
         }
     }
 
-    /// load a byte from memory
+    /// Load a byte from memory
     pub fn load8(&self, address: u32) -> u8
     {
         let mut offset = (address & 0x00ffffff) as usize;
@@ -57,10 +57,10 @@ impl Memory
         }
     }
     
-    /// load a halfword from memory
+    /// Load a halfword from memory
     pub fn load16(&self, address: u32) -> u16
     {
-        let mut offset = (address & 0x00ffffff) as usize;
+        let offset = (address & 0x00ffffff) as usize;
 
         let ldh = |mem: &[u8]| mem[offset] as u16 | (mem[offset + 1] as u16) << 8;
 
@@ -82,10 +82,10 @@ impl Memory
         }
     }
 
-    /// load a word from memory
+    /// Load a word from memory
     pub fn load32(&self, address: u32) -> u32
     {
-        let mut offset = (address & 0x00ffffff) as usize;
+        let offset = (address & 0x00ffffff) as usize;
 
         let ld = |mem: &[u8]| mem[offset] as u32 | 
                                (mem[offset + 1] as u32) << 8 | 
@@ -110,10 +110,10 @@ impl Memory
         }
     }
 
-    /// store a byte in memory, only EWRAM, IWRAM, IORAM, SRAM are accessible
+    /// Store a byte in memory, only EWRAM, IWRAM, IORAM, SRAM are accessible
     pub fn store8(&mut self, address: u32, data: u8)
     {
-        let mut offset = (address & 0x00ffffff) as usize;
+        let offset = (address & 0x00ffffff) as usize;
 
         match address >> 24
         {
@@ -125,10 +125,10 @@ impl Memory
         };
     }
 
-    /// store an halfword in memory, BIOS, ROM, SRAM are inaccessible
+    /// Store an halfword in memory, BIOS, ROM, SRAM are inaccessible
     pub fn store16(&mut self, address: u32, data: u16)
     {
-        let mut offset = (address & 0x00ffffff) as usize;
+        let offset = (address & 0x00ffffff) as usize;
 
         let sth = |mem: &mut [u8]| 
         {
@@ -148,10 +148,10 @@ impl Memory
         };
     }
 
-    /// store a word in memory, BIOS, ROM, SRAM are inaccessible
+    /// Store a word in memory, BIOS, ROM, SRAM are inaccessible
     pub fn store32(&mut self, address: u32, data: u32)
     {
-        let mut offset = (address & 0x00ffffff) as usize;
+        let offset = (address & 0x00ffffff) as usize;
 
         let sth = |mem: &mut [u8]| 
         {
@@ -173,7 +173,7 @@ impl Memory
         };
     }
 
-    /// load rom from file, take name as a parameter
+    /// Load rom from file, take name as a parameter
     pub fn load_rom(&mut self, name: &String)
     {
         self.rom.clear();
