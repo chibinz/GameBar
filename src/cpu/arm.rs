@@ -224,6 +224,17 @@ pub fn disassemble(opcode: u32) -> String
 
     };
 
+    // Block Data Transfer
+    let block_data_transfer = || -> String
+    {
+        let st = if opcode >> 20 & 0b01 == 1 {"LDM"} else {"STM"};
+        let w = if opcode >> 21 & 1 == 1 {"!"} else {""};
+        let s = if opcode >> 22 & 1 == 1 {"^"} else {""};
+        let rlist = opcode as u16;
+
+        format!("{}{} R{}{}, R{{{:016b}}}{}", st, cond(), rn(), w, rlist, s)
+    };
+
     // Branch / Branch with Link
     let branch = ||
     {
@@ -260,7 +271,7 @@ pub fn disassemble(opcode: u32) -> String
         0b001 => data_process_imm(),
         0b010 |
         0b011 => single_data_transfer(),
-        0b100 => format!("Block Data Transfer"),
+        0b100 => block_data_transfer(),
         0b101 => branch(),
         0b110 => format!("Coprocessor"),
         0b111 => format!("SWI / Coprocessor"),
@@ -311,7 +322,13 @@ mod test
     fn single_data_transfer()
     {
         assert_eq!(disassemble(0b0000_01111111_1010_0101_100000000000), "LDREQB R5, [R10, R0, LSL #0x10]!");
-        assert_eq!(disassemble(0b0000_01000000_1010_0101_100000000000), "STREQ R5, [R10], #-0x800");
+    }
+
+    #[test]
+    fn block_data_transfer()
+    {
+        assert_eq!(disassemble(0b0000_10011111_1010_0101_100000000000), "LDMEQ R10!, R{0101100000000000}^");
+        assert_eq!(disassemble(0b0001_10000000_1010_0000_000000000000), "STMNE R10, R{0000000000000000}");
     }
 
 }
