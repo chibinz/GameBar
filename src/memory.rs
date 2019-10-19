@@ -53,7 +53,7 @@ impl Memory
                 self.rom[offset]
             },
             0x0e => self.sram[offset],
-            _    => panic!("invalid memory address {:08x}", address),
+            _    => panic!("Invalid memory address {:08x}", address),
         }
     }
     
@@ -78,7 +78,7 @@ impl Memory
                 ldh(self.rom.as_slice())
             },
             0x0e => ldh(self.sram.as_slice()),
-            _    => panic!("invalid memory address {:08x}", address),
+            _    => panic!("Invalid memory address {:08x}", address),
         }
     }
 
@@ -106,7 +106,7 @@ impl Memory
                 ld(self.rom.as_slice())
             },
             0x0e => ld(self.sram.as_slice()),
-            _    => panic!("invalid memory address {:08x}", address),
+            _    => panic!("Invalid memory address {:08x}", address),
         }
     }
 
@@ -121,7 +121,7 @@ impl Memory
             0x03 => self.iwram[offset] = data,
             0x04 => self.ioram[offset] = data,
             0x0e => self.sram[offset]  = data,
-            _    => panic!("invalid memory address {:08x}", address),
+            _    => panic!("Invalid memory address {:08x}", address),
         };
     }
 
@@ -144,7 +144,7 @@ impl Memory
             0x05 => sth(self.param.as_mut_slice()),
             0x06 => sth(self.vram.as_mut_slice()),
             0x07 => sth(self.oam.as_mut_slice()),
-            _    => panic!("invalid memory address {:08x}", address),
+            _    => panic!("Invalid memory address {:08x}", address),
         };
     }
 
@@ -169,7 +169,7 @@ impl Memory
             0x05 => sth(self.param.as_mut_slice()),
             0x06 => sth(self.vram.as_mut_slice()),
             0x07 => sth(self.oam.as_mut_slice()),
-            _    => panic!("invalid memory address {:08x}", address),
+            _    => panic!("Invalid memory address {:08x}", address),
         };
     }
 

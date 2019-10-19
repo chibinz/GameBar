@@ -1,3 +1,4 @@
+/// Disassemble Arm opcode
 pub fn disassemble(opcode: u32) -> String
 {
     // use bits 27 to 25 to decode opcode
