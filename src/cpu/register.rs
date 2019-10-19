@@ -25,7 +25,6 @@ pub enum PSRBit
 }
 
 /// Operating Mode
-#[derive(PartialEq)]
 pub enum PSRMode
 {
     User       = 0b10000,
@@ -49,16 +48,26 @@ impl Register
         }
     }
 
+    #[inline(always)]
     pub fn get_cpsr_bit(&self, bit: PSRBit) -> bool
     {
         self.cpsr >> (bit as u32) & 1 == 1
     }
 
+    #[inline(always)]
     pub fn set_cpsr_bit(&mut self, bit: PSRBit, t: bool)
     {
-        if t {self.cpsr |= 1 << (bit as u32)};
+        if t
+        {
+            self.cpsr |= 1 << (bit as u32)
+        }
+        else
+        {
+            self.cpsr &= !(1 << (bit as u32))
+        }
     }
 
+    #[inline(always)]
     pub fn get_cpsr_mode(&self) -> PSRMode
     {
         match self.cpsr
@@ -74,6 +83,7 @@ impl Register
         }
     }
 
+    #[inline(always)]
     pub fn set_cpsr_mode(&mut self, m: PSRMode)
     {
         // Clear bits 4 - 0

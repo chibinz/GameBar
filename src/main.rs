@@ -1,8 +1,9 @@
 pub mod cpu;
 pub mod memory;
 pub mod debug;
+pub mod console;
 
-use std::{env, fs};
+use std::env;
 use std::time::Instant;
 
 fn main() 
@@ -14,29 +15,16 @@ fn main()
         panic!("usage: gba <rom>");
     }
 
-    let mut cpu = cpu::CPU::new(); 
-    let mut memory = memory::Memory::new();
-    memory.load_rom(&args[1]);
+    let mut console = console::Console::new();
+    console.load_gamepak(&args[1]);
 
-    let file = fs::read(args[1].to_string()).unwrap();
-    println!("rom size: 0x{:08x} bytes", file.len());
-    
     let start = Instant::now();
-    cpu.register.r[15] = 0x08000000;
-    while (cpu.register.r[15] as usize) - 0x08000000 < file.len()
+    loop
     {
-        debug::debug();
-
-        let word = memory.load32(cpu.register.r[15]);
-        print!("{:08x}: {:08x} | {:032b} ", cpu.register.r[15], word, word);
-        println!("{}", cpu::arm::disassemble(word));
-
-        // let halfword: u16 = (file[i] as u16) + ((file[i + 1] as u16) << 8);
-        // print!("{:08x}: {:04x} | {:016b} ", i, halfword, halfword);
-        // thumb::disassemble(halfword);
-        // print!("{}\n", thumb::disassemble(halfword));
-
-        cpu.register.r[15] += 4;
+        if !console.debug()
+        {
+            break;
+        }
     }
 
     println!("time elapsed: {:?}", start.elapsed());

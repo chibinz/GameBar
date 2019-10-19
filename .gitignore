@@ -1,4 +1,5 @@
 /target
 /.vscode
 /reference
+/rom
 **/*.rs.bk
