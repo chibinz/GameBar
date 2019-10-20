@@ -1,19 +1,22 @@
+//! As x86 explicitly uses least significant 5 bits of shift amount
+//! and Rust explicits check integer overflow in debug builds,
+//! special handling is needed
+
 use crate::cpu::CPU;
 use crate::cpu::register::PSRBit::C;
 
 /// Shift a value according to shift amount and type and return the carry bit.
 /// Set carry bits of CPSR accordingly
 #[inline]
+#[allow(exceeding_bitshifts)]
 pub fn shift(cpu: &mut CPU, operand: u32, amount: u32, stype: u32) -> u32
 {
-    let samount = amount % 64;
-
     match stype
     {
-        0b00 => logical_left(cpu, operand, samount),
-        0b01 => logical_right(cpu, operand, samount),
-        0b10 => arithmetic_right(cpu, operand, samount),
-        0b11 => rotate_right(cpu, operand, samount),
+        0b00 => logical_left(cpu, operand, amount),
+        0b01 => logical_right(cpu, operand, amount),
+        0b10 => arithmetic_right(cpu, operand, amount),
+        0b11 => rotate_right(cpu, operand, amount),
         _    => panic!("Invalid shift type!"),
     }
 }
@@ -23,14 +26,31 @@ pub fn shift(cpu: &mut CPU, operand: u32, amount: u32, stype: u32) -> u32
 #[allow(exceeding_bitshifts)]
 pub fn logical_left(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
-    if amount > 0
+
+    if amount == 0
+    {
+        operand
+    }
+    else if amount < 32
     {
         let carry = (operand >> (32 - amount)) & 1 == 1;
         cpu.register.set_cpsr_bit(C, carry);
-    }
 
-    // `operand << amount` strangely compiles to rotate left
-    ((operand as u64) << amount) as u32
+        operand << amount
+    }
+    else if amount == 32
+    {
+        let carry = (operand >> 32) & 1 == 1;
+        cpu.register.set_cpsr_bit(C, carry);
+
+        0
+    }
+    else
+    {
+        cpu.register.set_cpsr_bit(C, false);
+
+        0
+    }
 }
 
 /// Note that LSR #0 is equivalent to LSR #32
@@ -45,13 +65,25 @@ pub fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 
         0
     }
-    else
+    else if amount < 32
     {
         let carry = (operand >> (amount - 1)) & 1 == 1;
         cpu.register.set_cpsr_bit(C, carry);
 
-        // `operand >> amount` strangely compiles to rotate right
-        ((((operand as u64) << amount) & 0xffffffff00000000) >> 32) as u32
+        operand >> amount
+    }
+    else if amount == 32
+    {
+        let carry = (operand >> 31) & 1 == 1;
+        cpu.register.set_cpsr_bit(C, carry);
+
+        0
+    }
+    else
+    {
+        cpu.register.set_cpsr_bit(C, false);
+
+        0
     }
 }
 
@@ -60,14 +92,12 @@ pub fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 #[allow(exceeding_bitshifts)]
 pub fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
-    if amount == 0
+    if amount == 0 || amount >= 32
     {
         let carry = operand >> 31 & 1 == 1;
         cpu.register.set_cpsr_bit(C, carry);
         
-        // assert_eq!(0x80000000u32 as i32 >> 32, -1i32);
-        // Rust perform arithemetic shift right on signed integers
-        ((operand as i32) / (32 << 1)) as u32
+        (operand as i32 >> 31) as u32
     }
     else
     {
@@ -94,7 +124,8 @@ pub fn rotate_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
     }
     else
     {
-        let carry = (operand >> (amount - 1)) & 1 == 1;
+        // Rotate amount larger than 32 is same as their least significant 5 bits
+        let carry = (operand >> ((amount - 1) & 0b11111)) & 1 == 1;
         cpu.register.set_cpsr_bit(C, carry);
 
         operand.rotate_right(amount)
@@ -106,8 +137,6 @@ pub fn rotate_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 mod test
 {
     use super::*;
-    // Part of the test are commented out due to Rust explicitly
-    // checks for integer overflow in debug builds.
 
     #[test]
     fn shift_shift()
@@ -151,6 +180,10 @@ mod test
         cpu.register.set_cpsr_bit(C, false);
         assert_eq!(arithmetic_right(&mut cpu, 0x80000000, 0), 0xffffffff);
         assert!(cpu.register.get_cpsr_bit(C));
+
+        cpu.register.set_cpsr_bit(C, false);
+        assert_eq!(arithmetic_right(&mut cpu, 0x80000000, 99), 0xffffffff);
+        assert!(cpu.register.get_cpsr_bit(C));
     }
 
     #[test]
@@ -166,7 +199,7 @@ mod test
         assert!(!cpu.register.get_cpsr_bit(C));
 
         cpu.register.set_cpsr_bit(C, false);
-        assert_eq!(rotate_right(&mut cpu, 0xf0f0f0f0, 8), 0xf0f0f0f0);
+        assert_eq!(rotate_right(&mut cpu, 0xf0f0f0f0, 64), 0xf0f0f0f0);
         assert!(cpu.register.get_cpsr_bit(C));
     }
 }
