@@ -1,12 +1,12 @@
-//! As x86 explicitly uses least significant 5 bits of shift amount
-//! and Rust explicits check integer overflow in debug builds,
+//! As x86 uses only the least significant 5 bits of shift amount
+//! and Rust explicitly checks integer overflow in debug builds,
 //! special handling is needed
 
 use crate::cpu::CPU;
 use crate::cpu::register::PSRBit::C;
 
-/// Shift a value according to shift amount and type and return the carry bit.
-/// Set carry bits of CPSR accordingly
+/// Shift a value according to shift amount and type and return the shifted result.
+/// Set carry bits of CPSR accordingly.
 #[inline]
 #[allow(exceeding_bitshifts)]
 pub fn shift(cpu: &mut CPU, operand: u32, amount: u32, stype: u32) -> u32
@@ -58,7 +58,7 @@ pub fn logical_left(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 #[allow(exceeding_bitshifts)]
 pub fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
-    if amount == 0
+    if amount == 0 || amount == 32
     {
         let carry = operand >> 31 & 1 == 1;
         cpu.register.set_cpsr_bit(C, carry);
@@ -71,13 +71,6 @@ pub fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
         cpu.register.set_cpsr_bit(C, carry);
 
         operand >> amount
-    }
-    else if amount == 32
-    {
-        let carry = (operand >> 31) & 1 == 1;
-        cpu.register.set_cpsr_bit(C, carry);
-
-        0
     }
     else
     {
