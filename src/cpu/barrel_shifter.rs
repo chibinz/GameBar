@@ -5,6 +5,40 @@
 use crate::cpu::CPU;
 use crate::cpu::register::PSRBit::C;
 
+/// Perform shift on a register, return shifted result.
+/// Note that this function may change the C flag of CPSR.
+#[inline]
+pub fn shift_register(cpu: &mut CPU, operand2: u32) -> u32
+{
+    let rm = bits(operand2, 3, 0);
+    let stype = bits(operand2, 6, 5);
+    let amount = 
+    if bit(operand2, 4)
+    {
+        let rs = bits(operand2, 11, 8);
+
+        debug_assert_ne!(rs, 15);
+        debug_assert_eq!(bit(operand2, 7), false);
+
+        cpu.register.r[rs as usize]
+    } 
+    else
+    {
+        bits(operand2, 11, 7)
+    };
+    
+    shift(cpu, cpu.register.r[rm as usize], amount, stype)
+}
+
+/// Perform rotate on an immediate, return rotated result
+#[inline]
+pub fn rotate_immediate(operand2: u32) -> u32
+{
+    let rotate = bits(operand2, 11, 8);
+    let immediate = bits(operand2, 7, 0);
+    immediate.rotate_right(rotate * 2) 
+}
+
 /// Shift a value according to shift amount and type and return the shifted result.
 /// Set carry bits of CPSR accordingly.
 #[inline]
@@ -17,14 +51,13 @@ pub fn shift(cpu: &mut CPU, operand: u32, amount: u32, stype: u32) -> u32
         0b01 => logical_right(cpu, operand, amount),
         0b10 => arithmetic_right(cpu, operand, amount),
         0b11 => rotate_right(cpu, operand, amount),
-        _    => panic!("Invalid shift type!"),
+        _    => unreachable!("Invalid shift type!"),
     }
 }
 
 /// Note that LSL #0 maintains the old CPSR C flag
 #[inline]
-#[allow(exceeding_bitshifts)]
-pub fn logical_left(cpu: &mut CPU, operand: u32, amount: u32) -> u32
+fn logical_left(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
 
     if amount == 0
@@ -55,8 +88,7 @@ pub fn logical_left(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 
 /// Note that LSR #0 is equivalent to LSR #32
 #[inline]
-#[allow(exceeding_bitshifts)]
-pub fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
+fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
     if amount == 0 || amount == 32
     {
@@ -82,8 +114,7 @@ pub fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 
 /// Note that ASR #0 is equivalent to ASR #32
 #[inline]
-#[allow(exceeding_bitshifts)]
-pub fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
+fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
     if amount == 0 || amount >= 32
     {
@@ -103,8 +134,7 @@ pub fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 
 /// Note that ROR #0 is RRX, rotate right extended
 #[inline]
-#[allow(exceeding_bitshifts)]
-pub fn rotate_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
+fn rotate_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
     if amount == 0
     {
@@ -130,13 +160,33 @@ pub fn rotate_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 mod test
 {
     use super::*;
-
     #[test]
-    fn shift_shift()
+    fn test_shift_register()
     {
         let mut cpu = CPU::new();
 
-        assert_eq!(shift(&mut cpu, 3, 63, 0), 0);
+        let mut operand2;
+
+        // ASR 32
+        operand2 = 0b11111_10_0_0100;
+        cpu.register.r[4] = 0x80000000;
+        assert_eq!(shift_register(&mut cpu, operand2), 0xffffffff);
+        assert_eq!(cpu.register.get_cpsr_bit(C), false);
+
+        // LSR 32
+        operand2 = 0b0001_0_01_1_0100;
+        cpu.register.r[1] = 32;
+        cpu.register.r[4] = 0x80000000;
+        assert_eq!(shift_register(&mut cpu, operand2), 0);
+        assert_eq!(cpu.register.get_cpsr_bit(C), true);
+    }
+
+    #[test]
+    fn test_rotate_immediate()
+    {
+        let operand2 = 0b0001_00000010;
+
+        assert_eq!(rotate_immediate(operand2), 0x80000000);
     }
 
     #[test]
