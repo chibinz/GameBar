@@ -90,6 +90,11 @@ impl Register
         self.cpsr &= !0b11111;
         self.cpsr |= m as u32;
     }
+
+    pub fn restore_cpsr(&mut self)
+    {
+        self.cpsr = self.spsr[self.get_cpsr_mode() as usize];
+    }
 }
 
 #[cfg(test)]

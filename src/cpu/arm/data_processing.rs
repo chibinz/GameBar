@@ -1,16 +1,23 @@
+use crate::util::*;
 use crate::cpu::CPU;
 use crate::cpu::register::PSRBit::*;
-use crate::cpu::barrel_shifter::{shift};
+use crate::cpu::barrel_shifter::{shift_register, rotate_immediate};
+
+#[inline]
+pub fn decode_execute(cpu: &mut CPU, instruction: u32)
+{
+    execute(cpu, decode(instruction));
+}
 
 #[inline]
 pub fn decode(instruction: u32) -> (bool, u32, bool, u32, u32, u32)
 {
-    let i = instruction >> 25 & 1 == 1;
-    let opcode = instruction >> 21 & 0b1111;
-    let s = instruction >> 20 & 1 == 1;
-    let rn = instruction >> 16 & 0b1111;
-    let rd = instruction >> 12 & 0b1111;
-    let operand2 = instruction & 0b11111111111;
+    let i = bit(instruction, 25);
+    let opcode = bits(instruction, 24, 21);
+    let s = bit(instruction, 20);
+    let rn = bits(instruction, 19, 16);
+    let rd = bits(instruction, 15, 12);
+    let operand2 = bits(instruction, 11, 0);
 
     (i, opcode, s, rn, rd, operand2)
 }
@@ -19,22 +26,9 @@ pub fn decode(instruction: u32) -> (bool, u32, bool, u32, u32, u32)
 pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32))
 {
     let op1 = cpu.register.r[rn as usize];
-    let op2 = 
-    if i 
-    {
-        let rotate = operand2 >> 8 & 0b1111;
-        let immediate = operand2 & 0b11111111;
-        immediate.rotate_right(rotate * 2)
-    }
-    else
-    {    
-        let rm = (operand2 & 0b1111) as usize;
-        let rs = (operand2 >> 8 & 0b1111) as usize;
-        let stype = operand2 >> 5 & 0b11;
-        let amount = if operand2 >> 4 & 1 == 1 {cpu.register.r[rs]} 
-                     else {(operand2 >> 3) & 0b11111};
-        shift(cpu, cpu.register.r[rm], amount, stype)
-    };
+    
+    // CPSR C flag may be changed in the barrel shifter
+    let op2 = if i {rotate_immediate(operand2)} else {shift_register(cpu, operand2)};
      
     let carry = if cpu.register.get_cpsr_bit(C) {1} else {0};
 
@@ -64,8 +58,8 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         0b0010 => add(op1, !op2, 0),
         0b0011 => add(op2, !op1, 0),
         0b0101 => add(op1, op2, carry),
-        0b0110 => add(op1, !op2, carry),
-        0b0111 => add(op2, !op1, carry),
+        0b0110 => add(op1, !op2, carry.wrapping_sub(1)),
+        0b0111 => add(op2, !op1, carry.wrapping_sub(1)),
         0b1000 => op1 & op2,
         0b1001 => op1 ^ op2,
         0b1010 => add(op1, !op2, 0),
@@ -77,7 +71,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         _      => panic!("Invalid opcode!") 
     };
 
-    // If bit S is set, set CPSR condition flags accordingly
+    // If S bit is set, set CPSR condition flags accordingly
     if s
     {
         if result == 0
@@ -89,11 +83,39 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         {
             cpu.register.set_cpsr_bit(N, true)
         }
+
+        // If S bit is set and `rd` is pc, move the SPSR corresponding to the 
+        // current mode to the CPSR
+        if rd == 15
+        {
+            cpu.register.restore_cpsr();
+        }
     }
 
     // Write result to register, if needed
     if opcode < 0b1000 || opcode > 0b1011
     {
         cpu.register.r[rd as usize] = result;
+    }
+}
+
+#[cfg(test)]
+mod tests
+{
+    use super::*;
+
+    #[test]
+    fn test_execute()
+    {
+        let mut cpu = CPU::new();
+
+        // AND R1, R2, R4 LSL R1
+        cpu.register.r[1] = 1;
+        cpu.register.r[2] = 2;
+        cpu.register.r[3] = 1;
+        cpu.register.r[4] = 0xffffffff;
+        execute(&mut cpu, (false, 0b0000, true, 2, 1, 0b0011_0_00_1_0100));
+        assert_eq!(cpu.register.r[1], 2);
+        assert_eq!(cpu.register.get_cpsr_bit(C), true);
     }
 }
