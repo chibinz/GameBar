@@ -25,6 +25,24 @@ pub fn bit(a: u32, b: u32) -> bool
     a & (1 << b) == (1 << b)
 }
 
+/// Sign extend a word.
+/// `s` is the place of the most significant bit.
+#[inline]
+pub fn sign_extend(a: u32, s: u32) -> i32
+{
+    debug_assert!(s < 32);
+
+    if bit(a, s)
+    {
+        let extension = !((1 << s) - 1);
+        (a | extension) as i32
+    }
+    else
+    {
+        a as i32
+    }
+}
+
 #[cfg(test)]
 mod tests
 {
@@ -40,5 +58,11 @@ mod tests
     fn test_bit()
     {
         assert_eq!(bit(0x80000000, 31), true);
+    }
+
+    #[test]
+    fn test_sign_extend()
+    {
+        assert_eq!(sign_extend(0b10, 1), -2);
     }
 }
