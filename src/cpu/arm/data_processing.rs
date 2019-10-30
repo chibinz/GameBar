@@ -79,7 +79,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
             cpu.register.set_cpsr_bit(Z, true)
         }
 
-        if result >> 31 & 1 == 1
+        if bit(result, 31)
         {
             cpu.register.set_cpsr_bit(N, true)
         }
@@ -105,7 +105,7 @@ mod tests
     use super::*;
 
     #[test]
-    fn test_execute()
+    fn data_execute()
     {
         let mut cpu = CPU::new();
 
