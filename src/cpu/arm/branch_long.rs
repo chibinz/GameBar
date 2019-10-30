@@ -1,9 +1,9 @@
-use util::*;
-use cpu::CPU;
+use crate::util::*;
+use crate::cpu::CPU;
 
 pub fn decode_execute(cpu: &mut CPU, instruction: u32)
 {
-    // It the link bit is set, the old value of pc is written
+    // If the link bit is set, the old value of pc is written
     // to the link register, which is R14.
     let l = bit(instruction, 24);
 
@@ -15,5 +15,5 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
         cpu.register.r[14] = cpu.register.r[15];
     }
 
-    cpu.register.r[15] += offset;
+    cpu.register.r[15] = cpu.register.r[15].wrapping_add(offset as u32);
 }

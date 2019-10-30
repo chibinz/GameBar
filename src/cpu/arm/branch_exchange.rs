@@ -1,7 +1,6 @@
-use util::*;
-use cpu::CPU;
-use cpu::register::PSRBit::T;
-use cpu::register::set_cpsr_bit;
+use crate::util::*;
+use crate::cpu::CPU;
+use crate::cpu::register::PSRBit::T;
 
 pub fn decode_execute(cpu: &mut CPU, instruction: u32)
 {
@@ -11,7 +10,7 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
     debug_assert_ne!(rn, 15);
 
     // If bit 0 of rn = 1, subsequent instructions are decoded as THUMB instructions
-    cpu.register.set_cpsr_bit(T, bit(cpu.register.r[rn]));
+    cpu.register.set_cpsr_bit(T, bit(cpu.register.r[rn as usize], 0));
 
-    cpu.register.r[15] = cpu.register.r[rn];
+    cpu.register.r[15] = cpu.register.r[rn as usize];
 }
