@@ -5,6 +5,7 @@ pub mod branch_long;
 pub mod branch_exchange;
 pub mod multiply_accumulate;
 pub mod multiply_long_accumulate;
+pub mod single_data_transfer;
 
 use crate::util::*;
 use crate::cpu::CPU;
