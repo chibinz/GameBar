@@ -20,12 +20,12 @@ pub fn decode(instruction: u32) -> (bool, bool, bool, u32, u32, u32, u32)
     let rs = bits(instruction, 11, 8);
     let rm = bits(instruction, 3, 0);
 
-    // rdhi, rdlo, and rm must all specify different registers.
+    // `rdhi`, `rdlo`, and `rm` must all specify different registers.
     debug_assert_ne!(rdhi, rm);
     debug_assert_ne!(rdlo, rm);
     debug_assert_ne!(rdhi, rdlo);
 
-    // r15 must not be used as an operand or destination register
+    // `r15` must not be used as an operand or destination register
     debug_assert_ne!(rdhi, 15);
     debug_assert_ne!(rdlo, 15);
     debug_assert_ne!(rs, 15);
@@ -48,7 +48,7 @@ pub fn execute(cpu: &mut CPU, (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, 
     }
     else
     {
-        // Operands are sign extended to 64 bits. i32 are necessary for sign extension
+        // Operands are sign extended to 64 bits. `i32` is necessary for sign extension.
         let operand1 = cpu.register.r[rm as usize] as i32 as i64;
         let operand2 = cpu.register.r[rs as usize] as i32 as i64;
         
