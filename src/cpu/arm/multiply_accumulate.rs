@@ -22,7 +22,7 @@ pub fn decode(instruction: u32) -> (bool, bool, u32, u32, u32, u32)
     // The destination register rd must not be the same as the operand register rm
     debug_assert_ne!(rd, rm);
 
-    // r15 must not be used as an operand or destination register
+    // `r15` must not be used as an operand or destination register
     debug_assert_ne!(rd, 15);
     debug_assert_ne!(rn, 15);
     debug_assert_ne!(rs, 15);
