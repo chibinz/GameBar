@@ -25,6 +25,8 @@ fn main()
         {
             break;
         }
+
+        console.print();
     }
 
     println!("time elapsed: {:?}", start.elapsed());

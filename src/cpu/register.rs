@@ -1,3 +1,5 @@
+use crate::util::*;
+
 /// Structure containing 16 general pupose registers,
 /// 1 Current Program Status Register,
 /// and 5 Saved Program Status Register
@@ -43,7 +45,7 @@ impl Register
         Self
         {
             r   : [0; 16],
-            cpsr: 0,
+            cpsr: 0b10011, // On reset, the CPSR is forced to supervisor mode
             spsr: [0; 5],
         }
     }
@@ -70,7 +72,7 @@ impl Register
     #[inline]
     pub fn restore_cpsr(&mut self)
     {
-        self.cpsr = self.spsr[self.get_cpsr_mode() as usize];
+        self.cpsr = self.spsr[self.get_spsr_index()];
     }
 
     #[inline]
@@ -176,7 +178,7 @@ mod test
         let mut reg = Register::new();
         reg.set_cpsr_bit(PSRBit::F, true);
 
-        assert_eq!(reg.cpsr, 0b1000000);
+        assert_eq!(bit(reg.cpsr, 6), true);
     }
 
     #[test]

@@ -7,6 +7,7 @@ pub mod multiply_accumulate;
 pub mod multiply_long_accumulate;
 pub mod single_data_transfer;
 pub mod halfword_data_transfer;
+pub mod block_data_transfer;
 
 use crate::util::*;
 use crate::cpu::CPU;
@@ -26,12 +27,5 @@ impl CPU
 
         return 0;
     }
-
-}
-
-#[cfg(test)]
-mod tests
-{
-    use super::*;
 
 }
