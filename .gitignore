@@ -1,5 +1,6 @@
-/target
-/.vscode
-/reference
-/rom
+target/
+.vscode/
+reference/
+rom/
+suite/
 **/*.rs.bk

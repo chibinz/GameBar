@@ -43,7 +43,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         // result is negative, or both operands are negative and the result is positive.
         if s
         {
-            let overflow = ((!(op1 ^ op2)) & (op1 ^ r2)) >> 31 & 1 == 1;
+            let overflow = (op1 as i32).overflowing_add(op2 as i32).1;
             cpu.register.set_cpsr_bit(V, overflow);
             cpu.register.set_cpsr_bit(C, c1 || c2);
         }
@@ -57,6 +57,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         0b0001 => op1 ^ op2,
         0b0010 => add(op1, !op2, 0),
         0b0011 => add(op2, !op1, 0),
+        0b0100 => add(op1, op2, 0),
         0b0101 => add(op1, op2, carry),
         0b0110 => add(op1, !op2, carry.wrapping_sub(1)),
         0b0111 => add(op2, !op1, carry.wrapping_sub(1)),
@@ -68,7 +69,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         0b1101 => op2,
         0b1110 => op1 & !op2,
         0b1111 => !op2,
-        _      => panic!("Invalid opcode!") 
+        _      => unreachable!("Invalid opcode!") 
     };
 
     // If S bit is set, set CPSR condition flags accordingly

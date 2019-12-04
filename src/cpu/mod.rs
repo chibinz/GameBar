@@ -22,7 +22,7 @@ impl CPU
     }
 
     /// Return true if condition is satified
-    #[inline(always)]
+    #[inline]
     fn check_condition(&self, condition: u32) -> bool
     {
         use register::PSRBit::*;
@@ -67,7 +67,7 @@ impl fmt::Display for CPU
 }
 
 #[cfg(test)]
-mod test
+mod tests
 {
     use super::*;
 
