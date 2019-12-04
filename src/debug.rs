@@ -35,10 +35,7 @@ impl Console
 
     fn print(&self)
     {
-        for i in 0..16
-        {
-            println!("Register R{:02}: {:#010x}", i, self.cpu.register.r[i]);
-        }
+        println!("{}", self.cpu);
     }
 
 

@@ -3,6 +3,7 @@ pub mod arm;
 pub mod thumb;
 pub mod barrel_shifter;
 
+use std::fmt;
 use register::Register;
 
 pub struct CPU
@@ -50,6 +51,21 @@ impl CPU
     }
 }
 
+impl fmt::Display for CPU
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
+    {
+        for i in 0..16
+        {
+            if i % 4 == 0 && i > 0 {print!("\n");}
+
+            print!("R{:<2} = {:08x} ", i, self.register.r[i as usize]);
+        }
+
+        write!(f, "\nCPSR = {:032b}", self.register.get_cpsr())
+    }
+}
+
 #[cfg(test)]
 mod test
 {
@@ -79,5 +95,4 @@ mod test
         cpu.register.set_cpsr_bit(Z, false);
         assert!(cpu.check_condition(0b1100));
     }
-
 }
