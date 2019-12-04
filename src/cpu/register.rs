@@ -81,7 +81,7 @@ impl Register
         self.cpsr >> (bit as u32) & 1 == 1
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn set_cpsr_bit(&mut self, bit: PSRBit, t: bool)
     {
         if t
@@ -94,7 +94,7 @@ impl Register
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn get_cpsr_mode(&self) -> PSRMode
     {
         use PSRMode::*;
@@ -112,7 +112,7 @@ impl Register
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn set_cpsr_mode(&mut self, m: PSRMode)
     {
         // Clear bits 4 - 0
@@ -159,7 +159,7 @@ impl Register
 }
 
 #[cfg(test)]
-mod test
+mod tests
 {
     use super::*;
 

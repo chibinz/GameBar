@@ -281,7 +281,7 @@ pub fn disassemble(opcode: u32) -> String
 }
 
 #[cfg(test)]
-mod test
+mod tests
 {
     use super::*;
 

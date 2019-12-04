@@ -1,7 +1,8 @@
 //! As x86 uses only the least significant 5 bits of shift amount
 //! and Rust explicitly checks integer overflow in debug builds,
 //! special handling is needed
-
+//! 
+use crate::util::*;
 use crate::cpu::CPU;
 use crate::cpu::register::PSRBit::C;
 
@@ -42,7 +43,6 @@ pub fn rotate_immediate(operand2: u32) -> u32
 /// Shift a value according to shift amount and type and return the shifted result.
 /// Set carry bits of CPSR accordingly.
 #[inline]
-#[allow(exceeding_bitshifts)]
 pub fn shift(cpu: &mut CPU, operand: u32, amount: u32, stype: u32) -> u32
 {
     match stype
@@ -66,14 +66,14 @@ fn logical_left(cpu: &mut CPU, operand: u32, amount: u32) -> u32
     }
     else if amount < 32
     {
-        let carry = (operand >> (32 - amount)) & 1 == 1;
+        let carry = bit(operand, 32 - amount);
         cpu.register.set_cpsr_bit(C, carry);
 
         operand << amount
     }
     else if amount == 32
     {
-        let carry = (operand >> 32) & 1 == 1;
+        let carry = operand & 1 == 1;
         cpu.register.set_cpsr_bit(C, carry);
 
         0
@@ -92,14 +92,14 @@ fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
     if amount == 0 || amount == 32
     {
-        let carry = operand >> 31 & 1 == 1;
+        let carry = bit(operand, 31);
         cpu.register.set_cpsr_bit(C, carry);
 
         0
     }
     else if amount < 32
     {
-        let carry = (operand >> (amount - 1)) & 1 == 1;
+        let carry = bit(operand, amount - 1);
         cpu.register.set_cpsr_bit(C, carry);
 
         operand >> amount
@@ -118,14 +118,14 @@ fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
     if amount == 0 || amount >= 32
     {
-        let carry = operand >> 31 & 1 == 1;
+        let carry = bit(operand, 31);
         cpu.register.set_cpsr_bit(C, carry);
         
         (operand as i32 >> 31) as u32
     }
     else
     {
-        let carry = (operand >> (amount - 1)) & 1 == 1;
+        let carry = bit(operand, amount - 1);
         cpu.register.set_cpsr_bit(C, carry);
 
         (operand as i32 >> amount) as u32
@@ -157,7 +157,7 @@ fn rotate_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 
 
 #[cfg(test)]
-mod test
+mod tests
 {
     use super::*;
     #[test]

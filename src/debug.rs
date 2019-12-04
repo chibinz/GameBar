@@ -27,19 +27,20 @@ impl Console
             "print"       => self.print(),
             "disassemble" => self.disassemble(),
             "step"        => self.step(),
+            "quit"        => return false,
             _             => self.step(),
         };
 
         true
     }
 
-    fn print(&self)
+    pub fn print(&self)
     {
         println!("{}", self.cpu);
     }
 
 
-    fn disassemble(&self)
+    pub fn disassemble(&self)
     {
         if self.cpu.register.get_cpsr_bit(cpu::register::PSRBit::T)
         {
