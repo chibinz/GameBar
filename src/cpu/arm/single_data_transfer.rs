@@ -11,15 +11,15 @@ pub fn decode_execute(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
 #[inline]
 pub fn decode(instruction: u32) -> (bool, bool, bool, bool, u32, u32, u32, u32)
 {
-    debug_assert_eq!(bits(instruction, 27, 26), 0b01);
+    debug_assert_eq!(instruction.bits(27, 26), 0b01);
 
-    let i      = bit(instruction, 25);
-    let p      = bit(instruction, 24);
-    let u      = bit(instruction, 23);
-    let w      = bit(instruction, 21);
-    let rn     = bits(instruction, 19, 16);
-    let rd     = bits(instruction, 15, 12);
-    let offset = bits(instruction, 11, 0);
+    let i      = instruction.bit(25);
+    let p      = instruction.bit(24);
+    let u      = instruction.bit(23);
+    let w      = instruction.bit(21);
+    let rn     = instruction.bits(19, 16);
+    let rd     = instruction.bits(15, 12);
+    let offset = instruction.bits(11, 0);
 
     // Instruction is later on dispatched using the l, b bits
     let lb = (instruction >> 22 & 1) + (instruction >> 20 & 1) << 1;

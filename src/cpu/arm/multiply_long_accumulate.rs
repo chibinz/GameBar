@@ -10,15 +10,15 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
 #[inline]
 pub fn decode(instruction: u32) -> (bool, bool, bool, u32, u32, u32, u32)
 {
-    debug_assert_eq!(bits(instruction, 7, 4), 0b1001);
+    debug_assert_eq!(instruction.bits(7, 4), 0b1001);
 
-    let u = bit(instruction, 22);
-    let a = bit(instruction, 21);
-    let s = bit(instruction, 20);
-    let rdhi = bits(instruction, 19, 16);
-    let rdlo = bits(instruction, 15, 12);
-    let rs = bits(instruction, 11, 8);
-    let rm = bits(instruction, 3, 0);
+    let u = instruction.bit(22);
+    let a = instruction.bit(21);
+    let s = instruction.bit(20);
+    let rdhi = instruction.bits(19, 16);
+    let rdlo = instruction.bits(15, 12);
+    let rs = instruction.bits(11, 8);
+    let rm = instruction.bits(3, 0);
 
     // `rdhi`, `rdlo`, and `rm` must all specify different registers.
     debug_assert_ne!(rdhi, rm);

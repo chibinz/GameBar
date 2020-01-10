@@ -1,7 +1,7 @@
 //! As x86 uses only the least significant 5 bits of shift amount
 //! and Rust explicitly checks integer overflow in debug builds,
 //! special handling is needed
-//! 
+
 use crate::util::*;
 use crate::cpu::CPU;
 use crate::cpu::register::PSRBit::C;
@@ -11,15 +11,15 @@ use crate::cpu::register::PSRBit::C;
 #[inline]
 pub fn shift_register(cpu: &mut CPU, operand2: u32) -> u32
 {
-    let rm = bits(operand2, 3, 0);
-    let stype = bits(operand2, 6, 5);
+    let rm = operand2.bits(3, 0);
+    let stype = operand2.bits(6, 5);
     let amount = 
     if bit(operand2, 4)
     {
-        let rs = bits(operand2, 11, 8);
+        let rs = operand2.bits(11, 8);
 
         debug_assert_ne!(rs, 15);
-        debug_assert_eq!(bit(operand2, 7), false);
+        debug_assert_eq!(operand2.bit(7), false);
 
         cpu.register.r[rs as usize]
     } 
@@ -35,8 +35,8 @@ pub fn shift_register(cpu: &mut CPU, operand2: u32) -> u32
 #[inline]
 pub fn rotate_immediate(operand2: u32) -> u32
 {
-    let rotate = bits(operand2, 11, 8);
-    let immediate = bits(operand2, 7, 0);
+    let rotate = operand2.bits(11, 8);
+    let immediate = operand2.bits(7, 0);
     immediate.rotate_right(rotate * 2) 
 }
 
@@ -66,7 +66,7 @@ fn logical_left(cpu: &mut CPU, operand: u32, amount: u32) -> u32
     }
     else if amount < 32
     {
-        let carry = bit(operand, 32 - amount);
+        let carry = operand.bit(32 - amount);
         cpu.register.set_cpsr_bit(C, carry);
 
         operand << amount
@@ -92,14 +92,14 @@ fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
     if amount == 0 || amount == 32
     {
-        let carry = bit(operand, 31);
+        let carry = operand.bit(31);
         cpu.register.set_cpsr_bit(C, carry);
 
         0
     }
     else if amount < 32
     {
-        let carry = bit(operand, amount - 1);
+        let carry = operand.bit(amount - 1);
         cpu.register.set_cpsr_bit(C, carry);
 
         operand >> amount
@@ -118,14 +118,14 @@ fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
     if amount == 0 || amount >= 32
     {
-        let carry = bit(operand, 31);
+        let carry = operand.bit(31);
         cpu.register.set_cpsr_bit(C, carry);
         
         (operand as i32 >> 31) as u32
     }
     else
     {
-        let carry = bit(operand, amount - 1);
+        let carry = operand.bit(amount - 1);
         cpu.register.set_cpsr_bit(C, carry);
 
         (operand as i32 >> amount) as u32

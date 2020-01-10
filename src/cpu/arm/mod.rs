@@ -22,7 +22,7 @@ impl CPU
 
         self.register.r[15] += 4;
         
-        let cond = bits(instruction, 31, 28);
+        let cond = instruction.bits(31, 28);
         if self.check_condition(cond)
         {
             dispatch(self, memory, instruction);

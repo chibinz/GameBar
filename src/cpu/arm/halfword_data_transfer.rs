@@ -9,23 +9,23 @@ pub fn decode_execute(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
 
 pub fn decode(instruction: u32) -> (bool, bool, bool, bool, u32, u32, u32 ,u32)
 {
-    debug_assert_eq!(bits(instruction, 27, 25), 0b000);
-    debug_assert_eq!(bit(instruction, 7), true);
-    debug_assert_eq!(bit(instruction, 4), true);
+    debug_assert_eq!(instruction.bits(27, 25), 0b000);
+    debug_assert_eq!(instruction.bit(7), true);
+    debug_assert_eq!(instruction.bit(4), true);
 
-    let p = bit(instruction, 24);
-    let u = bit(instruction, 23);
-    let w = bit(instruction, 22);
-    let rn = bits(instruction, 19, 16);
-    let rd = bits(instruction, 15, 12);
+    let p = instruction.bit(24);
+    let u = instruction.bit(23);
+    let w = instruction.bit(22);
+    let rn = instruction.bits(19, 16);
+    let rd = instruction.bits(15, 12);
 
     // Instruction is later on dispatched by the l, s, h bits
     // Note that the shift operator takes precedence over add operator
-    let lsh = ((instruction >> 20 & 1) << 2) + bits(instruction, 6, 5);
+    let lsh = ((instruction >> 20 & 1) << 2) + instruction.bits(6, 5);
 
     // Offset can be a register or an immediate depending on bit 22
-    let i = bit(instruction, 22);
-    let offset = (bits(instruction, 11, 8) << 4) + bits(instruction, 3, 0);
+    let i = instruction.bit(22);
+    let offset = (instruction.bits(11, 8) << 4) + instruction.bits(3, 0);
 
     (p, u, i, w, lsh, rn, rd, offset)
 }
