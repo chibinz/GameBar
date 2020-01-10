@@ -4,13 +4,14 @@ pub mod thumb;
 pub mod barrel_shifter;
 
 use std::fmt;
-use register::Register;
+
+use crate::memory::Memory;
 
 pub struct CPU
 {
     pub ir: u32, // Instruction register, used to store next instruction to execute
     pub flushed: bool, // Determine whether the pipeline is empty
-    pub register: Register,
+    pub register: register::Register,
 }
 
 impl CPU
@@ -21,8 +22,28 @@ impl CPU
         {
             ir: 0,
             flushed: true,
-            register: Register::new(),
+            register: register::Register::new(),
         }
+    }
+
+    pub fn step(&mut self, memory: &mut Memory)
+    {
+        if self.in_thumb_mode()
+        {
+            thumb::fetch(self, memory);
+            thumb::execute(self, memory);
+        }
+        else
+        {
+            arm::fetch(self, memory);
+            arm::execute(self, memory);
+        }
+    }
+
+    #[inline]
+    pub fn in_thumb_mode(&self) -> bool
+    {
+        self.register.get_cpsr_bit(register::PSRBit::T)
     }
 
     /// Return true if condition is satified

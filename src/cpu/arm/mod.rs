@@ -13,47 +13,37 @@ use crate::util::*;
 use crate::cpu::CPU;
 use crate::memory::Memory;
 
-impl CPU
+/// Execute instruction
+pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
 {
-    /// Execute instruction
-    pub fn execute(&mut self, memory: &mut Memory) -> u32
+    let instruction = cpu.ir;
+
+    cpu.register.r[15] += 4;
+    
+    let cond = instruction.bits(31, 28);
+    if cpu.check_condition(cond)
     {
-        let instruction = self.ir;
-
-        self.register.r[15] += 4;
-        
-        let cond = instruction.bits(31, 28);
-        if self.check_condition(cond)
-        {
-            dispatch(self, memory, instruction);
-        }
-
-        return 0;
+        dispatch(cpu, memory, instruction);
     }
 
-    pub fn fetch(&mut self, memory: &mut Memory)
-    {
-        if self.flushed
-        {
-            self.ir = memory.load32(self.register.r[15]);
-            self.register.r[15] += 4;
-            self.flushed = false;
-        }
-        else
-        {
-            self.ir = memory.load32(self.register.r[15] - 4);
-        }
-    }
-
-    pub fn step(&mut self, memory: &mut Memory)
-    {
-        self.fetch(memory);
-        self.execute(memory);
-    }
-
+    return 0;
 }
 
-fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
+pub fn fetch(cpu: &mut CPU, memory: &mut Memory)
+{
+    if cpu.flushed
+    {
+        cpu.ir = memory.load32(cpu.register.r[15]);
+        cpu.register.r[15] += 4;
+        cpu.flushed = false;
+    }
+    else
+    {
+        cpu.ir = memory.load32(cpu.register.r[15] - 4);
+    }
+}
+
+pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
 {
     let b74 = || instruction >> 6 & 0b10 | instruction >> 4 & 0b01;
     let b65 = || instruction >> 5 & 0b11;

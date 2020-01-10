@@ -51,19 +51,21 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         r2
     };
 
+    // Subtracting an operand is adding its 2's complement.
+    // An operand's 2's complement is its negation plus one.
     let result = match opcode
     {
         0b0000 => op1 & op2,
         0b0001 => op1 ^ op2,
-        0b0010 => add(op1, !op2, 0),
-        0b0011 => add(op2, !op1, 0),
+        0b0010 => add(op1, !op2 + 1, 0),
+        0b0011 => add(op2, !op1 + 1, 0),
         0b0100 => add(op1, op2, 0),
         0b0101 => add(op1, op2, carry),
-        0b0110 => add(op1, !op2, carry.wrapping_sub(1)),
-        0b0111 => add(op2, !op1, carry.wrapping_sub(1)),
+        0b0110 => add(op1, !op2 + 1, carry.wrapping_sub(1)),
+        0b0111 => add(op2, !op1 + 1, carry.wrapping_sub(1)),
         0b1000 => op1 & op2,
         0b1001 => op1 ^ op2,
-        0b1010 => add(op1, !op2, 0),
+        0b1010 => add(op1, !op2 + 1, 0),
         0b1011 => add(op1, op2, 0),
         0b1100 => op1 | op2,
         0b1101 => op2,
@@ -80,7 +82,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
             cpu.register.set_cpsr_bit(Z, true)
         }
 
-        if bit(result, 31)
+        if result.bit(31)
         {
             cpu.register.set_cpsr_bit(N, true)
         }

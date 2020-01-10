@@ -42,7 +42,7 @@ impl Console
 
     pub fn disassemble(&self)
     {
-        if self.cpu.register.get_cpsr_bit(cpu::register::PSRBit::T)
+        if self.cpu.in_thumb_mode()
         {
             let halfword = self.memory.load16(self.cpu.register.r[15]);
             print!("{:08x}: {:04x} | {:016b} ", self.cpu.register.r[15], halfword, halfword);

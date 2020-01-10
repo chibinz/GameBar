@@ -10,7 +10,7 @@ impl BitField for u32
 {
     /// Return certain bits of a word as unsigned integer
     /// ```
-    /// assert_eq!(0xaabbccdd, 15.bits(8), 0xcc);
+    /// assert_eq!(0xaabbccdd.bits(15, 8), 0xcc);
     /// ```
     #[inline]
     fn bits(self, hi: u32, lo: u32) -> u32
@@ -23,7 +23,7 @@ impl BitField for u32
     
     /// Test certains bit of a word, return true if set
     /// ```
-    /// assert_eq!(bit(0b10, 1), true)
+    /// assert_eq!(0b10.bit(1), true)
     /// ```
     #[inline]
     fn bit(self, b: u32) -> bool
@@ -52,7 +52,7 @@ impl BitField for u16
     
     /// Test certains bit of a word, return true if set
     /// ```
-    /// assert_eq!(bit(0b10, 1), true)
+    /// assert_eq!(0b10.bit(1), true)
     /// ```
     #[inline]
     fn bit(self, b: u32) -> bool
@@ -65,7 +65,7 @@ impl BitField for u16
 
 /// Return certain bits of a word as unsigned integer
 /// ```
-/// assert_eq!(0xaabbccdd, 15.bits(8), 0xcc);
+/// assert_eq!(bits(0xaabbccdd, 15, 8), 0xcc);
 /// ```
 #[inline]
 pub fn bits(a: u32, hi: u32, lo: u32) -> u32
