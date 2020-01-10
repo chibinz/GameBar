@@ -20,8 +20,7 @@ impl Console
 
     pub fn step(&mut self)
     {
-        let fetched = self.memory.load32(self.cpu.register.r[15]);
-        self.cpu.execute(fetched);
+        self.cpu.step(&mut self.memory);
     }
 
     pub fn load_gamepak(&mut self, gamepak: &String)

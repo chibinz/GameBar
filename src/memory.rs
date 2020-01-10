@@ -174,14 +174,24 @@ impl Memory
     }
 
     /// Load rom from file, take name as a parameter
-    pub fn load_rom(&mut self, name: &String)
+    pub fn load_rom(&mut self, name: &String) -> usize
     {
         self.rom.clear();
 
         let mut file = File::open(name).unwrap();
         file.read_to_end(&mut self.rom).unwrap();
-        
-        println!("{}", self.rom[0]);
+
+        self.rom.len()
+    }
+
+    pub fn load_bios(&mut self, name: &String) -> usize
+    {
+        self.bios.clear();
+
+        let mut file = File::open(name).unwrap();
+        file.read_to_end(&mut self.bios).unwrap();
+
+        self.bios.len()
     }
 
 }

@@ -8,6 +8,8 @@ use register::Register;
 
 pub struct CPU
 {
+    pub ir: u32, // Instruction register, used to store next instruction to execute
+    pub flushed: bool, // Determine whether the pipeline is empty
     pub register: Register,
 }
 
@@ -17,6 +19,8 @@ impl CPU
     {
         Self
         {
+            ir: 0,
+            flushed: true,
             register: Register::new(),
         }
     }

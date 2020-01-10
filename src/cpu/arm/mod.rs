@@ -11,21 +11,123 @@ pub mod block_data_transfer;
 
 use crate::util::*;
 use crate::cpu::CPU;
+use crate::memory::Memory;
 
 impl CPU
 {
     /// Execute instruction
-    pub fn execute(&mut self, instruction: u32) -> u32
+    pub fn execute(&mut self, memory: &mut Memory) -> u32
     {
+        let instruction = self.ir;
+
+        self.register.r[15] += 4;
+        
         let cond = bits(instruction, 31, 28);
         if self.check_condition(cond)
         {
-            data_processing::execute(self, data_processing::decode(instruction));
+            dispatch(self, memory, instruction);
         }
-        
-        self.register.r[15] += 4;
 
         return 0;
     }
 
+    pub fn fetch(&mut self, memory: &mut Memory)
+    {
+        if self.flushed
+        {
+            self.ir = memory.load32(self.register.r[15]);
+            self.register.r[15] += 4;
+            self.flushed = false;
+        }
+        else
+        {
+            self.ir = memory.load32(self.register.r[15] - 4);
+        }
+    }
+
+    pub fn step(&mut self, memory: &mut Memory)
+    {
+        self.fetch(memory);
+        self.execute(memory);
+    }
+
+}
+
+fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
+{
+    let b74 = || instruction >> 6 & 0b10 | instruction >> 4 & 0b01;
+    let b65 = || instruction >> 5 & 0b11;
+
+    // Data Processing / PSR Transfer / branch and exchange
+    let mut data_process_psr_bx = ||
+    {
+        match bits(instruction, 24, 20)
+        {
+            0b10000 | 0b10100 | 0b10110  => psr_transfer::decode_execute(cpu, instruction),
+            0b10010           => if b74() == 0 
+                                {psr_transfer::decode_execute(cpu, instruction)} else
+                                {branch_exchange::decode_execute(cpu, instruction)},
+            _                 => data_processing::decode_execute(cpu, instruction)
+        };
+    };
+
+    // let data_process_imm = ||
+    // {   
+    //     match bits(instruction, 24, 20)
+    //     {
+    //         0b10110 | 0b10010 => psr_transfer::decode_execute(cpu, instruction),
+    //         _                 => data_processing::decode_execute(cpu, instruction),
+    //     }
+    // };
+
+    // Multiply / Multiply Long / Single Data Swap
+    // let mut multiply_swap = ||
+    // {
+    //     match bits(instruction, 24, 20)
+    //     {
+    //         0b00000 | 0b00001 |
+    //         0b00010 | 0b00011 => multiply_accumulate::decode_execute(cpu, instruction),
+    //         0b01000 | 0b01001 |
+    //         0b01010 | 0b01011 |
+    //         0b01100 | 0b01101 |
+    //         0b01110 | 0b01111 => multiply_long_accumulate::decode_execute(cpu, instruction),
+
+    //         // Single data swap
+    //         0b10000 | 0b10100 => unimplemented!(),
+
+    //         _                 => unimplemented!(),
+    //     };
+    // };
+    
+    match bits(instruction, 27, 25)
+    {
+        0b000 =>
+        {
+            if b74() < 0b11
+            {
+                data_process_psr_bx()
+            }
+            else
+            {
+                if b65() > 0
+                {
+                    halfword_data_transfer::decode_execute(cpu, memory, instruction)
+                }
+                else
+                {
+                    unimplemented!()
+                }
+            }
+        },
+        0b001 => match bits(instruction, 24, 20)
+                {
+                    0b10110 | 0b10010 => psr_transfer::decode_execute(cpu, instruction),
+                    _                 => data_processing::decode_execute(cpu, instruction)
+                },
+        0b010 |
+        0b011 => single_data_transfer::decode_execute(cpu, memory, instruction),
+        0b100 => block_data_transfer::decode_execute(cpu, memory, instruction),
+        0b101 => branch_long::decode_execute(cpu, instruction), 
+        _     => unimplemented!(),
+    };
 }

@@ -96,7 +96,7 @@ pub fn disassemble(opcode: u32) -> String
         }
     };
 
-    // Data Process With 8-bit Immediate offset
+    // Data Process With 8-bit Immediate offset / PSR transfer immediate
     let data_process_imm = || -> String
     {   
         // actually (opcode >> 8 & 0b00001111) << 1, immediate value is rotated twice by this field
@@ -122,6 +122,9 @@ pub fn disassemble(opcode: u32) -> String
             0b11100 | 0b11101 => format!("BIC{}{} R{}, R{}, #{:#x}, #{:#x}", cond(), s(), rd(), rn(), immediate, rotate),
             0b11110 | 0b11111 => format!("MVN{}{} R{}, #{:#x}, #{:#x}", cond(), s(), rd(), immediate, rotate),
             
+            0b10110           => format!("MSR{} SPSR, #{:#x}, #{:#x}", cond(), immediate, rotate),
+            0b10010           => format!("MSR{} CPSR, #{:#x}, #{:#x}", cond(), immediate, rotate),
+
             _                 => format!("undefined"),
         }
     };
@@ -152,7 +155,6 @@ pub fn disassemble(opcode: u32) -> String
     {
         // bit 24, 20, 6, 5 concatenated
         let field = opcode >> 21 & 0b1000 | opcode >> 18 & 0b0100 | b65();
-        println!("{:b}", field);
 
         let offset =
         {
@@ -284,6 +286,13 @@ pub fn disassemble(opcode: u32) -> String
 mod tests
 {
     use super::*;
+
+    #[test]
+    fn psr_transfer_immediate()
+    {
+        assert_eq!(disassemble(0b1110_0011001010001111000100000001), "MSR CPSR, #0x1, #0x2");
+        assert_eq!(disassemble(0b1110_0011011010001111000100000001), "MSR SPSR, #0x1, #0x2");
+    }
 
     #[test]
     fn data_process_psr_bx()

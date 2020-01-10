@@ -46,7 +46,7 @@ impl Console
         {
             let halfword = self.memory.load16(self.cpu.register.r[15]);
             print!("{:08x}: {:04x} | {:016b} ", self.cpu.register.r[15], halfword, halfword);
-            println!("{}", cpu::thumb::disassemble(halfword));
+            println!("{}", cpu::thumb::disassemble::disassemble(halfword));
         }
         else
         {
