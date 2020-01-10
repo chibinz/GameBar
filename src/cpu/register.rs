@@ -178,7 +178,7 @@ mod tests
         let mut reg = Register::new();
         reg.set_cpsr_bit(PSRBit::F, true);
 
-        assert_eq!(bit(reg.cpsr, 6), true);
+        assert_eq!(reg.cpsr.bit(6), true);
     }
 
     #[test]

@@ -4,18 +4,18 @@ use crate::cpu::barrel_shifter::rotate_immediate;
 
 pub fn decode_execute(cpu: &mut CPU, instruction: u32)
 {
-    let l = bit(instruction, 21);
-    let pd = bit(instruction, 22);
+    let l = instruction.bit(21);
+    let pd = instruction.bit(22);
 
     if l // MSR
     {
-        let i = bit(instruction, 25);
+        let i = instruction.bit(25);
         // Bit 16 of MSR instructions varies.
         // When it is clear, only PSR flag bits are
         // transeferred, otherwise all defined bits of source
         // register is transferred.
-        let f = !bit(instruction, 16);
-        let operand2 = bits(instruction, 11, 0);
+        let f = !instruction.bit(16);
+        let operand2 = instruction.bits(11, 0);
 
         let op = 
         if i 
@@ -24,9 +24,9 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
         }
         else
         {
-            debug_assert_eq!(bits(operand2, 11, 4), 0);
+            debug_assert_eq!(operand2.bits(11, 4), 0);
 
-            let rm = bits(operand2, 3, 0);
+            let rm = operand2.bits(3, 0);
             cpu.register.r[rm as usize]
         };
 
@@ -35,10 +35,10 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
     }
     else // MRS
     {
-        debug_assert_eq!(bits(instruction, 21, 16), 0b001111);
-        debug_assert_eq!(bits(instruction, 11, 0), 0);
+        debug_assert_eq!(instruction.bits(21, 16), 0b001111);
+        debug_assert_eq!(instruction.bits(11, 0), 0);
         
-        let rd = bits(instruction, 15, 12);
+        let rd = instruction.bits(15, 12);
         let psr = if pd {cpu.register.get_spsr()} else {cpu.register.get_cpsr()};
         
         cpu.register.r[rd as usize] = psr;

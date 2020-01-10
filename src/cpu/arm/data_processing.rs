@@ -12,12 +12,12 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
 #[inline]
 pub fn decode(instruction: u32) -> (bool, u32, bool, u32, u32, u32)
 {
-    let i = bit(instruction, 25);
-    let opcode = bits(instruction, 24, 21);
-    let s = bit(instruction, 20);
-    let rn = bits(instruction, 19, 16);
-    let rd = bits(instruction, 15, 12);
-    let operand2 = bits(instruction, 11, 0);
+    let i = instruction.bit(25);
+    let opcode = instruction.bits(24, 21);
+    let s = instruction.bit(20);
+    let rn = instruction.bits(19, 16);
+    let rd = instruction.bits(15, 12);
+    let operand2 = instruction.bits(11, 0);
 
     (i, opcode, s, rn, rd, operand2)
 }
