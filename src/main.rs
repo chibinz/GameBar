@@ -18,8 +18,8 @@ fn main()
 
     let mut console = console::Console::new();
     console.load_gamepak(&args[1]);
+    console.memory.load_bios(&"rom/gba_bios.bin".to_string());
 
-    assert_eq!(console.cpu.register.r[15], 0x08000000);
     let start = Instant::now();
     loop
     {

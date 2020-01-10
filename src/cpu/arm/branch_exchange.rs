@@ -13,4 +13,5 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
     cpu.register.set_cpsr_bit(T, bit(cpu.register.r[rn as usize], 0));
 
     cpu.register.r[15] = cpu.register.r[rn as usize];
+    cpu.flushed = true;
 }
