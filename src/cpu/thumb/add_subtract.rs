@@ -26,7 +26,6 @@ fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32)
     let op1 = cpu.register.r[rs as usize];
     let op2 = if i {operand2} else {cpu.register.r[operand2 as usize]};
 
-    dbg!(op1, op2, !op2, op1.wrapping_add(!op2));
     let mut add = |op1: u32, op2: u32| -> u32
     {
         let (r1, c1) = op1.overflowing_add(op2);
@@ -40,16 +39,8 @@ fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32)
 
     let result = if op {add(op1, !op2 + 1)} else {add(op1, op2)};
 
-    if result == 0
-    {
-        cpu.register.set_cpsr_bit(Z, true)
-    }
-
-    if result.bit(31)
-    {
-        cpu.register.set_cpsr_bit(N, true)
-    }
-
+    cpu.register.set_cpsr_bit(Z, result == 0);
+    cpu.register.set_cpsr_bit(N, result.bit(31));
     cpu.register.r[rd as usize] = result;
 }
 
@@ -66,7 +57,7 @@ mod tests
 
         cpu.register.r[1] = 0xffffffff;
         execute(&mut cpu, (true, false, 0b111, 1, 1));
-        assert_eq!(0xffffffff_u32.wrapping_add(0b111), 0b110);
+        assert_eq!(cpu.register.r[1], 0b110);
         assert_eq!(cpu.register.get_cpsr_bit(C), true);
 
         cpu.register.r[0] = 0x10000000;

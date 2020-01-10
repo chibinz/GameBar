@@ -77,15 +77,8 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
     // If S bit is set, set CPSR condition flags accordingly
     if s
     {
-        if result == 0
-        {
-            cpu.register.set_cpsr_bit(Z, true)
-        }
-
-        if result.bit(31)
-        {
-            cpu.register.set_cpsr_bit(N, true)
-        }
+        cpu.register.set_cpsr_bit(Z, result == 0);
+        cpu.register.set_cpsr_bit(N, result.bit(31));
 
         // If S bit is set and `rd` is pc, move the SPSR corresponding to the 
         // current mode to the CPSR
