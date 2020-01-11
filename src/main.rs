@@ -1,6 +1,5 @@
 pub mod cpu;
 pub mod memory;
-pub mod debug;
 pub mod console;
 pub mod util;
 
@@ -27,8 +26,6 @@ fn main()
         {
             break;
         }
-
-        console.print();
     }
 
     println!("time elapsed: {:?}", start.elapsed());

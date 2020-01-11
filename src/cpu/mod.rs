@@ -31,13 +31,11 @@ impl CPU
     {
         if self.in_thumb_mode()
         {
-            thumb::fetch(self, memory);
-            thumb::execute(self, memory);
+            thumb::step(self, memory);
         }
         else
         {
-            arm::fetch(self, memory);
-            arm::execute(self, memory);
+            arm::step(self, memory);
         }
     }
 

@@ -13,7 +13,17 @@ use crate::util::*;
 use crate::cpu::CPU;
 use crate::memory::Memory;
 
-/// Execute instruction
+pub fn step(cpu: &mut CPU, memory: &mut Memory)
+{
+    fetch(cpu, memory);
+
+    print!("{:08x}: {:08x} | {:032b} ", cpu.register.r[15] - 8, cpu.ir, cpu.ir);
+    println!("{}", disassemble::disassemble(cpu.ir));
+    println!("{}", cpu);
+
+    execute(cpu, memory);
+}
+
 pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
 {
     let instruction = cpu.ir;
