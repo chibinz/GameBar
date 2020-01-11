@@ -19,10 +19,10 @@ pub fn disassemble(opcode: u16) -> String
     let rn       = || opcode >> 6 & 0b00000111;
     let ro       = || opcode >> 6 & 0b00000111;
     let rs       = || opcode >> 3 & 0b00000111;
-    let hs       = || opcode >> 3 & 0b00000111 + 8;
+    let hs       = || (opcode >> 3 & 0b00000111) + 8;
     let rb       = || opcode >> 3 & 0b00000111;
     let rd       = || opcode & 0b00000111;
-    let hd       = || opcode & 0b00000111 + 8;
+    let hd       = || (opcode & 0b00000111) + 8;
 
     // result of match statement is returned
     match b15_11 

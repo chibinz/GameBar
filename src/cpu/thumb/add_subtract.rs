@@ -1,7 +1,6 @@
 use crate::util::*;
 use crate::cpu::CPU;
 use crate::cpu::alu;
-use crate::cpu::register::PSRBit::*;
 
 #[inline]
 pub fn decode_execute(cpu: &mut CPU, instruction: u16)
@@ -30,8 +29,6 @@ fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32)
     let result = if op {alu::sub(cpu, op1, op2, true)} 
                   else {alu::add(cpu, op1, op2, true)};
 
-    cpu.register.set_cpsr_bit(Z, result == 0);
-    cpu.register.set_cpsr_bit(N, result.bit(31));
     cpu.register.r[rd as usize] = result;
 }
 

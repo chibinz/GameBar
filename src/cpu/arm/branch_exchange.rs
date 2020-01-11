@@ -12,6 +12,6 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
     // If bit 0 of rn = 1, subsequent instructions are decoded as THUMB instructions
     cpu.register.set_cpsr_bit(T, cpu.register.r[rn as usize].bit(0));
 
-    cpu.register.r[15] = cpu.register.r[rn as usize];
+    cpu.register.r[15] = cpu.register.r[rn as usize] & 0xfffffffe;
     cpu.flushed = true;
 }
