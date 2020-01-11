@@ -4,6 +4,7 @@ pub mod add_subtract;
 pub mod move_compare;
 pub mod alu_operations;
 pub mod hi_operations_bx;
+pub mod load_address;
 
 use crate::util::*;
 use crate::cpu::CPU;
@@ -13,9 +14,9 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
 {
     fetch(cpu, memory);
 
+    println!("{}", cpu);
     print!("{:08x}: {:04x} | {:016b} ", cpu.register.r[15] - 4, cpu.ir, cpu.ir);
     println!("{}", disassemble::disassemble(cpu.ir as u16));
-    println!("{}", cpu);
 
     execute(cpu, memory);
 }
@@ -89,8 +90,8 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u16)
         // 0b10001 => format!("LDRH R{}, [R{}, #{}]",rd(), rb(), offset5() << 1),
         // 0b10010 => format!("STR R{}, [SP, #{}]", rdb(), offset8() << 2),
         // 0b10011 => format!("LDR R{}, [SP, #{}]", rdb(), offset8() << 2),
-        // 0b10100 => format!("ADD R{}, PC, #{}", rd(), offset8() << 2),
-        // 0b10101 => format!("ADD R{}, SP, #{}", rd(), offset8() << 2),
+        0b10100 ..=
+        0b10101 => load_address::decode_execute(cpu, instruction),
         // 0b10110 | 0b10111 => 
         // {
         //     match b11_8()

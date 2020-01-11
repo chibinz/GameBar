@@ -21,7 +21,18 @@ pub fn shift_register(cpu: &mut CPU, operand2: u32) -> u32
         debug_assert_ne!(rs, 15);
         debug_assert_eq!(operand2.bit(7), false);
 
-        cpu.register.r[rs as usize]
+        // If shift register equals zero, shift operand and
+        // CPSR flags remain untouched.
+        if cpu.register.r[rs as usize] == 0
+        {
+            return cpu.register.r[rm as usize];
+        }
+        else
+        {
+            // Only the least significant byte is used to determine
+            // the shift amount.
+            cpu.register.r[rs as usize] & 0xff
+        }
     } 
     else
     {
@@ -31,13 +42,26 @@ pub fn shift_register(cpu: &mut CPU, operand2: u32) -> u32
     shift(cpu, cpu.register.r[rm as usize], amount, stype)
 }
 
-/// Perform rotate on an immediate, return rotated result
+/// Perform rotate on an immediate, return rotated result.
+/// While not listed on the data sheet, immediate operand rotates
+/// do manipulate CPSR flags.
 #[inline]
-pub fn rotate_immediate(operand2: u32) -> u32
+pub fn rotate_immediate(cpu: &mut CPU, operand2: u32) -> u32
 {
-    let rotate = operand2.bits(11, 8);
+    let amount = operand2.bits(11, 8) * 2;
     let immediate = operand2.bits(7, 0);
-    immediate.rotate_right(rotate * 2) 
+
+    if amount == 0
+    {
+        immediate
+    }
+    else
+    {
+        let carry = (immediate >> ((amount - 1) & 0b11111)) & 1 == 1;
+        cpu.register.set_cpsr_bit(C, carry);
+        
+        immediate.rotate_right(amount)
+    }    
 }
 
 /// Shift a value according to shift amount and type and return the shifted result.
@@ -184,9 +208,10 @@ mod tests
     #[test]
     fn test_rotate_immediate()
     {
+        let mut cpu = CPU::new();
         let operand2 = 0b0001_00000010;
 
-        assert_eq!(rotate_immediate(operand2), 0x80000000);
+        assert_eq!(rotate_immediate(&mut cpu, operand2), 0x80000000);
     }
 
     #[test]

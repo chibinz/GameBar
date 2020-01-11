@@ -26,7 +26,7 @@ pub fn decode(instruction: u32) -> (bool, u32, bool, u32, u32, u32)
 pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32))
 {
     let op1 = cpu.register.r[rn as usize];
-    let op2 = if i {rotate_immediate(operand2)} else {shift_register(cpu, operand2)};
+    let op2 = if i {rotate_immediate(cpu, operand2)} else {shift_register(cpu, operand2)};
      
     let result = match opcode
     {
@@ -53,6 +53,11 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
     if opcode < 0b1000 || opcode > 0b1011
     {
         cpu.register.r[rd as usize] = result;
+
+        if rd == 15
+        {
+            cpu.flushed = true;
+        }
     }
 }
 

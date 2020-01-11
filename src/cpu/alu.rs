@@ -37,7 +37,7 @@ fn add_overflow(op1: u32, op2: u32) -> bool
 #[inline]
 fn sub_carry(op1: u32, op2: u32) -> bool
 {
-    op1.overflowing_add(op2.wrapping_neg()).1
+    op1 >= op2
 }
 
 #[inline]
@@ -215,14 +215,15 @@ pub fn rsb(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 pub fn sbc(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 {
     let carry: u32 = if cpu.register.get_cpsr_bit(C) {1} else {0};
-    let result = op1.wrapping_sub(op2.wrapping_add(!carry));
+    let opc = op2.wrapping_sub(carry).wrapping_add(1);
+    let result = op1.wrapping_sub(opc);
 
     if s
     {
         cpu.register.set_cpsr_bit(N, negative(result));
         cpu.register.set_cpsr_bit(Z, zero(result));
-        cpu.register.set_cpsr_bit(C, sub_carry(op1, op2.wrapping_add(!carry)));
-        cpu.register.set_cpsr_bit(V, sub_overflow(op1, op2.wrapping_add(!carry)));
+        cpu.register.set_cpsr_bit(C, sub_carry(op1, opc));
+        cpu.register.set_cpsr_bit(V, sub_overflow(op1, opc));
     }
 
     result
@@ -232,14 +233,15 @@ pub fn sbc(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 pub fn rsc(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 {
     let carry: u32 = if cpu.register.get_cpsr_bit(C) {1} else {0};
-    let result = op2.wrapping_sub(op1.wrapping_add(!carry));
+    let opc = op1.wrapping_sub(carry).wrapping_add(1);
+    let result = op2.wrapping_sub(opc);
 
     if s
     {
         cpu.register.set_cpsr_bit(N, negative(result));
         cpu.register.set_cpsr_bit(Z, zero(result));
-        cpu.register.set_cpsr_bit(C, sub_carry(op2, op1.wrapping_add(!carry)));
-        cpu.register.set_cpsr_bit(V, sub_overflow(op2, op1.wrapping_add(!carry)));
+        cpu.register.set_cpsr_bit(C, sub_carry(op2, opc));
+        cpu.register.set_cpsr_bit(V, sub_overflow(op2, opc));
     }
 
     result

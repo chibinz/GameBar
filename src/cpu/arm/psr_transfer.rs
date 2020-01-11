@@ -20,7 +20,7 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
         let op = 
         if i 
         {
-            rotate_immediate(operand2)
+            rotate_immediate(cpu, operand2)
         }
         else
         {
