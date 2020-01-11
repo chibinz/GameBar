@@ -1,6 +1,7 @@
 pub mod register;
 pub mod arm;
 pub mod thumb;
+pub mod alu;
 pub mod barrel_shifter;
 
 use std::fmt;

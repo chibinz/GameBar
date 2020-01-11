@@ -1,5 +1,6 @@
 use crate::util::*;
 use crate::cpu::CPU;
+use crate::cpu::alu;
 use crate::cpu::register::PSRBit::*;
 
 #[inline]
@@ -26,18 +27,8 @@ fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32)
     let op1 = cpu.register.r[rs as usize];
     let op2 = if i {operand2} else {cpu.register.r[operand2 as usize]};
 
-    let mut add = |op1: u32, op2: u32| -> u32
-    {
-        let (r1, c1) = op1.overflowing_add(op2);
-        let overflow = (op1 as i32).overflowing_add(op2 as i32).1;
-        
-        cpu.register.set_cpsr_bit(V, overflow);
-        cpu.register.set_cpsr_bit(C, c1);
-
-        r1
-    };
-
-    let result = if op {add(op1, !op2 + 1)} else {add(op1, op2)};
+    let result = if op {alu::sub(cpu, op1, op2, true)} 
+                  else {alu::add(cpu, op1, op2, true)};
 
     cpu.register.set_cpsr_bit(Z, result == 0);
     cpu.register.set_cpsr_bit(N, result.bit(31));

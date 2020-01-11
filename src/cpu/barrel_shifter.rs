@@ -57,7 +57,7 @@ pub fn shift(cpu: &mut CPU, operand: u32, amount: u32, stype: u32) -> u32
 
 /// Note that LSL #0 maintains the old CPSR C flag
 #[inline]
-fn logical_left(cpu: &mut CPU, operand: u32, amount: u32) -> u32
+pub fn logical_left(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
 
     if amount == 0
@@ -88,7 +88,7 @@ fn logical_left(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 
 /// Note that LSR #0 is equivalent to LSR #32
 #[inline]
-fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
+pub fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
     if amount == 0 || amount == 32
     {
@@ -114,7 +114,7 @@ fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 
 /// Note that ASR #0 is equivalent to ASR #32
 #[inline]
-fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
+pub fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
     if amount == 0 || amount >= 32
     {
@@ -134,7 +134,7 @@ fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 
 /// Note that ROR #0 is RRX, rotate right extended
 #[inline]
-fn rotate_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
+pub fn rotate_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
 {
     if amount == 0
     {

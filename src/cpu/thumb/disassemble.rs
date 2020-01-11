@@ -49,7 +49,7 @@ pub fn disassemble(opcode: u16) -> String
         {
             match b10_6()
             {
-                0b00000 => format!("ADD R{}, R{}", rd(), rs()),
+                0b00000 => format!("AND R{}, R{}", rd(), rs()),
                 0b00001 => format!("EOR R{}, R{}", rd(), rs()),
                 0b00010 => format!("LSL R{}, R{}", rd(), rs()),
                 0b00011 => format!("LSR R{}, R{}", rd(), rs()),
