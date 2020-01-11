@@ -1,4 +1,4 @@
-use crate::util::BitField;
+use crate::util::*;
 use crate::cpu::CPU;
 use crate::cpu::alu;
 use crate::cpu::register::PSRBit::*;
@@ -50,7 +50,7 @@ mod tests
     use crate::cpu::register::PSRBit::*;
     
     #[test]
-    fn add()
+    fn move_compare()
     {
         let mut cpu = CPU::new();
 

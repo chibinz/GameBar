@@ -246,6 +246,12 @@ pub fn rsc(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 }
 
 #[inline]
+pub fn neg(cpu: &mut CPU, _op1: u32, op2: u32) -> u32
+{
+    rsb(cpu, op2, 0, true)
+}
+
+#[inline]
 pub fn cmp(cpu: &mut CPU, op1: u32, op2: u32) -> u32
 {
     sub(cpu, op1, op2, true)
@@ -255,6 +261,34 @@ pub fn cmp(cpu: &mut CPU, op1: u32, op2: u32) -> u32
 pub fn cmn(cpu: &mut CPU, op1: u32, op2: u32) -> u32
 {
     add(cpu, op1, op2, true)
+}
+
+// Multiplication
+
+pub fn mul(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
+{
+    let result = op2.wrapping_mul(op1);
+
+    if s
+    {
+        cpu.register.set_cpsr_bit(N, negative(result));
+        cpu.register.set_cpsr_bit(Z, zero(result));
+    }
+
+    result
+}
+
+pub fn mla(cpu: &mut CPU, op1: u32, op2: u32, op3: u32, s: bool) -> u32
+{
+    let result = op2.wrapping_mul(op1).wrapping_add(op3);
+
+    if s
+    {
+        cpu.register.set_cpsr_bit(N, negative(result));
+        cpu.register.set_cpsr_bit(Z, zero(result));
+    }
+
+    result
 }
 
 // Shift operations
