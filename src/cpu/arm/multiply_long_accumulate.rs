@@ -52,8 +52,6 @@ pub fn execute(cpu: &mut CPU, (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, 
         let operand1 = cpu.register.r[rm as usize] as i32 as i64;
         let operand2 = cpu.register.r[rs as usize] as i32 as i64;
         
-        println!("{:0x} {:0x}", operand1, operand2);
-        
         result = (operand1 * operand2) as u64;
     }
 

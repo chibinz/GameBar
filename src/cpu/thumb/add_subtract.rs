@@ -42,7 +42,7 @@ mod tests
     use crate::cpu::register::PSRBit::*;
 
     #[test]
-    fn add()
+    fn add_subtract()
     {
         let mut cpu = CPU::new();
 

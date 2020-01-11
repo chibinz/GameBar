@@ -3,6 +3,7 @@ pub mod instruction;
 pub mod move_shifted;
 pub mod add_subtract;
 pub mod move_compare;
+pub mod alu_operations;
 
 use crate::util::*;
 use crate::cpu::CPU;
