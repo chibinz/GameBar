@@ -1,5 +1,6 @@
 use crate::util::BitField;
 use crate::cpu::CPU;
+use crate::cpu::alu;
 use crate::cpu::register::PSRBit::*;
 
 #[inline]
@@ -24,25 +25,12 @@ fn execute(cpu: &mut CPU, (op, rd, offset8): (u32, u32, u32))
     let op1 = cpu.register.r[rd as usize];
     let op2 = offset8;
 
-    let mut add = |op1: u32, op2: u32| -> u32
-    {
-        let (r1, c1) = op1.overflowing_add(op2);
-        let overflow = (op1 as i32).overflowing_add(op2 as i32).1;
-        
-        dbg!(op1, op2, op1 as i32, op2 as i32, (op1 as i32).overflowing_add(op2 as i32));
-
-        cpu.register.set_cpsr_bit(V, overflow);
-        cpu.register.set_cpsr_bit(C, c1);
-
-        r1
-    };
-
     let result = match op
     {
-        0b00 => op2,
-        0b01 => add(op1, !op2 + 1),
-        0b10 => add(op1, op2),
-        0b11 => add(op1, !op2 + 1),
+        0b00 => alu::mov(cpu, op1, op2, true),
+        0b01 => alu::cmp(cpu, op1, op2),
+        0b10 => alu::add(cpu, op1, op2, true),
+        0b11 => alu::sub(cpu, op1, op2, true),
         _    => unreachable!()
     };
 
