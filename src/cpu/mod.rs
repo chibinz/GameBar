@@ -10,9 +10,12 @@ use crate::memory::Memory;
 
 pub struct CPU
 {
-    pub ir: u32, // Instruction register, used to store next instruction to execute
-    pub flushed: bool, // Determine whether the pipeline is empty
-    pub register: register::Register,
+    pub instruction: u32,   // Next instruction to execute
+    pub flushed: bool,      // Determine whether the pipeline is empty
+    pub r: [u32; 16],       // General purpose registers
+
+    cpsr : u32,
+    spsr : [u32; 5],
 }
 
 impl CPU
@@ -21,9 +24,11 @@ impl CPU
     {
         Self
         {
-            ir: 0,
+            instruction: 0,
             flushed: true,
-            register: register::Register::new(),
+            r   : [0; 16],
+            cpsr: 0b10011, // On reset, the CPSR is forced to supervisor mode
+            spsr: [0; 5],
         }
     }
 
@@ -42,36 +47,7 @@ impl CPU
     #[inline]
     pub fn in_thumb_mode(&self) -> bool
     {
-        self.register.get_cpsr_bit(register::PSRBit::T)
-    }
-
-    /// Return true if condition is satified
-    #[inline]
-    fn check_condition(&self, condition: u32) -> bool
-    {
-        use register::PSRBit::*;
-
-        match condition
-        {
-            0b0000 =>  self.register.get_cpsr_bit(Z),      // EQ
-            0b0001 => !self.register.get_cpsr_bit(Z),      // NE
-            0b0010 =>  self.register.get_cpsr_bit(C),      // CS
-            0b0011 => !self.register.get_cpsr_bit(C),      // CC
-            0b0100 =>  self.register.get_cpsr_bit(N),      // MI
-            0b0101 => !self.register.get_cpsr_bit(N),      // PL
-            0b0110 =>  self.register.get_cpsr_bit(V),      // VS
-            0b0111 => !self.register.get_cpsr_bit(V),      // VC
-            0b1000 =>  self.register.get_cpsr_bit(C) && !self.register.get_cpsr_bit(Z), // HI
-            0b1001 => !self.register.get_cpsr_bit(C) ||  self.register.get_cpsr_bit(Z), // LS
-            0b1010 =>  self.register.get_cpsr_bit(N) ==  self.register.get_cpsr_bit(V), // GE
-            0b1011 =>  self.register.get_cpsr_bit(N) !=  self.register.get_cpsr_bit(V), // LT
-            0b1100 => !self.register.get_cpsr_bit(Z) && (self.register.get_cpsr_bit(N)
-                                                     ==  self.register.get_cpsr_bit(V)),// GT
-            0b1101 =>  self.register.get_cpsr_bit(Z) || (self.register.get_cpsr_bit(N)
-                                                     !=  self.register.get_cpsr_bit(V)),// LE
-            0b1110 => true,
-            _      => panic!("Invalid Condition Field!"),
-        }
+        self.get_cpsr_bit(register::PSRBit::T)
     }
 }
 
@@ -83,40 +59,9 @@ impl fmt::Display for CPU
         {
             if i % 4 == 0 && i > 0 {print!("\n");}
 
-            print!("R{:<2} = {:08x} ", i, self.register.r[i as usize]);
+            print!("R{:<2} = {:08x} ", i, self.r[i as usize]);
         }
 
-        write!(f, "\nCPSR = {:032b}", self.register.get_cpsr())
-    }
-}
-
-#[cfg(test)]
-mod tests
-{
-    use super::*;
-
-    #[test]
-    fn check_condition()
-    {
-        use register::PSRBit::*;
-
-        let mut cpu = CPU::new();
-
-        cpu.register.set_cpsr_bit(Z, true);
-        assert!(cpu.check_condition(0b0000));
-
-        cpu.register.set_cpsr_bit(C, true);
-        assert!(cpu.check_condition(0b0010));
-
-        cpu.register.set_cpsr_bit(N, true);
-        assert!(cpu.check_condition(0b0100));
-
-        cpu.register.set_cpsr_bit(V, true);
-        assert!(cpu.check_condition(0b0110));
-
-        assert!(cpu.check_condition(0b1010));
-
-        cpu.register.set_cpsr_bit(Z, false);
-        assert!(cpu.check_condition(0b1100));
+        write!(f, "\nCPSR = {:032b}", self.get_cpsr())
     }
 }

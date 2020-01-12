@@ -47,7 +47,7 @@ impl Memory
             0x05 => self.param[offset],
             0x06 => self.vram[offset],
             0x07 => self.oam[offset],
-            0x08...0x0d =>
+            0x08..=0x0d =>
             {
                 offset = (address % 0x02000000) as usize;
                 self.rom[offset]
@@ -73,7 +73,7 @@ impl Memory
             0x05 => ldh(self.param.as_slice()),
             0x06 => ldh(self.vram.as_slice()),
             0x07 => ldh(self.oam.as_slice()),
-            0x08...0x0d => 
+            0x08..=0x0d => 
             {
                 ldh(self.rom.as_slice())
             },
@@ -101,7 +101,7 @@ impl Memory
             0x05 => ld(self.param.as_slice()),
             0x06 => ld(self.vram.as_slice()),
             0x07 => ld(self.oam.as_slice()),
-            0x08...0x0d => 
+            0x08..=0x0d => 
             {
                 ld(self.rom.as_slice())
             },

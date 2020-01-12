@@ -15,18 +15,18 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
     fetch(cpu, memory);
 
     println!("{}", cpu);
-    print!("{:08x}: {:04x} | {:016b} ", cpu.register.r[15] - 4, cpu.ir, cpu.ir);
-    println!("{}", disassemble::disassemble(cpu.ir as u16));
+    print!("{:08x}: {:04x} | {:016b} ", cpu.r[15] - 4, cpu.instruction, cpu.instruction);
+    println!("{}", disassemble::disassemble(cpu.instruction as u16));
 
     execute(cpu, memory);
 }
 
 pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
 {
-    disassemble::disassemble(cpu.ir as u16);
-    cpu.register.r[15] += 2;
+    disassemble::disassemble(cpu.instruction as u16);
+    cpu.r[15] += 2;
 
-    dispatch(cpu, memory, cpu.ir as u16);
+    dispatch(cpu, memory, cpu.instruction as u16);
 
     0
 }
@@ -35,13 +35,13 @@ pub fn fetch(cpu: &mut CPU, memory: &mut Memory)
 {
     if cpu.flushed
     {
-        cpu.ir = memory.load16(cpu.register.r[15]) as u32;
-        cpu.register.r[15] += 2;
+        cpu.instruction = memory.load16(cpu.r[15]) as u32;
+        cpu.r[15] += 2;
         cpu.flushed = false;
     }
     else
     {
-        cpu.ir = memory.load16(cpu.register.r[15] - 2) as u32;
+        cpu.instruction = memory.load16(cpu.r[15] - 2) as u32;
     }
 }
 

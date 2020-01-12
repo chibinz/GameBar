@@ -18,17 +18,17 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
     fetch(cpu, memory);
 
     println!("{}", cpu);
-    print!("{:08x}: {:08x} | {:032b} ", cpu.register.r[15] - 8, cpu.ir, cpu.ir);
-    println!("{}", disassemble::disassemble(cpu.ir));
+    print!("{:08x}: {:08x} | {:032b} ", cpu.r[15] - 8, cpu.instruction, cpu.instruction);
+    println!("{}", disassemble::disassemble(cpu.instruction));
 
     execute(cpu, memory);
 }
 
 pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
 {
-    let instruction = cpu.ir;
+    let instruction = cpu.instruction;
 
-    cpu.register.r[15] += 4;
+    cpu.r[15] += 4;
     
     let cond = instruction.bits(31, 28);
     if cpu.check_condition(cond)
@@ -43,13 +43,13 @@ pub fn fetch(cpu: &mut CPU, memory: &mut Memory)
 {
     if cpu.flushed
     {
-        cpu.ir = memory.load32(cpu.register.r[15]);
-        cpu.register.r[15] += 4;
+        cpu.instruction = memory.load32(cpu.r[15]);
+        cpu.r[15] += 4;
         cpu.flushed = false;
     }
     else
     {
-        cpu.ir = memory.load32(cpu.register.r[15] - 4);
+        cpu.instruction = memory.load32(cpu.r[15] - 4);
     }
 }
 

@@ -10,15 +10,15 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
     debug_assert_ne!(rn, 15);
 
     // If bit 0 of rn = 1, subsequent instructions are decoded as THUMB instructions
-    cpu.register.set_cpsr_bit(T, cpu.register.r[rn as usize].bit(0));
+    cpu.set_cpsr_bit(T, cpu.r[rn as usize].bit(0));
 
-    if cpu.register.r[rn as usize].bit(0)
+    if cpu.r[rn as usize].bit(0)
     {
-        cpu.register.r[15] = cpu.register.r[rn as usize] & 0xfffffffe;
+        cpu.r[15] = cpu.r[rn as usize] & 0xfffffffe;
     }
     else
     {
-        cpu.register.r[15] = cpu.register.r[rn as usize] & 0xfffffffc;
+        cpu.r[15] = cpu.r[rn as usize] & 0xfffffffc;
     }
     cpu.flushed = true;
 }

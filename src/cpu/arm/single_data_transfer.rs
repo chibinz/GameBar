@@ -33,27 +33,27 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
 {
     let noffset = if i {offset} else {shift_register(cpu, offset)};
 
-    let post = cpu.register.r[rn as usize];
-    let pre = if u {cpu.register.r[rn as usize] + noffset} 
-              else {cpu.register.r[rn as usize] - noffset};
+    let post = cpu.r[rn as usize];
+    let pre = if u {cpu.r[rn as usize] + noffset} 
+              else {cpu.r[rn as usize] - noffset};
 
     let address = if p {pre} else {post};
-    let data = cpu.register.r[rd as usize];
+    let data = cpu.r[rd as usize];
 
     // Misaligned word access is not handled
     match lb
     {
         0b00 => memory.store32(address, data),
         0b01 => memory.store8(address, data as u8),
-        0b10 => cpu.register.r[rd as usize] = memory.load32(address),
-        0b11 => cpu.register.r[rd as usize] = memory.load8(address) as u32,
+        0b10 => cpu.r[rd as usize] = memory.load32(address),
+        0b11 => cpu.r[rd as usize] = memory.load8(address) as u32,
         _    => unreachable!()
     }
 
     // Privileged write back bit not handled
     if w || !p
     {
-        cpu.register.r[rn as usize] = pre;
+        cpu.r[rn as usize] = pre;
     }
 }
 
@@ -69,12 +69,12 @@ mod tests
         let mut memory = Memory::new();
 
         memory.store8(0x02000001, 0xff);
-        cpu.register.r[0] = 0x02000000;
+        cpu.r[0] = 0x02000000;
 
         // Immediate offset, pre-indexing, up offset, write back, load byte
         execute(&mut cpu, &mut memory, (true, true, true, true, 0b11, 0, 1, 1));
-        assert_eq!(cpu.register.r[1], 0xff);
-        assert_eq!(cpu.register.r[0], 0x02000001);
+        assert_eq!(cpu.r[1], 0xff);
+        assert_eq!(cpu.r[0], 0x02000001);
 
         // Immediate offset, pre-indexing, down offset, no write back, store byte
         execute(&mut cpu, &mut memory, (true, true, false, false, 0b01, 0, 1, 1));
@@ -88,17 +88,17 @@ mod tests
         let mut memory = Memory::new();
         
         memory.store32(0x02000000, 0xdeadbeef);
-        cpu.register.r[0] = 0x02000000;
+        cpu.r[0] = 0x02000000;
 
         // Immediate offset, post-indexing, up offset, write back, load word
         execute(&mut cpu, &mut memory, (true, false, true, true, 0b10, 0, 1, 4));
-        assert_eq!(cpu.register.r[1], 0xdeadbeef);
-        assert_eq!(cpu.register.r[0], 0x02000004);
+        assert_eq!(cpu.r[1], 0xdeadbeef);
+        assert_eq!(cpu.r[0], 0x02000004);
 
-        cpu.register.r[1] = 0;
+        cpu.r[1] = 0;
         // Immediate offset, pre-indexing, down offset, write back, store word
         execute(&mut cpu, &mut memory, (true, true, false, true, 0b00, 0, 1, 4));
         assert_eq!(memory.load32(0x02000000), 0);
-        assert_eq!(cpu.register.r[0], 0x02000000);
+        assert_eq!(cpu.r[0], 0x02000000);
     }
 }

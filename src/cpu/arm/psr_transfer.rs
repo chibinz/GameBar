@@ -27,10 +27,10 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
             debug_assert_eq!(operand2.bits(11, 4), 0);
 
             let rm = operand2.bits(3, 0);
-            cpu.register.r[rm as usize]
+            cpu.r[rm as usize]
         };
 
-        if pd {cpu.register.set_spsr(op, f);} else {cpu.register.set_cpsr(op, f);}
+        if pd {cpu.set_spsr(op, f);} else {cpu.set_cpsr(op, f);}
 
     }
     else // MRS
@@ -39,9 +39,9 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
         debug_assert_eq!(instruction.bits(11, 0), 0);
         
         let rd = instruction.bits(15, 12);
-        let psr = if pd {cpu.register.get_spsr()} else {cpu.register.get_cpsr()};
+        let psr = if pd {cpu.get_spsr()} else {cpu.get_cpsr()};
         
-        cpu.register.r[rd as usize] = psr;
+        cpu.r[rd as usize] = psr;
     }
 }
 
@@ -56,12 +56,12 @@ mod tests
         let mut cpu = CPU::new();
 
         // MSR CPSR
-        cpu.register.r[0] = 0xfffffff1;
+        cpu.r[0] = 0xfffffff1;
         decode_execute(&mut cpu, 0b0000_00010_0_10100_1_1111_00000000_0000);
-        assert_eq!(cpu.register.get_cpsr(), 0xf00000f1);
+        assert_eq!(cpu.get_cpsr(), 0xf00000f1);
 
         // MSR SPSR flag bits
         decode_execute(&mut cpu, 0b0000_00010_1_10100_0_1111_00000000_0000);
-        assert_eq!(cpu.register.get_spsr(), 0xf0000000);
+        assert_eq!(cpu.get_spsr(), 0xf0000000);
     }
 }

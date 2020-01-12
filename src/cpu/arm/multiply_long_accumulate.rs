@@ -41,45 +41,45 @@ pub fn execute(cpu: &mut CPU, (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, 
 
     if u
     {
-        let operand1 = cpu.register.r[rm as usize] as u64;
-        let operand2 = cpu.register.r[rs as usize] as u64;
+        let operand1 = cpu.r[rm as usize] as u64;
+        let operand2 = cpu.r[rs as usize] as u64;
 
         result = operand1 * operand2;
     }
     else
     {
         // Operands are sign extended to 64 bits. `i32` is necessary for sign extension.
-        let operand1 = cpu.register.r[rm as usize] as i32 as i64;
-        let operand2 = cpu.register.r[rs as usize] as i32 as i64;
+        let operand1 = cpu.r[rm as usize] as i32 as i64;
+        let operand2 = cpu.r[rs as usize] as i32 as i64;
         
         result = (operand1 * operand2) as u64;
     }
 
     if a
     {
-        let hi = (cpu.register.r[rdhi as usize] as u64) << 32;
-        let lo = cpu.register.r[rdlo as usize] as u64;
+        let hi = (cpu.r[rdhi as usize] as u64) << 32;
+        let lo = cpu.r[rdlo as usize] as u64;
 
         result = result.wrapping_add(hi + lo);
     }
 
     if s
     {
-        if cpu.register.r[rdhi as usize] == 0 && cpu.register.r[rdlo as usize] == 0
+        if cpu.r[rdhi as usize] == 0 && cpu.r[rdlo as usize] == 0
         {
-            cpu.register.set_cpsr_bit(Z, true)
+            cpu.set_cpsr_bit(Z, true)
         }
 
-        if bit(cpu.register.r[rdhi as usize], 31)
+        if bit(cpu.r[rdhi as usize], 31)
         {
-            cpu.register.set_cpsr_bit(N, true)
+            cpu.set_cpsr_bit(N, true)
         }
 
         // Both the C and V flags are set to meaningless values
     }
 
-    cpu.register.r[rdhi as usize] = (result >> 32) as u32;
-    cpu.register.r[rdlo as usize] = result as u32;
+    cpu.r[rdhi as usize] = (result >> 32) as u32;
+    cpu.r[rdlo as usize] = result as u32;
 }
 
 #[cfg(test)]
@@ -92,20 +92,20 @@ mod tests
     {
         let mut cpu = CPU::new();
 
-        cpu.register.r[0] = 0x10000000;
-        cpu.register.r[1] = 0x10000000;
+        cpu.r[0] = 0x10000000;
+        cpu.r[1] = 0x10000000;
 
         execute(&mut cpu, (true, false, false, 4, 3, 0, 1));
 
-        assert_eq!(cpu.register.r[3], 0);
-        assert_eq!(cpu.register.r[4], 0x01000000);
+        assert_eq!(cpu.r[3], 0);
+        assert_eq!(cpu.r[4], 0x01000000);
 
-        cpu.register.r[0] = 0xffffffff;
-        cpu.register.r[1] = 0xffffffff;
+        cpu.r[0] = 0xffffffff;
+        cpu.r[1] = 0xffffffff;
 
         execute(&mut cpu, (false, false, true, 4, 3, 0, 1));
-        assert_eq!(cpu.register.r[3], 1);
-        assert_eq!(cpu.register.r[4], 0);
-        assert_eq!(cpu.register.get_cpsr_bit(N), false);
+        assert_eq!(cpu.r[3], 1);
+        assert_eq!(cpu.r[4], 0);
+        assert_eq!(cpu.get_cpsr_bit(N), false);
     }
 }

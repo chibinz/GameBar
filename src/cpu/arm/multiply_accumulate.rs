@@ -34,35 +34,35 @@ pub fn decode(instruction: u32) -> (bool, bool, u32, u32, u32, u32)
 #[inline]
 pub fn execute(cpu: &mut CPU, (a, s, rd, rn, rs, rm): (bool, bool, u32, u32, u32, u32))
 {
-    let mut result = cpu.register.r[rm as usize].wrapping_mul(cpu.register.r[rs as usize]);
+    let mut result = cpu.r[rm as usize].wrapping_mul(cpu.r[rs as usize]);
 
     // If accumulate bit is set, add rn to result
     if a
     {
-        result = result.wrapping_add(cpu.register.r[rn as usize]);
+        result = result.wrapping_add(cpu.r[rn as usize]);
     }
     else
     {
-        debug_assert_eq!(cpu.register.r[rn as usize], 0);
+        debug_assert_eq!(cpu.r[rn as usize], 0);
     }
 
     if s
     {
         if result == 0
         {
-            cpu.register.set_cpsr_bit(Z, true)
+            cpu.set_cpsr_bit(Z, true)
         }
 
         if bit(result, 31)
         {
-            cpu.register.set_cpsr_bit(N, true)
+            cpu.set_cpsr_bit(N, true)
         }
 
         // The C (Carry) flag is set to a meaningless value.
         // And the V (Overflow) flag is unaffected.
     }
 
-    cpu.register.r[rd as usize] = result;
+    cpu.r[rd as usize] = result;
 }
 
 #[cfg(test)]
@@ -75,19 +75,19 @@ mod tests
     {
         let mut cpu = CPU::new();
 
-        cpu.register.r[0] = 0xfffffff6;
-        cpu.register.r[1] = 0x00000014;
+        cpu.r[0] = 0xfffffff6;
+        cpu.r[1] = 0x00000014;
 
         execute(&mut cpu, (false, false, 3, 4, 0, 1));
 
-        assert_eq!(cpu.register.r[3], 0xffffff38);
+        assert_eq!(cpu.r[3], 0xffffff38);
 
-        cpu.register.r[0] = 0x10;
-        cpu.register.r[1] = 0x10000000;
+        cpu.r[0] = 0x10;
+        cpu.r[1] = 0x10000000;
 
         execute(&mut cpu, (false, true, 3, 4, 0, 1));
-        assert_eq!(cpu.register.r[3], 0);
-        assert_eq!(cpu.register.get_cpsr_bit(Z), true);
-        assert_eq!(cpu.register.get_cpsr_bit(N), false);
+        assert_eq!(cpu.r[3], 0);
+        assert_eq!(cpu.get_cpsr_bit(Z), true);
+        assert_eq!(cpu.get_cpsr_bit(N), false);
     }
 }
