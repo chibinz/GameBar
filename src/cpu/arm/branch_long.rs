@@ -12,10 +12,10 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
     
     if l
     {
-        cpu.register.r[14] = cpu.register.r[15];
+        cpu.r[14] = cpu.r[15];
     }
 
-    cpu.register.r[15] = cpu.register.r[15].wrapping_add(offset as u32);
+    cpu.r[15] = cpu.r[15].wrapping_add(offset as u32);
 
     cpu.flushed = true;
 }

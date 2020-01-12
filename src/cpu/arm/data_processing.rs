@@ -25,7 +25,7 @@ pub fn decode(instruction: u32) -> (bool, u32, bool, u32, u32, u32)
 #[inline]
 pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32))
 {
-    let op1 = cpu.register.r[rn as usize];
+    let op1 = cpu.r[rn as usize];
     let op2 = if i {rotate_immediate(cpu, operand2)} else {shift_register(cpu, operand2)};
      
     let result = match opcode
@@ -52,7 +52,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
     // Write result to register, if needed
     if opcode < 0b1000 || opcode > 0b1011
     {
-        cpu.register.r[rd as usize] = result;
+        cpu.r[rd as usize] = result;
 
         if rd == 15
         {
@@ -73,12 +73,12 @@ mod tests
         let mut cpu = CPU::new();
 
         // AND R1, R2, R4 LSL R1
-        cpu.register.r[1] = 1;
-        cpu.register.r[2] = 2;
-        cpu.register.r[3] = 1;
-        cpu.register.r[4] = 0xffffffff;
+        cpu.r[1] = 1;
+        cpu.r[2] = 2;
+        cpu.r[3] = 1;
+        cpu.r[4] = 0xffffffff;
         execute(&mut cpu, (false, 0b0000, true, 2, 1, 0b0011_0_00_1_0100));
-        assert_eq!(cpu.register.r[1], 2);
-        assert_eq!(cpu.register.get_cpsr_bit(C), true);
+        assert_eq!(cpu.r[1], 2);
+        assert_eq!(cpu.get_cpsr_bit(C), true);
     }
 }

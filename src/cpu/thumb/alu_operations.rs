@@ -21,8 +21,8 @@ fn decode(instruction: u16) -> (u32, u32, u32)
 #[inline]
 fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32))
 {   
-    let op1 = cpu.register.r[rd as usize];
-    let op2 = cpu.register.r[rs as usize];
+    let op1 = cpu.r[rd as usize];
+    let op2 = cpu.r[rs as usize];
 
     let result = match op
     {
@@ -47,7 +47,7 @@ fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32))
 
     if op != 0b1000 && op != 0b1010 && op != 0b1011
     {
-        cpu.register.r[rd as usize] = result;
+        cpu.r[rd as usize] = result;
     }
 }
 
@@ -63,22 +63,22 @@ mod tests
         let mut cpu = CPU::new();
 
         // MUL 0x80000000, 0x10000000
-        cpu.register.r[0] = 0x10000000;
-        cpu.register.r[1] = 0x80000000;
+        cpu.r[0] = 0x10000000;
+        cpu.r[1] = 0x80000000;
         execute(&mut cpu, (0b1101, 0, 1));
-        assert_eq!(cpu.register.r[1], 0);
-        assert_eq!(cpu.register.get_cpsr_bit(Z), true);
+        assert_eq!(cpu.r[1], 0);
+        assert_eq!(cpu.get_cpsr_bit(Z), true);
 
         // NEG 0xf0f0f0f0
-        cpu.register.r[1] = 0xf0f0f0f0;
+        cpu.r[1] = 0xf0f0f0f0;
         execute(&mut cpu, (0b1001, 1, 1));
-        assert_eq!(cpu.register.r[1], 0x0f0f0f0f + 1);
-        assert_eq!(cpu.register.get_cpsr_bit(Z), false);
+        assert_eq!(cpu.r[1], 0x0f0f0f0f + 1);
+        assert_eq!(cpu.get_cpsr_bit(Z), false);
 
         // BIC 0x0f0f0f0f, 0xffffffff
-        cpu.register.r[0] = 0xffffffff;
+        cpu.r[0] = 0xffffffff;
         execute(&mut cpu, (0b1110, 0, 1));
-        assert_eq!(cpu.register.r[1], 0);
-        assert_eq!(cpu.register.get_cpsr_bit(Z), true);
+        assert_eq!(cpu.r[1], 0);
+        assert_eq!(cpu.get_cpsr_bit(Z), true);
     }
 }

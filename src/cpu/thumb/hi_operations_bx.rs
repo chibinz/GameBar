@@ -25,24 +25,24 @@ fn decode(instruction: u16) -> (u32, u32, u32)
 #[inline]
 fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32))
 {   
-    let op1 = cpu.register.r[rd as usize];
-    let op2 = cpu.register.r[rs as usize];
+    let op1 = cpu.r[rd as usize];
+    let op2 = cpu.r[rs as usize];
 
     match op
     {
-        0b00 => cpu.register.r[rd as usize] = 
+        0b00 => cpu.r[rd as usize] = 
                 alu::add(cpu, op1, op2, false),
         0b01 => 
             {
                 alu::cmp(cpu, op1, op2);
             },
-        0b10 => cpu.register.r[rd as usize] = 
+        0b10 => cpu.r[rd as usize] = 
                 alu::mov(cpu, op1, op2, false),
         0b11 => 
             {
-                cpu.register.set_cpsr_bit(T, cpu.register.r[rs as usize].bit(0));
+                cpu.set_cpsr_bit(T, cpu.r[rs as usize].bit(0));
 
-                cpu.register.r[15] = cpu.register.r[rs as usize] & 0xfffffffe;
+                cpu.r[15] = cpu.r[rs as usize] & 0xfffffffe;
                 cpu.flushed = true;
             },
         _    => unreachable!()
@@ -63,21 +63,21 @@ mod tests
 
         // All operations except CMP does not effect CPSR flags.
         // ADD 2, 0xffffffff
-        cpu.register.r[8] = 0xffffffff;
-        cpu.register.r[9] = 2;
+        cpu.r[8] = 0xffffffff;
+        cpu.r[9] = 2;
         execute(&mut cpu, (0b00, 8, 9));
-        assert_eq!(cpu.register.r[9], 1);
-        assert_eq!(cpu.register.get_cpsr_bit(C), false);
+        assert_eq!(cpu.r[9], 1);
+        assert_eq!(cpu.get_cpsr_bit(C), false);
 
         // CMP 1, 1
-        cpu.register.r[8] = 1;
+        cpu.r[8] = 1;
         execute(&mut cpu, (0b01, 8, 9));
-        assert_eq!(cpu.register.r[9], 1);
-        assert_eq!(cpu.register.get_cpsr_bit(Z), true);
+        assert_eq!(cpu.r[9], 1);
+        assert_eq!(cpu.get_cpsr_bit(Z), true);
 
         // BX 
-        cpu.register.r[14] = 0xffffffff;
+        cpu.r[14] = 0xffffffff;
         execute(&mut cpu, (0b11, 14, 0));
-        assert_eq!(cpu.register.r[15], 0xfffffffe);
+        assert_eq!(cpu.r[15], 0xfffffffe);
     }
 }

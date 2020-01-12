@@ -27,7 +27,7 @@ pub fn decode(instruction: u32) -> (bool, bool, bool, bool, bool, u32, u32)
 pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     (p, u, s, w, l, rn, rlist): (bool, bool, bool, bool, bool, u32, u32))
 {
-    let mut address = cpu.register.r[rn as usize];
+    let mut address = cpu.r[rn as usize];
 
     if p
     {
@@ -41,11 +41,11 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
         {
             if l
             {
-                cpu.register.r[j as usize] = memory.load32(address);
+                cpu.r[j as usize] = memory.load32(address);
             }
             else
             {
-                memory.store32(address, cpu.register.r[j as usize]);
+                memory.store32(address, cpu.r[j as usize]);
             }
 
             address = if u {address + 4} else {address - 4};
@@ -58,7 +58,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
         // to CPSR at the same time as R15 is loaded.
         if l
         {
-            cpu.register.restore_cpsr();
+            cpu.restore_cpsr();
         }
     }
 
@@ -72,7 +72,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
             address = if u {address - 4} else {address + 4}
         }
 
-        cpu.register.r[rn as usize] = address
+        cpu.r[rn as usize] = address
     }
 }
 
@@ -91,13 +91,13 @@ mod tests
         {
             memory.store32(0x02000000 + i * 4, i);
         }
-        cpu.register.r[0] = 0x02000000;
+        cpu.r[0] = 0x02000000;
 
         // Write back bit is redundant because R0 is overwritten
         execute(&mut cpu, &mut memory, (false, true, true, true, true, 0, 0xffff));
         for i in 0..16
         {
-            assert_eq!(cpu.register.r[i as usize], i);
+            assert_eq!(cpu.r[i as usize], i);
         }
     }
 
@@ -110,13 +110,13 @@ mod tests
         memory.store32(0x02000004, 1);
         memory.store32(0x02000008, 2);
         memory.store32(0x0200000c, 3);
-        cpu.register.r[0] = 0x02000000;
+        cpu.r[0] = 0x02000000;
 
         execute(&mut cpu, &mut memory, (true, true, true, true, true, 0, 0x000e));
-        assert_eq!(cpu.register.r[1], 1);
-        assert_eq!(cpu.register.r[2], 2);
-        assert_eq!(cpu.register.r[3], 3);
-        assert_eq!(cpu.register.r[0], 0x0200000c);
+        assert_eq!(cpu.r[1], 1);
+        assert_eq!(cpu.r[2], 2);
+        assert_eq!(cpu.r[3], 3);
+        assert_eq!(cpu.r[0], 0x0200000c);
     }
 
     #[test]
@@ -128,13 +128,13 @@ mod tests
         memory.store32(0x02000004, 1);
         memory.store32(0x02000008, 2);
         memory.store32(0x0200000c, 3);
-        cpu.register.r[0] = 0x0200000c;
+        cpu.r[0] = 0x0200000c;
 
         execute(&mut cpu, &mut memory, (false, false, true, true, true, 0, 0x000e));
-        assert_eq!(cpu.register.r[1], 1);
-        assert_eq!(cpu.register.r[2], 2);
-        assert_eq!(cpu.register.r[3], 3);
-        assert_eq!(cpu.register.r[0], 0x02000000);
+        assert_eq!(cpu.r[1], 1);
+        assert_eq!(cpu.r[2], 2);
+        assert_eq!(cpu.r[3], 3);
+        assert_eq!(cpu.r[0], 0x02000000);
     }
 
     #[test]
@@ -146,12 +146,12 @@ mod tests
         memory.store32(0x02000000, 1);
         memory.store32(0x02000004, 2);
         memory.store32(0x02000008, 3);
-        cpu.register.r[0] = 0x0200000c;
+        cpu.r[0] = 0x0200000c;
 
         execute(&mut cpu, &mut memory, (true, false, true, true, true, 0, 0x1110));
-        assert_eq!(cpu.register.r[4], 1);
-        assert_eq!(cpu.register.r[8], 2);
-        assert_eq!(cpu.register.r[12], 3);
-        assert_eq!(cpu.register.r[0], 0x02000000);
+        assert_eq!(cpu.r[4], 1);
+        assert_eq!(cpu.r[8], 2);
+        assert_eq!(cpu.r[12], 3);
+        assert_eq!(cpu.r[0], 0x02000000);
     }
 }

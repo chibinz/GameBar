@@ -22,11 +22,11 @@ fn execute(cpu: &mut CPU, (sp, rd, word8): (bool, u32, u32))
 {   
     if sp
     {
-        cpu.register.r[rd as usize] = cpu.register.r[13] + (word8 << 2);
+        cpu.r[rd as usize] = cpu.r[13] + (word8 << 2);
     }
     else
     {
-        cpu.register.r[rd as usize] = cpu.register.r[15] + (word8 << 2);
+        cpu.r[rd as usize] = cpu.r[15] + (word8 << 2);
     }
 }
 
@@ -40,8 +40,8 @@ mod tests
     {
         let mut cpu = CPU::new();
 
-        cpu.register.r[13] = 0xffffff00;
+        cpu.r[13] = 0xffffff00;
         execute(&mut cpu, (true, 0, 0b00111111));
-        assert_eq!(cpu.register.r[0], 0xfffffffc);
+        assert_eq!(cpu.r[0], 0xfffffffc);
     }
 }

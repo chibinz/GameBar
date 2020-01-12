@@ -1,15 +1,5 @@
 use crate::util::*;
-
-/// Structure containing 16 general pupose registers,
-/// 1 Current Program Status Register,
-/// and 5 Saved Program Status Register
-pub struct Register
-{
-    pub r: [u32; 16],
-
-    cpsr : u32,
-    spsr : [u32; 5],
-}
+use crate::cpu::CPU;
 
 /// Bits 31 - 28, 7 - 5 of Current Program Status Register
 pub enum PSRBit
@@ -38,18 +28,8 @@ pub enum PSRMode
     System     = 0b11111,
 }
 
-impl Register
+impl CPU
 {
-    pub fn new() -> Self
-    {
-        Self
-        {
-            r   : [0; 16],
-            cpsr: 0b10011, // On reset, the CPSR is forced to supervisor mode
-            spsr: [0; 5],
-        }
-    }
-
     #[inline]
     pub fn get_cpsr(&self) -> u32
     {
@@ -156,6 +136,35 @@ impl Register
             _          => panic!("Curent mode does not have a SPSR"),
         }
     }
+
+    /// Return true if condition is satified
+    #[inline]
+    pub fn check_condition(&self, condition: u32) -> bool
+    {
+        use PSRBit::*;
+
+        match condition
+        {
+            0b0000 =>  self.get_cpsr_bit(Z),      // EQ
+            0b0001 => !self.get_cpsr_bit(Z),      // NE
+            0b0010 =>  self.get_cpsr_bit(C),      // CS
+            0b0011 => !self.get_cpsr_bit(C),      // CC
+            0b0100 =>  self.get_cpsr_bit(N),      // MI
+            0b0101 => !self.get_cpsr_bit(N),      // PL
+            0b0110 =>  self.get_cpsr_bit(V),      // VS
+            0b0111 => !self.get_cpsr_bit(V),      // VC
+            0b1000 =>  self.get_cpsr_bit(C) && !self.get_cpsr_bit(Z), // HI
+            0b1001 => !self.get_cpsr_bit(C) ||  self.get_cpsr_bit(Z), // LS
+            0b1010 =>  self.get_cpsr_bit(N) ==  self.get_cpsr_bit(V), // GE
+            0b1011 =>  self.get_cpsr_bit(N) !=  self.get_cpsr_bit(V), // LT
+            0b1100 => !self.get_cpsr_bit(Z) && (self.get_cpsr_bit(N)
+                                                        ==  self.get_cpsr_bit(V)),// GT
+            0b1101 =>  self.get_cpsr_bit(Z) || (self.get_cpsr_bit(N)
+                                                        !=  self.get_cpsr_bit(V)),// LE
+            0b1110 => true,
+            _      => panic!("Invalid Condition Field!"),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -166,36 +175,61 @@ mod tests
     #[test]
     fn get_cpsr_bit()
     {
-        let mut reg = Register::new();
-        reg.cpsr = 0b100000;
+        let mut cpu = CPU::new();
+        cpu.cpsr = 0b100000;
 
-        assert_eq!(reg.get_cpsr_bit(PSRBit::T), true);
+        assert_eq!(cpu.get_cpsr_bit(PSRBit::T), true);
     }
 
     #[test]
     fn set_cpsr_bit()
     {
-        let mut reg = Register::new();
-        reg.set_cpsr_bit(PSRBit::F, true);
+        let mut cpu = CPU::new();
+        cpu.set_cpsr_bit(PSRBit::F, true);
 
-        assert_eq!(reg.cpsr.bit(6), true);
+        assert_eq!(cpu.cpsr.bit(6), true);
     }
 
     #[test]
     fn get_cpsr_mode()
     {
-        let mut reg = Register::new();
-        reg.cpsr = 0b10000;
+        let mut cpu = CPU::new();
+        cpu.cpsr = 0b10000;
 
-        assert!(match reg.get_cpsr_mode() {PSRMode::User => true, _ => false});
+        assert!(match cpu.get_cpsr_mode() {PSRMode::User => true, _ => false});
     }
 
     #[test]
     fn set_cpsr_mode()
     {
-        let mut reg = Register::new();
-        reg.set_cpsr_mode(PSRMode::System);
+        let mut cpu = CPU::new();
+        cpu.set_cpsr_mode(PSRMode::System);
 
-        assert_eq!(reg.cpsr, 0b11111);
+        assert_eq!(cpu.cpsr, 0b11111);
+    }
+
+    #[test]
+    fn check_condition()
+    {
+        use PSRBit::*;
+
+        let mut cpu = CPU::new();
+
+        cpu.set_cpsr_bit(Z, true);
+        assert!(cpu.check_condition(0b0000));
+
+        cpu.set_cpsr_bit(C, true);
+        assert!(cpu.check_condition(0b0010));
+
+        cpu.set_cpsr_bit(N, true);
+        assert!(cpu.check_condition(0b0100));
+
+        cpu.set_cpsr_bit(V, true);
+        assert!(cpu.check_condition(0b0110));
+
+        assert!(cpu.check_condition(0b1010));
+
+        cpu.set_cpsr_bit(Z, false);
+        assert!(cpu.check_condition(0b1100));
     }
 }

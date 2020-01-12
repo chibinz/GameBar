@@ -55,8 +55,8 @@ pub fn and(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
     }
 
     result
@@ -69,8 +69,8 @@ pub fn eor(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
     }
 
     result
@@ -83,8 +83,8 @@ pub fn orr(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
     }
 
     result
@@ -97,8 +97,8 @@ pub fn bic(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
     }
 
     result
@@ -111,8 +111,8 @@ pub fn mov(cpu: &mut CPU, _op1: u32, op2: u32, s: bool) -> u32
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
     }
 
     result
@@ -125,8 +125,8 @@ pub fn mvn(cpu: &mut CPU, _op1: u32, op2: u32, s: bool) -> u32
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
     }
 
     result
@@ -153,10 +153,10 @@ pub fn add(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
-        cpu.register.set_cpsr_bit(C, add_carry(op1, op2));
-        cpu.register.set_cpsr_bit(V, add_overflow(op1, op2));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(C, add_carry(op1, op2));
+        cpu.set_cpsr_bit(V, add_overflow(op1, op2));
     }
 
     result
@@ -165,15 +165,15 @@ pub fn add(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 #[inline]
 pub fn adc(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 {
-    let carry = if cpu.register.get_cpsr_bit(C) {1} else {0};
+    let carry = if cpu.get_cpsr_bit(C) {1} else {0};
     let result = op1.wrapping_add(op2.wrapping_add(carry));
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
-        cpu.register.set_cpsr_bit(C, add_carry(op1, op2.wrapping_add(carry)));
-        cpu.register.set_cpsr_bit(V, add_overflow(op1, op2.wrapping_add(carry)));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(C, add_carry(op1, op2.wrapping_add(carry)));
+        cpu.set_cpsr_bit(V, add_overflow(op1, op2.wrapping_add(carry)));
     }
 
     result
@@ -186,10 +186,10 @@ pub fn sub(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
-        cpu.register.set_cpsr_bit(C, sub_carry(op1, op2));
-        cpu.register.set_cpsr_bit(V, sub_overflow(op1, op2));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(C, sub_carry(op1, op2));
+        cpu.set_cpsr_bit(V, sub_overflow(op1, op2));
     }
 
     result
@@ -202,10 +202,10 @@ pub fn rsb(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
-        cpu.register.set_cpsr_bit(C, sub_carry(op2, op1));
-        cpu.register.set_cpsr_bit(V, sub_overflow(op2, op1));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(C, sub_carry(op2, op1));
+        cpu.set_cpsr_bit(V, sub_overflow(op2, op1));
     }
 
     result
@@ -214,16 +214,16 @@ pub fn rsb(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 #[inline]
 pub fn sbc(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 {
-    let carry: u32 = if cpu.register.get_cpsr_bit(C) {1} else {0};
+    let carry: u32 = if cpu.get_cpsr_bit(C) {1} else {0};
     let opc = op2.wrapping_sub(carry).wrapping_add(1);
     let result = op1.wrapping_sub(opc);
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
-        cpu.register.set_cpsr_bit(C, sub_carry(op1, opc));
-        cpu.register.set_cpsr_bit(V, sub_overflow(op1, opc));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(C, sub_carry(op1, opc));
+        cpu.set_cpsr_bit(V, sub_overflow(op1, opc));
     }
 
     result
@@ -232,16 +232,16 @@ pub fn sbc(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 #[inline]
 pub fn rsc(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 {
-    let carry: u32 = if cpu.register.get_cpsr_bit(C) {1} else {0};
+    let carry: u32 = if cpu.get_cpsr_bit(C) {1} else {0};
     let opc = op1.wrapping_sub(carry).wrapping_add(1);
     let result = op2.wrapping_sub(opc);
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
-        cpu.register.set_cpsr_bit(C, sub_carry(op2, opc));
-        cpu.register.set_cpsr_bit(V, sub_overflow(op2, opc));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(C, sub_carry(op2, opc));
+        cpu.set_cpsr_bit(V, sub_overflow(op2, opc));
     }
 
     result
@@ -273,8 +273,8 @@ pub fn mul(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
     }
 
     result
@@ -286,8 +286,8 @@ pub fn mla(cpu: &mut CPU, op1: u32, op2: u32, op3: u32, s: bool) -> u32
 
     if s
     {
-        cpu.register.set_cpsr_bit(N, negative(result));
-        cpu.register.set_cpsr_bit(Z, zero(result));
+        cpu.set_cpsr_bit(N, negative(result));
+        cpu.set_cpsr_bit(Z, zero(result));
     }
 
     result
