@@ -14,7 +14,7 @@ pub fn shift_register(cpu: &mut CPU, operand2: u32) -> u32
     let rm = operand2.bits(3, 0);
     let stype = operand2.bits(6, 5);
     let amount = 
-    if bit(operand2, 4)
+    if operand2.bit(4)
     {
         let rs = operand2.bits(11, 8);
 

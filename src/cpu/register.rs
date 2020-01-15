@@ -1,6 +1,9 @@
 use crate::util::*;
 use crate::cpu::CPU;
 
+use PSRBit::*;
+use PSRMode::*;
+
 /// Bits 31 - 28, 7 - 5 of Current Program Status Register
 pub enum PSRBit
 {
@@ -42,17 +45,29 @@ impl CPU
     #[inline]
     pub fn set_cpsr(&mut self, r: u32, f: bool)
     {
-        let mask = if f {0xf0000000} else {0xf00000ff};
-        
-        self.cpsr &= !mask;
-        self.cpsr |= r & mask;
+        if f 
+        {
+            // Set condition code flags only
+            let mask = 0xf0000000;
+            self.cpsr &= !mask;
+            self.cpsr |= r & mask;
+        } 
+        else
+        {
+            // Save state and switch mode
+            let mode = CPU::get_mode(r & 0b11111);
+            self.save_state();
+            self.switch_mode(mode);
+            
+            // Change control bits
+            self.cpsr = r;
+        };
     }
 
-    /// Copy SPSR of current mode to CPSR
     #[inline]
     pub fn restore_cpsr(&mut self)
     {
-        self.cpsr = self.spsr[self.get_spsr_index()];
+        self.set_cpsr(self.spsr, false);
     }
 
     #[inline]
@@ -74,12 +89,29 @@ impl CPU
         }
     }
 
+    /// Get SPSR of current mode
     #[inline]
-    pub fn get_cpsr_mode(&self) -> PSRMode
+    pub fn get_spsr(&mut self) -> u32
     {
-        use PSRMode::*;
+        self.spsr
+    }
 
-        match self.cpsr & 0b11111
+    /// Set defined bits of SPSR of current mode.
+    /// If parameter f is set, transfer only the flag bits.
+    /// Reserved bits of SPSR are kept intact.
+    #[inline]
+    pub fn set_spsr(&mut self, r: u32, f: bool)
+    {
+        let mask = if f {0xf0000000} else {0xf00000ff};
+        
+        self.spsr &= !mask;
+        self.spsr |= r & mask;
+    }    
+    
+    #[inline]
+    pub fn get_mode(mbits: u32) -> PSRMode
+    {
+        match mbits
         {
             0b10000 => User,
             0b10001 => FIQ,
@@ -92,48 +124,129 @@ impl CPU
         }
     }
 
-    #[inline]
-    pub fn set_cpsr_mode(&mut self, m: PSRMode)
+    pub fn save_state(&mut self)
     {
-        // Clear bits 4 - 0
-        self.cpsr &= !0b11111;
-        self.cpsr |= m as u32;
-    }
+        let mode = CPU::get_mode(self.cpsr & 0b11111);
 
-    /// Get SPSR of current mode
-    #[inline]
-    pub fn get_spsr(&mut self) -> u32
-    {
-        self.spsr[self.get_spsr_index()]
-    }
-
-    /// Set defined bits of SPSR of current mode.
-    /// If parameter f is set, transfer only the flag bits.
-    /// Reserved bits of SPSR are kept intact.
-    #[inline]
-    pub fn set_spsr(&mut self, r: u32, f: bool)
-    {
-        let mask = if f {0xf0000000} else {0xf00000ff};
-        
-        self.spsr[self.get_spsr_index()] &= !mask;
-        self.spsr[self.get_spsr_index()] |= r & mask;
-    }    
-    
-    /// Because SPSR are banked and stored as array,
-    /// get the index of current SPSR.
-    #[inline]
-    fn get_spsr_index(&self) -> usize
-    {
-        use PSRMode::*;
-
-        match self.get_cpsr_mode()
+        match mode
         {
-            FIQ        => 0,
-            Supervisor => 1,
-            Abort      => 2,
-            IRQ        => 3,
-            Undefined  => 4,
-            _          => panic!("Curent mode does not have a SPSR"),
+            User => 
+            {
+                self.bank[5] = self.r[13]; 
+                self.bank[6] = self.r[14]
+            },
+            System => 
+            {
+                self.bank[5] = self.r[13]; 
+                self.bank[6] = self.r[14]
+            },
+            FIQ  => 
+            {
+                self.bank[12] = self.r[13];
+                self.bank[13] = self.r[14];
+                self.bank[14] = self.spsr
+            },
+            Supervisor => 
+            {
+                self.bank[15] = self.r[13];
+                self.bank[16] = self.r[14];
+                self.bank[17] = self.spsr
+            },
+            Abort  => 
+            {
+                self.bank[18] = self.r[13];
+                self.bank[19] = self.r[14];
+                self.bank[20] = self.spsr
+            },
+            IRQ  => 
+            {
+                self.bank[21] = self.r[13];
+                self.bank[22] = self.r[14];
+                self.bank[23] = self.spsr
+            }, 
+            Undefined  => 
+            {
+                self.bank[24] = self.r[13];
+                self.bank[25] = self.r[14];
+                self.bank[26] = self.spsr
+            },  
+        };
+
+        if let FIQ = mode
+        {
+            for i in 0..5
+            {
+                self.bank[i + 7] = self.r[i + 8];
+            }
+        }
+        else
+        {
+            for i in 0..5
+            {
+                self.bank[i] = self.r[i + 8];
+            }
+        }
+    }
+
+    pub fn switch_mode(&mut self, mode: PSRMode)
+    {
+        match mode
+        {
+            User => 
+            {
+                self.r[13] = self.bank[5];
+                self.r[14] = self.bank[6];
+            },
+            System => 
+            {
+                self.r[13] = self.bank[5];
+                self.r[14] = self.bank[6];
+            },
+            FIQ  => 
+            {
+                self.r[13] = self.bank[12];
+                self.r[14] = self.bank[13];
+                self.spsr  = self.bank[14];
+            },
+            Supervisor => 
+            {
+                self.r[13] = self.bank[15];
+                self.r[14] = self.bank[16];
+                self.spsr  = self.bank[17];
+            },
+            Abort  => 
+            {
+                self.r[13] = self.bank[18];
+                self.r[14] = self.bank[19];
+                self.spsr  = self.bank[20];
+            },
+            IRQ  => 
+            {
+                self.r[13] = self.bank[21];
+                self.r[14] = self.bank[22];
+                self.spsr  = self.bank[23];
+            }, 
+            Undefined  => 
+            {
+                self.r[13] = self.bank[24];
+                self.r[14] = self.bank[25];
+                self.spsr  = self.bank[26];
+            },
+        };
+
+        if let FIQ = mode
+        {
+            for i in 0..5
+            {
+                self.r[i + 8] = self.bank[i + 7];
+            }
+        }
+        else
+        {
+            for i in 0..5
+            {
+                self.r[i + 8] = self.bank[i];
+            }
         }
     }
 
@@ -141,8 +254,6 @@ impl CPU
     #[inline]
     pub fn check_condition(&self, condition: u32) -> bool
     {
-        use PSRBit::*;
-
         match condition
         {
             0b0000 =>  self.get_cpsr_bit(Z),      // EQ
@@ -158,9 +269,9 @@ impl CPU
             0b1010 =>  self.get_cpsr_bit(N) ==  self.get_cpsr_bit(V), // GE
             0b1011 =>  self.get_cpsr_bit(N) !=  self.get_cpsr_bit(V), // LT
             0b1100 => !self.get_cpsr_bit(Z) && (self.get_cpsr_bit(N)
-                                                        ==  self.get_cpsr_bit(V)),// GT
+                                            ==  self.get_cpsr_bit(V)),// GT
             0b1101 =>  self.get_cpsr_bit(Z) || (self.get_cpsr_bit(N)
-                                                        !=  self.get_cpsr_bit(V)),// LE
+                                            !=  self.get_cpsr_bit(V)),// LE
             0b1110 => true,
             _      => panic!("Invalid Condition Field!"),
         }
@@ -188,24 +299,6 @@ mod tests
         cpu.set_cpsr_bit(PSRBit::F, true);
 
         assert_eq!(cpu.cpsr.bit(6), true);
-    }
-
-    #[test]
-    fn get_cpsr_mode()
-    {
-        let mut cpu = CPU::new();
-        cpu.cpsr = 0b10000;
-
-        assert!(match cpu.get_cpsr_mode() {PSRMode::User => true, _ => false});
-    }
-
-    #[test]
-    fn set_cpsr_mode()
-    {
-        let mut cpu = CPU::new();
-        cpu.set_cpsr_mode(PSRMode::System);
-
-        assert_eq!(cpu.cpsr, 0b11111);
     }
 
     #[test]
