@@ -39,7 +39,8 @@ pub fn execute(cpu: &mut CPU, (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, 
 {
     let mut result: u64;
 
-    if u
+    // 0 for u means unsigned
+    if !u
     {
         let operand1 = cpu.r[rm as usize] as u64;
         let operand2 = cpu.r[rs as usize] as u64;
@@ -65,15 +66,8 @@ pub fn execute(cpu: &mut CPU, (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, 
 
     if s
     {
-        if cpu.r[rdhi as usize] == 0 && cpu.r[rdlo as usize] == 0
-        {
-            cpu.set_cpsr_bit(Z, true)
-        }
-
-        if bit(cpu.r[rdhi as usize], 31)
-        {
-            cpu.set_cpsr_bit(N, true)
-        }
+        cpu.set_cpsr_bit(Z, result == 0);
+        cpu.set_cpsr_bit(N, result >> 63 == 1);
 
         // Both the C and V flags are set to meaningless values
     }
@@ -92,18 +86,17 @@ mod tests
     {
         let mut cpu = CPU::new();
 
+        // unsigned
         cpu.r[0] = 0x10000000;
         cpu.r[1] = 0x10000000;
-
-        execute(&mut cpu, (true, false, false, 4, 3, 0, 1));
-
+        execute(&mut cpu, (false, false, false, 4, 3, 0, 1));
         assert_eq!(cpu.r[3], 0);
         assert_eq!(cpu.r[4], 0x01000000);
 
+        // signed
         cpu.r[0] = 0xffffffff;
         cpu.r[1] = 0xffffffff;
-
-        execute(&mut cpu, (false, false, true, 4, 3, 0, 1));
+        execute(&mut cpu, (true, false, true, 4, 3, 0, 1));
         assert_eq!(cpu.r[3], 1);
         assert_eq!(cpu.r[4], 0);
         assert_eq!(cpu.get_cpsr_bit(N), false);
