@@ -67,11 +67,11 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
 
         if rd == 15
         {
-            // Direct manipulation of pc will result in a pipeline flush
+            // Direct manipulation of pc will result in a pipeline flush.
             // The next instruction will be fetched from memory address 
             // at pc. pc is further incremented by 4 to maintain offset 8
             // from the currently executed instruction.
-            cpu.flushed = true;
+            cpu.flush();
 
             if s
             {

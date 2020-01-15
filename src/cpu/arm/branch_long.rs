@@ -17,5 +17,5 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
 
     cpu.r[15] = cpu.r[15].wrapping_add(offset as u32);
 
-    cpu.flushed = true;
+    cpu.flush();
 }

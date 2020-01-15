@@ -26,14 +26,12 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
 
 pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
 {
-    let instruction = cpu.instruction;
-
     cpu.r[15] += 4;
     
-    let cond = instruction.bits(31, 28);
+    let cond = cpu.instruction.bits(31, 28);
     if cpu.check_condition(cond)
     {
-        dispatch(cpu, memory, instruction);
+        dispatch(cpu, memory, cpu.instruction);
     }
 
     return 0;
@@ -41,16 +39,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
 
 pub fn fetch(cpu: &mut CPU, memory: &mut Memory)
 {
-    if cpu.flushed
-    {
-        cpu.instruction = memory.load32(cpu.r[15]);
-        cpu.r[15] += 4;
-        cpu.flushed = false;
-    }
-    else
-    {
-        cpu.instruction = memory.load32(cpu.r[15] - 4);
-    }
+    cpu.instruction = memory.load32(cpu.r[15] - 4);
 }
 
 pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
@@ -83,7 +72,6 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
     // Multiply / Multiply Long / Single Data Swap
     let multiply_swap = |cpu: &mut CPU|
     {
-            dbg!(instruction.bits(24, 20));
         match bits(instruction, 24, 20)
         {
             0b00000 | 0b00001 |
