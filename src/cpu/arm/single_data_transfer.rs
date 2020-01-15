@@ -22,7 +22,7 @@ pub fn decode(instruction: u32) -> (bool, bool, bool, bool, u32, u32, u32, u32)
     let offset = instruction.bits(11, 0);
 
     // Instruction is later on dispatched using the l, b bits
-    let lb = (instruction >> 22 & 1) + (instruction >> 20 & 1) << 1;
+    let lb = (instruction >> 22 & 1) + ((instruction >> 20 & 1) << 1);
 
     (i, p, u, w, lb, rn, rd, offset)
 }
@@ -31,29 +31,37 @@ pub fn decode(instruction: u32) -> (bool, bool, bool, bool, u32, u32, u32, u32)
 pub fn execute(cpu: &mut CPU, memory: &mut Memory, 
     (i, p, u, w, lb, rn, rd, offset): (bool, bool, bool, bool, u32, u32, u32, u32))
 {
-    let noffset = if i {offset} else {shift_register(cpu, offset)};
+    // 0 for i means immediate
+    let noffset = if !i {offset} else {shift_register(cpu, offset)};
 
     let post = cpu.r[rn as usize];
     let pre = if u {cpu.r[rn as usize] + noffset} 
               else {cpu.r[rn as usize] - noffset};
 
     let address = if p {pre} else {post};
-    let data = cpu.r[rd as usize];
 
-    // Misaligned word access is not handled
-    match lb
-    {
-        0b00 => memory.store32(address, data),
-        0b01 => memory.store8(address, data as u8),
-        0b10 => cpu.r[rd as usize] = memory.load32(address),
-        0b11 => cpu.r[rd as usize] = memory.load8(address) as u32,
-        _    => unreachable!()
-    }
+    // When R15 is the source register, the stored value will be 
+    // address of the instruction plus 12
+    let value = cpu.r[rd as usize] + if rd == 15 {4} else {0};
+
+    dbg!((i, p, u, w, lb, rn, rd, offset), address);
 
     // Privileged write back bit not handled
     if w || !p
     {
         cpu.r[rn as usize] = pre;
+    }
+    
+    // Misaligned word access handled in `memory.rs`
+    match lb
+    {
+        0b00 => memory.store32(address, value),
+        0b01 => memory.store8(address, value as u8),
+        0b10 => cpu.r[rd as usize] = memory.load32(address) 
+                                   + if rd == 15 {4} else {0},
+        0b11 => cpu.r[rd as usize] = memory.load8(address) as u32 
+                                   + if rd == 15 {4} else {0},
+        _    => unreachable!()
     }
 }
 

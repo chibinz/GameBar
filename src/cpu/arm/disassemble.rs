@@ -193,7 +193,7 @@ pub fn disassemble(opcode: u32) -> String
     let single_data_transfer = || -> String
     {
         // concatenate bit
-        let field = opcode >> 24 & 0b10 | opcode >> 20 & 0b01;
+        let field = opcode >> 23 & 0b10 | opcode >> 20 & 0b01;
         let offset =
         {
             let sign = if opcode >> 23 & 1 == 1 {""} else {"-"};

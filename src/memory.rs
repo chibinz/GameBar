@@ -60,11 +60,11 @@ impl Memory
     /// Load a halfword from memory
     pub fn load16(&self, address: u32) -> u16
     {
-        let offset = (address & 0x00ffffff) as usize;
+        let offset = (address & 0x00fffffe) as usize;
 
         let ldh = |mem: &[u8]| mem[offset] as u16 | (mem[offset + 1] as u16) << 8;
 
-        match address >> 24
+        let value = match address >> 24
         {
             0x00 => ldh(self.bios.as_slice()),
             0x02 => ldh(self.ewram.as_slice()),
@@ -79,20 +79,23 @@ impl Memory
             },
             0x0e => ldh(self.sram.as_slice()),
             _    => panic!("Invalid memory address {:08x}", address),
-        }
+        };
+
+        let shift = (address & 0b1) * 8;
+        return value.rotate_right(shift); 
     }
 
     /// Load a word from memory
     pub fn load32(&self, address: u32) -> u32
     {
-        let offset = (address & 0x00ffffff) as usize;
+        let offset = (address & 0x00fffffc) as usize;
 
         let ld = |mem: &[u8]| mem[offset] as u32 | 
                                (mem[offset + 1] as u32) << 8 | 
                                (mem[offset + 2] as u32) << 16 | 
                                (mem[offset + 3] as u32) << 24;
 
-        match address >> 24
+        let value = match address >> 24
         {
             0x00 => ld(self.bios.as_slice()),
             0x02 => ld(self.ewram.as_slice()),
@@ -107,7 +110,10 @@ impl Memory
             },
             0x0e => ld(self.sram.as_slice()),
             _    => panic!("Invalid memory address {:08x}", address),
-        }
+        };
+
+        let shift = (address & 0b11) * 8;
+        return value.rotate_right(shift);
     }
 
     /// Store a byte in memory, only EWRAM, IWRAM, IORAM, SRAM are accessible
@@ -128,7 +134,8 @@ impl Memory
     /// Store an halfword in memory, BIOS, ROM, SRAM are inaccessible
     pub fn store16(&mut self, address: u32, data: u16)
     {
-        let offset = (address & 0x00ffffff) as usize;
+        // Accesses are forced to halfword aligned
+        let offset = (address & 0x00fffffe) as usize;
 
         let sth = |mem: &mut [u8]| 
         {
@@ -151,7 +158,8 @@ impl Memory
     /// Store a word in memory, BIOS, ROM, SRAM are inaccessible
     pub fn store32(&mut self, address: u32, data: u32)
     {
-        let offset = (address & 0x00ffffff) as usize;
+        // Accesses are forced to be word aligned
+        let offset = (address & 0x00fffffc) as usize;
 
         let sth = |mem: &mut [u8]| 
         {
@@ -193,5 +201,4 @@ impl Memory
 
         self.bios.len()
     }
-
 }
