@@ -56,7 +56,7 @@ mod tests
         let mut cpu = CPU::new();
 
         // MSR CPSR
-        cpu.r[0] = 0xfffffff1;
+        cpu.r[0] = 0xf00000f1;
         decode_execute(&mut cpu, 0b0000_00010_0_10100_1_1111_00000000_0000);
         assert_eq!(cpu.get_cpsr(), 0xf00000f1);
 

@@ -18,7 +18,7 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
     fetch(cpu, memory);
 
     println!("{}", cpu);
-    print!("{:08x}: {:08x} | {:032b} ", cpu.r[15] - 8, cpu.instruction, cpu.instruction);
+    print!("{:08x}: {:08x} | {:032b} ", cpu.r[15] - 4, cpu.instruction, cpu.instruction);
     println!("{}", disassemble::disassemble(cpu.instruction));
 
     execute(cpu, memory);
@@ -59,7 +59,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
     let b65 = || instruction >> 5 & 0b11;
 
     // Data Processing / PSR Transfer / branch and exchange
-    let mut data_process_psr_bx = ||
+    let data_process_psr_bx = |cpu: &mut CPU|
     {
         match bits(instruction, 24, 20)
         {
@@ -81,23 +81,24 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
     // };
 
     // Multiply / Multiply Long / Single Data Swap
-    // let mut multiply_swap = ||
-    // {
-    //     match bits(instruction, 24, 20)
-    //     {
-    //         0b00000 | 0b00001 |
-    //         0b00010 | 0b00011 => multiply_accumulate::decode_execute(cpu, instruction),
-    //         0b01000 | 0b01001 |
-    //         0b01010 | 0b01011 |
-    //         0b01100 | 0b01101 |
-    //         0b01110 | 0b01111 => multiply_long_accumulate::decode_execute(cpu, instruction),
+    let multiply_swap = |cpu: &mut CPU|
+    {
+            dbg!(instruction.bits(24, 20));
+        match bits(instruction, 24, 20)
+        {
+            0b00000 | 0b00001 |
+            0b00010 | 0b00011 => multiply_accumulate::decode_execute(cpu, instruction),
+            0b01000 | 0b01001 |
+            0b01010 | 0b01011 |
+            0b01100 | 0b01101 |
+            0b01110 | 0b01111 => multiply_long_accumulate::decode_execute(cpu, instruction),
 
-    //         // Single data swap
-    //         0b10000 | 0b10100 => unimplemented!(),
+            // Single data swap
+            0b10000 | 0b10100 => unimplemented!(),
 
-    //         _                 => unimplemented!(),
-    //     };
-    // };
+            _                 => unimplemented!(),
+        };
+    };
     
     match bits(instruction, 27, 25)
     {
@@ -105,7 +106,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
         {
             if b74() < 0b11
             {
-                data_process_psr_bx()
+                data_process_psr_bx(cpu)
             }
             else
             {
@@ -115,7 +116,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
                 }
                 else
                 {
-                    unimplemented!()
+                    multiply_swap(cpu)
                 }
             }
         },

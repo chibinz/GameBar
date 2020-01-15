@@ -43,20 +43,14 @@ pub fn execute(cpu: &mut CPU, (a, s, rd, rn, rs, rm): (bool, bool, u32, u32, u32
     }
     else
     {
-        debug_assert_eq!(cpu.r[rn as usize], 0);
+        // Rn should be set to 0 if not used as accumulate
+        debug_assert_eq!(rn, 0);
     }
 
     if s
     {
-        if result == 0
-        {
-            cpu.set_cpsr_bit(Z, true)
-        }
-
-        if bit(result, 31)
-        {
-            cpu.set_cpsr_bit(N, true)
-        }
+        cpu.set_cpsr_bit(Z, result == 0);
+        cpu.set_cpsr_bit(N, result.bit(31));
 
         // The C (Carry) flag is set to a meaningless value.
         // And the V (Overflow) flag is unaffected.
@@ -77,15 +71,12 @@ mod tests
 
         cpu.r[0] = 0xfffffff6;
         cpu.r[1] = 0x00000014;
-
-        execute(&mut cpu, (false, false, 3, 4, 0, 1));
-
+        execute(&mut cpu, (false, false, 3, 0, 0, 1));
         assert_eq!(cpu.r[3], 0xffffff38);
 
         cpu.r[0] = 0x10;
         cpu.r[1] = 0x10000000;
-
-        execute(&mut cpu, (false, true, 3, 4, 0, 1));
+        execute(&mut cpu, (false, true, 3, 0, 0, 1));
         assert_eq!(cpu.r[3], 0);
         assert_eq!(cpu.get_cpsr_bit(Z), true);
         assert_eq!(cpu.get_cpsr_bit(N), false);

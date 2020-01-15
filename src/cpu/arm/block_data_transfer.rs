@@ -87,6 +87,8 @@ mod tests
         let mut cpu = CPU::new();
         let mut memory = Memory::new();
 
+        cpu.set_spsr(cpu.get_cpsr(), false);
+
         for i in 0..16
         {
             memory.store32(0x02000000 + i * 4, i);
