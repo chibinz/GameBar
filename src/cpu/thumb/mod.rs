@@ -23,7 +23,6 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
 
 pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
 {
-    disassemble::disassemble(cpu.instruction as u16);
     cpu.r[15] += 2;
 
     dispatch(cpu, memory, cpu.instruction as u16);
@@ -33,16 +32,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
 
 pub fn fetch(cpu: &mut CPU, memory: &mut Memory)
 {
-    if cpu.flushed
-    {
-        cpu.instruction = memory.load16(cpu.r[15]) as u32;
-        cpu.r[15] += 2;
-        cpu.flushed = false;
-    }
-    else
-    {
-        cpu.instruction = memory.load16(cpu.r[15] - 2) as u32;
-    }
+    cpu.instruction = memory.load16(cpu.r[15] - 2) as u32;
 }
 
 pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u16)

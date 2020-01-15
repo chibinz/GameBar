@@ -20,5 +20,5 @@ pub fn decode_execute(cpu: &mut CPU, instruction: u32)
     {
         cpu.r[15] = cpu.r[rn as usize] & 0xfffffffc;
     }
-    cpu.flushed = true;
+    cpu.flush();
 }

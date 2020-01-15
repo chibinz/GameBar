@@ -42,8 +42,8 @@ fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32))
             {
                 cpu.set_cpsr_bit(T, cpu.r[rs as usize].bit(0));
 
-                cpu.r[15] = cpu.r[rs as usize] & 0xfffffffe;
-                cpu.flushed = true;
+                cpu.r[15] = cpu.r[rs as usize];
+                cpu.flush();
             },
         _    => unreachable!()
     };
