@@ -25,9 +25,20 @@ pub fn decode(instruction: u32) -> (bool, u32, bool, u32, u32, u32)
 #[inline]
 pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32))
 {
-    let op1 = cpu.r[rn as usize];
-    let op2 = if i {rotate_immediate(cpu, operand2)} else {shift_register(cpu, operand2)};
-     
+    let mut op1 = cpu.r[rn as usize];
+    let mut op2 = if i {rotate_immediate(cpu, operand2)} 
+                  else {shift_register(cpu, operand2)};
+
+    // If a register is used to specify shift amount, the value of pc
+    // will be 12 head of the address of the currently executed instruction.
+    if !i && operand2.bit(4)
+    {
+        let rm = operand2.bits(3, 0);
+
+        if rn == 15 {op1 += 4};
+        if rm == 15 {op2 += 4}
+    }
+
     let result = match opcode
     {
         0b0000 => alu::and(cpu, op1, op2, s),
@@ -48,7 +59,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         0b1111 => alu::mvn(cpu, op1, op2, s),
         _      => unreachable!() 
     };
-
+    
     // Write result to register, if needed
     if opcode < 0b1000 || opcode > 0b1011
     {
@@ -56,7 +67,16 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
 
         if rd == 15
         {
+            // Direct manipulation of pc will result in a pipeline flush
+            // The next instruction will be fetched from memory address 
+            // at pc. pc is further incremented by 4 to maintain offset 8
+            // from the currently executed instruction.
             cpu.flushed = true;
+
+            if s
+            {
+                cpu.restore_cpsr();
+            }
         }
     }
 }

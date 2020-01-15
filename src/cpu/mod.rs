@@ -14,8 +14,16 @@ pub struct CPU
     pub flushed: bool,      // Determine whether the pipeline is empty
     pub r: [u32; 16],       // General purpose registers
 
-    cpsr : u32,
-    spsr : [u32; 5],
+    cpsr : u32,             // Current Program Status Register
+    spsr : u32,             // Saved Program Status Register (of current mode)
+    bank : [u32; 27],       // Banked registers
+
+    // 0 - 6:   R8_sys - R14_sys
+    // 7 - 14:  R8_fiq - R14_fiq, SPSR_fiq
+    // 15 - 17:  R13_svc, R14_svc, SPSR_svc
+    // 18 - 20: R13_abt, R14_abt, SPSR_abt
+    // 21 - 23: R13_irq, R14_irq, SPSR_irq
+    // 24 - 26: R13_und, R14_und, SPSR_und
 }
 
 impl CPU
@@ -27,8 +35,12 @@ impl CPU
             instruction: 0,
             flushed: true,
             r   : [0; 16],
-            cpsr: 0b10011, // On reset, the CPSR is forced to supervisor mode
-            spsr: [0; 5],
+
+            // On reset, the CPSR is forced to supervisor mode
+            // and I and F bits in the CPSR is set.
+            cpsr: 0b11010011, 
+            spsr: 0,
+            bank: [0; 27],
         }
     }
 
