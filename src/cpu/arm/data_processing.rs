@@ -36,7 +36,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         let rm = operand2.bits(3, 0);
 
         if rn == 15 {op1 += 4};
-        if rm == 15 {op2 += 4}
+        if rm == 15 {op2 += 4};
     }
 
     let result = match opcode
