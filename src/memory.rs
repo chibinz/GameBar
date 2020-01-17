@@ -64,7 +64,7 @@ impl Memory
 
         let ldh = |mem: &[u8]| mem[offset] as u16 | (mem[offset + 1] as u16) << 8;
 
-        let value = match address >> 24
+        match address >> 24
         {
             0x00 => ldh(self.bios.as_slice()),
             0x02 => ldh(self.ewram.as_slice()),
@@ -79,10 +79,7 @@ impl Memory
             },
             0x0e => ldh(self.sram.as_slice()),
             _    => panic!("Invalid memory address {:08x}", address),
-        };
-
-        let shift = (address & 0b1) * 8;
-        return value.rotate_right(shift); 
+        }
     }
 
     /// Load a word from memory
