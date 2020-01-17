@@ -44,8 +44,6 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     // address of the instruction plus 12
     let value = cpu.r[rd as usize] + if rd == 15 {4} else {0};
 
-    dbg!((i, p, u, w, lb, rn, rd, offset), address);
-
     // Privileged write back bit not handled
     if w || !p
     {
