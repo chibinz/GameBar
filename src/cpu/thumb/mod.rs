@@ -4,6 +4,7 @@ pub mod add_subtract;
 pub mod move_compare;
 pub mod alu_operations;
 pub mod hi_operations_bx;
+pub mod pc_relative_load;
 pub mod load_address;
 
 use crate::util::*;
@@ -62,7 +63,7 @@ pub fn dispatch(cpu: &mut CPU, _memory: &mut Memory)
                 _       => unreachable!(),
             }
         },
-        // 0b01001 => format!("LDR R{}, [PC, #{}]", rdb(), offset8() << 2),
+        0b01001 => pc_relative_load::decode_execute(cpu, instruction),
         // 0b01010 | 0b1011 => 
         // {
         //     match b11_9()
