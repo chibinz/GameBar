@@ -10,10 +10,13 @@ pub mod single_transfer_imm;
 pub mod halfword_transfer_imm;
 pub mod sp_relative_load;
 pub mod load_address;
+pub mod conditional_branch;
 
 use crate::util::*;
 use crate::cpu::CPU;
 use crate::memory::Memory;
+
+use super::arm::software_interrupt;
 
 #[inline]
 pub fn step(cpu: &mut CPU, memory: &mut Memory)
@@ -93,29 +96,17 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
         // },
         // 0b11000 => format!("STMIA R{}!, {{{:08b}}}", rb(), rlist()),
         // 0b11001 => format!("LDMIA R{}!, {{{:08b}}}", rb(), rlist()),
-        // 0b11010 | 0b11011 => 
-        // {
-        //     // TODO offset needs to be shifted
-        //     match cond()
-        //     {
-        //         0b0000 => format!("BEQ #{}", (offset8() + 2) << 1),
-        //         0b0001 => format!("BNE #{}", (offset8() + 2) << 1),
-        //         0b0010 => format!("BCS #{}", (offset8() + 2) << 1),
-        //         0b0011 => format!("BCC #{}", (offset8() + 2) << 1),
-        //         0b0100 => format!("BMI #{}", (offset8() + 2) << 1),
-        //         0b0101 => format!("BPL #{}", (offset8() + 2) << 1),
-        //         0b0110 => format!("BVS #{}", (offset8() + 2) << 1),
-        //         0b0111 => format!("BVC #{}", (offset8() + 2) << 1),
-        //         0b1000 => format!("BHI #{}", (offset8() + 2) << 1),
-        //         0b1001 => format!("BLS #{}", (offset8() + 2) << 1),
-        //         0b1010 => format!("BGE #{}", (offset8() + 2) << 1),
-        //         0b1011 => format!("BLT #{}", (offset8() + 2) << 1),
-        //         0b1100 => format!("BGT #{}", (offset8() + 2) << 1),
-        //         0b1101 => format!("BLE #{}", (offset8() + 2) << 1),
-        //         0b1111 => format!("SWI #{}", offset8()),
-        //         _      => format!("undefined"),
-        //     }
-        // },
+        0b11010 | 0b11011 => 
+        {
+            // TODO offset needs to be shifted
+            match instruction.bits(11, 8)
+            {
+                0b0000 ..=
+                0b1101 => conditional_branch::decode_execute(cpu, instruction),
+                0b1111 => software_interrupt::decode_execute(cpu),
+                _      => unreachable!(),
+            }
+        },
         // 0b11100 => format!("B #{}", offset11()),
         // 0b11110 => format!("BL-0"),
         // 0b11111 => format!("BL-1"),
