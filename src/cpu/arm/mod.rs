@@ -9,11 +9,13 @@ pub mod single_data_transfer;
 pub mod single_data_swap;
 pub mod halfword_data_transfer;
 pub mod block_data_transfer;
+pub mod software_interrupt;
 
 use crate::util::*;
 use crate::cpu::CPU;
 use crate::memory::Memory;
 
+#[inline]
 pub fn step(cpu: &mut CPU, memory: &mut Memory)
 {
     fetch(cpu, memory);
@@ -25,6 +27,13 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
     execute(cpu, memory);
 }
 
+#[inline]
+pub fn fetch(cpu: &mut CPU, memory: &mut Memory)
+{
+    cpu.instruction = memory.load32(cpu.r[15] - 4);
+}
+
+#[inline]
 pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
 {
     cpu.r[15] += 4;
@@ -32,19 +41,17 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
     let cond = cpu.instruction.bits(31, 28);
     if cpu.check_condition(cond)
     {
-        dispatch(cpu, memory, cpu.instruction);
+        dispatch(cpu, memory);
     }
 
     return 0;
 }
 
-pub fn fetch(cpu: &mut CPU, memory: &mut Memory)
+#[inline]
+pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
 {
-    cpu.instruction = memory.load32(cpu.r[15] - 4);
-}
+    let instruction = cpu.instruction;
 
-pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
-{
     let b74 = || instruction >> 6 & 0b10 | instruction >> 4 & 0b01;
     let b65 = || instruction >> 5 & 0b11;
 
@@ -60,15 +67,6 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
             _                 => data_processing::decode_execute(cpu, instruction)
         };
     };
-
-    // let data_process_imm = ||
-    // {   
-    //     match bits(instruction, 24, 20)
-    //     {
-    //         0b10110 | 0b10010 => psr_transfer::decode_execute(cpu, instruction),
-    //         _                 => data_processing::decode_execute(cpu, instruction),
-    //     }
-    // };
 
     // Multiply / Multiply Long / Single Data Swap
     let multiply_swap = |cpu: &mut CPU, memory: &mut Memory|
@@ -118,6 +116,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
         0b011 => single_data_transfer::decode_execute(cpu, memory, instruction),
         0b100 => block_data_transfer::decode_execute(cpu, memory, instruction),
         0b101 => branch_long::decode_execute(cpu, instruction), 
+        0b111 => software_interrupt::decode_execute(cpu),
         _     => unimplemented!(),
     };
 }

@@ -1,5 +1,6 @@
 use crate::util::*;
 use crate::cpu::CPU;
+use crate::cpu::register::PSRMode::User;
 use crate::memory::Memory;
 
 pub fn decode_execute(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
@@ -38,7 +39,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
         if !(l && rlist.bit(15))
         {
             // Switch to User mode register bank
-            cpu.set_cpsr(0b10000, false);
+            cpu.set_cpsr(User as u32, false);
         }
     }
 

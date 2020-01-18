@@ -1,4 +1,3 @@
-use crate::util::*;
 use crate::cpu::CPU;
 
 use PSRBit::*;
@@ -281,6 +280,7 @@ impl CPU
 #[cfg(test)]
 mod tests
 {
+    use crate::util::*;
     use super::*;
 
     #[test]
