@@ -5,6 +5,7 @@ pub mod move_compare;
 pub mod alu_operations;
 pub mod hi_operations_bx;
 pub mod pc_relative_load;
+pub mod data_transfer_reg;
 pub mod load_address;
 
 use crate::util::*;
@@ -40,7 +41,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
 }
 
 #[inline]
-pub fn dispatch(cpu: &mut CPU, _memory: &mut Memory)
+pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
 {
     let instruction = cpu.instruction as u16;
 
@@ -64,29 +65,8 @@ pub fn dispatch(cpu: &mut CPU, _memory: &mut Memory)
             }
         },
         0b01001 => pc_relative_load::decode_execute(cpu, instruction),
-        // 0b01010 | 0b1011 => 
-        // {
-        //     match b11_9()
-        //     {
-        //         0b000 => format!("STR R{}, [R{}, R{}]", rd(), rb(), ro()),
-        //         0b001 => format!("STRB R{}, [R{}, R{}]", rd(), rb(), ro()),
-        //         0b010 => format!("STRH R{}, [R{}, R{}]", rd(), rb(), ro()),
-        //         0b011 => format!("LDSB R{}, [R{}, R{}]", rd(), rb(), ro()),
-        //         0b100 => format!("LDR R{}, [R{}, R{}]", rd(), rb(), ro()),
-        //         0b101 => format!("LDRB R{}, [R{}, R{}]", rd(), rb(), ro()),
-        //         0b110 => format!("LDRH R{}, [R{}, R{}]", rd(), rb(), ro()),
-        //         0b111 => format!("LDSH R{}, [R{}, R{}]", rd(), rb(), ro()),
-        //         _    => format!("undefined"),
-        //     }
-        // },
-        // 0b01100 => format!("STR R{}, [R{}, #{}]",rd(), rb(), offset5() << 2),
-        // 0b01101 => format!("LDR R{}, [R{}, #{}]",rd(), rb(), offset5() << 2),
-        // 0b01110 => format!("STRB R{}, [R{}, #{}]",rd(), rb(), offset5()),
-        // 0b01111 => format!("LDRB R{}, [R{}, #{}]",rd(), rb(), offset5()),
-        // 0b10000 => format!("STRH R{}, [R{}, #{}]",rd(), rb(), offset5() << 1),
-        // 0b10001 => format!("LDRH R{}, [R{}, #{}]",rd(), rb(), offset5() << 1),
-        // 0b10010 => format!("STR R{}, [SP, #{}]", rdb(), offset8() << 2),
-        // 0b10011 => format!("LDR R{}, [SP, #{}]", rdb(), offset8() << 2),
+        0b01010 |
+        0b01011 =>  data_transfer_reg::decode_execute(cpu, memory, instruction),
         0b10100 ..=
         0b10101 => load_address::decode_execute(cpu, instruction),
         // 0b10110 | 0b10111 => 

@@ -85,12 +85,12 @@ pub fn disassemble(opcode: u16) -> String
             match b11_9()
             {
                 0b000 => format!("STR R{}, [R{}, R{}]", rd(), rb(), ro()),
-                0b001 => format!("STRB R{}, [R{}, R{}]", rd(), rb(), ro()),
-                0b010 => format!("STRH R{}, [R{}, R{}]", rd(), rb(), ro()),
+                0b001 => format!("STRH R{}, [R{}, R{}]", rd(), rb(), ro()),
+                0b010 => format!("STRB R{}, [R{}, R{}]", rd(), rb(), ro()),
                 0b011 => format!("LDSB R{}, [R{}, R{}]", rd(), rb(), ro()),
                 0b100 => format!("LDR R{}, [R{}, R{}]", rd(), rb(), ro()),
-                0b101 => format!("LDRB R{}, [R{}, R{}]", rd(), rb(), ro()),
-                0b110 => format!("LDRH R{}, [R{}, R{}]", rd(), rb(), ro()),
+                0b101 => format!("LDRH R{}, [R{}, R{}]", rd(), rb(), ro()),
+                0b110 => format!("LDRB R{}, [R{}, R{}]", rd(), rb(), ro()),
                 0b111 => format!("LDSH R{}, [R{}, R{}]", rd(), rb(), ro()),
                 _    => format!("undefined"),
             }
