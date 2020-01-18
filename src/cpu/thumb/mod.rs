@@ -10,6 +10,7 @@ use crate::util::*;
 use crate::cpu::CPU;
 use crate::memory::Memory;
 
+#[inline]
 pub fn step(cpu: &mut CPU, memory: &mut Memory)
 {
     fetch(cpu, memory);
@@ -21,22 +22,27 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
     execute(cpu, memory);
 }
 
-pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
-{
-    cpu.r[15] += 2;
-
-    dispatch(cpu, memory, cpu.instruction as u16);
-
-    0
-}
-
+#[inline]
 pub fn fetch(cpu: &mut CPU, memory: &mut Memory)
 {
     cpu.instruction = memory.load16(cpu.r[15] - 2) as u32;
 }
 
-pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u16)
+#[inline]
+pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
 {
+    cpu.r[15] += 2;
+
+    dispatch(cpu, memory);
+
+    0
+}
+
+#[inline]
+pub fn dispatch(cpu: &mut CPU, _memory: &mut Memory)
+{
+    let instruction = cpu.instruction as u16;
+
     match instruction.bits(15, 11)
     {
         0b00000 ..= 
