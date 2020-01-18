@@ -6,6 +6,8 @@ pub mod alu_operations;
 pub mod hi_operations_bx;
 pub mod pc_relative_load;
 pub mod data_transfer_reg;
+pub mod single_transfer_imm;
+pub mod halfword_transfer_imm;
 pub mod load_address;
 
 use crate::util::*;
@@ -64,9 +66,15 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
                 _       => unreachable!(),
             }
         },
-        0b01001 => pc_relative_load::decode_execute(cpu, instruction),
+        0b01001 => pc_relative_load::decode_execute(cpu, memory, instruction),
         0b01010 |
-        0b01011 =>  data_transfer_reg::decode_execute(cpu, memory, instruction),
+        0b01011 => data_transfer_reg::decode_execute(cpu, memory, instruction),
+        0b01100 ..=
+        0b01111 => single_transfer_imm::decode_execute(cpu, memory, instruction),
+        0b10000 |
+        0b10001 => halfword_transfer_imm::decode_execute(cpu, memory, instruction),
+        // 0b10010 => format!("STR R{}, [SP, #{}]", rdb(), offset8() << 2),
+        // 0b10011 => format!("LDR R{}, [SP, #{}]", rdb(), offset8() << 2),
         0b10100 ..=
         0b10101 => load_address::decode_execute(cpu, instruction),
         // 0b10110 | 0b10111 => 
