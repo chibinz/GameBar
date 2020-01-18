@@ -76,8 +76,8 @@ mod tests
         assert_eq!(cpu.get_cpsr_bit(Z), true);
 
         // BX 
-        cpu.r[14] = 0xffffffff;
+        cpu.r[14] = 0xfffffffb;
         execute(&mut cpu, (0b11, 14, 0));
-        assert_eq!(cpu.r[15], 0xfffffffe);
+        assert_eq!(cpu.r[15], 0xfffffffc);
     }
 }

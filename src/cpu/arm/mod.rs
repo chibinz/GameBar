@@ -6,6 +6,7 @@ pub mod branch_exchange;
 pub mod multiply_accumulate;
 pub mod multiply_long_accumulate;
 pub mod single_data_transfer;
+pub mod single_data_swap;
 pub mod halfword_data_transfer;
 pub mod block_data_transfer;
 
@@ -70,7 +71,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
     // };
 
     // Multiply / Multiply Long / Single Data Swap
-    let multiply_swap = |cpu: &mut CPU|
+    let multiply_swap = |cpu: &mut CPU, memory: &mut Memory|
     {
         match bits(instruction, 24, 20)
         {
@@ -82,9 +83,9 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
             0b01110 | 0b01111 => multiply_long_accumulate::decode_execute(cpu, instruction),
 
             // Single data swap
-            0b10000 | 0b10100 => unimplemented!(),
+            0b10000 | 0b10100 => single_data_swap::decode_execute(cpu, memory, instruction),
 
-            _                 => unimplemented!(),
+            _                 => unreachable!(),
         };
     };
     
@@ -104,7 +105,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
                 }
                 else
                 {
-                    multiply_swap(cpu)
+                    multiply_swap(cpu, memory)
                 }
             }
         },
