@@ -58,9 +58,9 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
         0b011 => memory.store16(address, value as u16),
         0b101 => cpu.r[rd as usize] = memory.load16(address) as u32 
                                     + if rd == 15 {4} else {0},
-        0b110 => cpu.r[rd as usize] = sign_extend(memory.load8(address) as u32, 7) as u32 
+        0b110 => cpu.r[rd as usize] = memory.load8(address) as i8 as i32 as u32 
                                     + if rd == 15 {4} else {0},
-        0b111 => cpu.r[rd as usize] = sign_extend(memory.load16(address) as u32, 15) as u32 
+        0b111 => cpu.r[rd as usize] = memory.load16(address) as i16 as i32 as u32
                                     + if rd == 15 {4} else {0},
         _     => unreachable!()
     }
