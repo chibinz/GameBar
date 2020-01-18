@@ -55,10 +55,10 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     {
         0b00 => memory.store32(address, value),
         0b01 => memory.store8(address, value as u8),
-        0b10 => cpu.r[rd as usize] = memory.load32(address) 
-                                   + if rd == 15 {4} else {0},
-        0b11 => cpu.r[rd as usize] = memory.load8(address) as u32 
-                                   + if rd == 15 {4} else {0},
+        0b10 => {cpu.r[rd as usize] = memory.load32(address);
+                 if rd == 15 {cpu.flush()}},
+        0b11 => {cpu.r[rd as usize] = memory.load8(address) as u32;
+                 if rd == 15 {cpu.flush()}},
         _    => unreachable!()
     }
 }
@@ -78,12 +78,12 @@ mod tests
         cpu.r[0] = 0x02000000;
 
         // Immediate offset, pre-indexing, up offset, write back, load byte
-        execute(&mut cpu, &mut memory, (true, true, true, true, 0b11, 0, 1, 1));
+        execute(&mut cpu, &mut memory, (false, true, true, true, 0b11, 0, 1, 1));
         assert_eq!(cpu.r[1], 0xff);
         assert_eq!(cpu.r[0], 0x02000001);
 
         // Immediate offset, pre-indexing, down offset, no write back, store byte
-        execute(&mut cpu, &mut memory, (true, true, false, false, 0b01, 0, 1, 1));
+        execute(&mut cpu, &mut memory, (false, true, false, false, 0b01, 0, 1, 1));
         assert_eq!(memory.load8(0x02000000), 0xff);
     }
 
@@ -97,13 +97,13 @@ mod tests
         cpu.r[0] = 0x02000000;
 
         // Immediate offset, post-indexing, up offset, write back, load word
-        execute(&mut cpu, &mut memory, (true, false, true, true, 0b10, 0, 1, 4));
+        execute(&mut cpu, &mut memory, (false, false, true, true, 0b10, 0, 1, 4));
         assert_eq!(cpu.r[1], 0xdeadbeef);
         assert_eq!(cpu.r[0], 0x02000004);
 
         cpu.r[1] = 0;
         // Immediate offset, pre-indexing, down offset, write back, store word
-        execute(&mut cpu, &mut memory, (true, true, false, true, 0b00, 0, 1, 4));
+        execute(&mut cpu, &mut memory, (false, true, false, true, 0b00, 0, 1, 4));
         assert_eq!(memory.load32(0x02000000), 0);
         assert_eq!(cpu.r[0], 0x02000000);
     }

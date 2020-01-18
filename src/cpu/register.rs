@@ -57,7 +57,7 @@ impl CPU
             // Save state and switch mode
             let mode = CPU::get_mode(r & 0b11111);
             self.save_state();
-            self.switch_mode(mode);
+            self.switch_bank(mode);
             
             // Change control bits
             self.cpsr = r;
@@ -188,7 +188,7 @@ impl CPU
         }
     }
 
-    pub fn switch_mode(&mut self, mode: PSRMode)
+    pub fn switch_bank(&mut self, mode: PSRMode)
     {
         match mode
         {

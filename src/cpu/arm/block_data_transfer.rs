@@ -27,52 +27,88 @@ pub fn decode(instruction: u32) -> (bool, bool, bool, bool, bool, u32, u32)
 pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     (p, u, s, w, l, rn, rlist): (bool, bool, bool, bool, bool, u32, u32))
 {
+    // Misaligned address not handled
     let mut address = cpu.r[rn as usize];
+    let original = address;
+
+    let saved_cpsr = cpu.get_cpsr();
+
+    if s
+    {
+        if !(l && rlist.bit(15))
+        {
+            // Switch to User mode register bank
+            cpu.set_cpsr(0b10000, false);
+        }
+    }
+
+    // Whether or not the p bit is set, the final address after transfer 
+    // should be the same. 
+    if w
+    {
+        if u
+        {
+            cpu.r[rn as usize] = address + 4 * rlist.count_ones();
+        }
+        else
+        {
+            cpu.r[rn as usize] = address - 4 * rlist.count_ones();
+        }
+    }
 
     if p
     {
         address = if u {address + 4} else {address - 4}
     }
 
+    // Empty list not handled
     for i in 0..16
     {
         let j = if u {i} else {15 - i};
-        if bit(rlist, j)
+        if rlist.bit(j)
         {
             if l
             {
                 cpu.r[j as usize] = memory.load32(address);
+
+                if j == 15
+                {
+                    cpu.flush();
+                }
             }
             else
             {
                 memory.store32(address, cpu.r[j as usize]);
+
+                if j == 15
+                {
+                    memory.store32(address, cpu.r[15] + 4);
+                }
+
+                // The first register to be stored will store the 
+                // unchanged value.
+                if w && j == rn && rlist.trailing_zeros() == rn
+                {
+                    memory.store32(address, original);
+                }
             }
 
             address = if u {address + 4} else {address - 4};
         }
     }
 
-    if s && bit(rlist, 0)
+    if s
     {
         // If the instruction is a LDM then SPSR_<mode> is transferred
         // to CPSR at the same time as R15 is loaded.
-        if l
+        if l && rlist.bit(15)
         {
             cpu.restore_cpsr();
         }
-    }
-
-    // Whether or not the p bit is set, the final address after transfer 
-    // should be the same. In the pre-increment case, the final address 
-    // needs to be adjusted
-    if w && !bit(rlist, rn)
-    {
-        if p
+        else
         {
-            address = if u {address - 4} else {address + 4}
+            cpu.set_cpsr(saved_cpsr, false);
         }
-
-        cpu.r[rn as usize] = address
     }
 }
 
@@ -97,10 +133,13 @@ mod tests
 
         // Write back bit is redundant because R0 is overwritten
         execute(&mut cpu, &mut memory, (false, true, true, true, true, 0, 0xffff));
-        for i in 0..16
+        for i in 0..15
         {
             assert_eq!(cpu.r[i as usize], i);
         }
+
+        // PC should be word aligned
+        assert_eq!(cpu.r[15], 16);
     }
 
     #[test]
