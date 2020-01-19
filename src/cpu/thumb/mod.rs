@@ -11,6 +11,7 @@ pub mod halfword_transfer_imm;
 pub mod sp_relative_load;
 pub mod load_address;
 pub mod add_sp;
+pub mod push_pop;
 pub mod conditional_branch;
 pub mod unconditional_branch;
 
@@ -85,15 +86,13 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
         0b10101 => load_address::decode_execute(cpu, instruction),
         0b10110 | 0b10111 => 
         {
-            match b11_8()
+            match instruction.bits(11, 8)
             {
                 // needs better implementation
                 0b0000 => add_sp::decode_execute(cpu, instruction),
-                0b0100 => format!("PUSH R{{{:08b}}}", offset8()),
-                0b0101 => format!("PUSH R{{{:08b}, LR}}", offset8()),
-                0b1100 => format!("POP {{{:08b}}}", offset8()),
-                0b1101 => format!("POP {{{:08b}, PC}}", offset8()),
-                _      => format!("undefined"),
+                0b0100 ..=
+                0b1101 => push_pop::decode_execute(cpu, memory, instruction),
+                _      => unreachable!(),
             }
         },
         // 0b11000 => format!("STMIA R{}!, {{{:08b}}}", rb(), rlist()),
