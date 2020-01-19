@@ -15,6 +15,7 @@ pub mod push_pop;
 pub mod multiple_transfer;
 pub mod conditional_branch;
 pub mod unconditional_branch;
+pub mod long_branch;
 
 use crate::util::*;
 use crate::cpu::CPU;
@@ -109,8 +110,8 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
             }
         },
         0b11100 => unconditional_branch::decode_execute(cpu, instruction),
-        // 0b11110 => format!("BL-0"),
-        // 0b11111 => format!("BL-1"),
+        0b11110 |
+        0b11111 => long_branch::decode_execute(cpu, instruction),
         _       => unimplemented!(),
     };
 }
