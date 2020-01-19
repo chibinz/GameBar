@@ -12,6 +12,7 @@ pub mod sp_relative_load;
 pub mod load_address;
 pub mod add_sp;
 pub mod push_pop;
+pub mod multiple_transfer;
 pub mod conditional_branch;
 pub mod unconditional_branch;
 
@@ -88,15 +89,14 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
         {
             match instruction.bits(11, 8)
             {
-                // needs better implementation
                 0b0000 => add_sp::decode_execute(cpu, instruction),
                 0b0100 ..=
                 0b1101 => push_pop::decode_execute(cpu, memory, instruction),
                 _      => unreachable!(),
             }
         },
-        // 0b11000 => format!("STMIA R{}!, {{{:08b}}}", rb(), rlist()),
-        // 0b11001 => format!("LDMIA R{}!, {{{:08b}}}", rb(), rlist()),
+        0b11000 |
+        0b11001 => multiple_transfer::decode_execute(cpu, memory, instruction),
         0b11010 | 0b11011 => 
         {
             // TODO offset needs to be shifted
