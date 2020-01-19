@@ -30,21 +30,29 @@ fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32))
 
     match op
     {
-        0b00 => cpu.r[rd as usize] = 
-                alu::add(cpu, op1, op2, false),
-        0b01 => 
-            {
-                alu::cmp(cpu, op1, op2);
-            },
-        0b10 => cpu.r[rd as usize] = 
-                alu::mov(cpu, op1, op2, false),
-        0b11 => 
-            {
-                cpu.set_cpsr_bit(T, cpu.r[rs as usize].bit(0));
+        0b00 => 
+        {
+            cpu.r[rd as usize] = alu::add(cpu, op1, op2, false);
 
-                cpu.r[15] = cpu.r[rs as usize];
-                cpu.flush();
-            },
+            if rd == 15 {cpu.r[15] &= 0xfffffffe}
+        },
+        0b01 => 
+        {
+            alu::cmp(cpu, op1, op2);
+        },
+        0b10 => 
+        {
+            cpu.r[rd as usize] = alu::mov(cpu, op1, op2, false);
+            
+            if rd == 15 {cpu.r[15] &= 0xfffffffe}
+        },
+        0b11 => 
+        {
+            cpu.set_cpsr_bit(T, cpu.r[rs as usize].bit(0));
+
+            cpu.r[15] = cpu.r[rs as usize];
+            cpu.flush();
+        },
         _    => unreachable!()
     };
 

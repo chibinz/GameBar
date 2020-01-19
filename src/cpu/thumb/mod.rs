@@ -11,6 +11,7 @@ pub mod halfword_transfer_imm;
 pub mod sp_relative_load;
 pub mod load_address;
 pub mod conditional_branch;
+pub mod unconditional_branch;
 
 use crate::util::*;
 use crate::cpu::CPU;
@@ -107,7 +108,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
                 _      => unreachable!(),
             }
         },
-        // 0b11100 => format!("B #{}", offset11()),
+        0b11100 => unconditional_branch::decode_execute(cpu, instruction),
         // 0b11110 => format!("BL-0"),
         // 0b11111 => format!("BL-1"),
         _       => unimplemented!(),
