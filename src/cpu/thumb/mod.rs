@@ -100,7 +100,6 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
         0b11001 => multiple_transfer::decode_execute(cpu, memory, instruction),
         0b11010 | 0b11011 => 
         {
-            // TODO offset needs to be shifted
             match instruction.bits(11, 8)
             {
                 0b0000 ..=

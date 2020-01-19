@@ -13,8 +13,6 @@ pub fn decode_execute(cpu: &mut CPU, memory: &mut Memory, instruction: u16)
 #[inline]
 fn decode(instruction: u16) -> (bool, u32, u32)
 {
-    debug_assert_eq!(instruction.bits(10, 9), 0b10);
-    
     let l = instruction.bit(11);
     let rb = instruction.bits(10, 8);
     let rlist = instruction.bits(7, 0);

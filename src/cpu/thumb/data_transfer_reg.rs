@@ -26,6 +26,7 @@ fn execute(cpu: &mut CPU, memory: &mut Memory, (lbh, ro, rb, rd): (u32, u32, u32
 {   
     let address = cpu.r[rb as usize] + cpu.r[ro as usize];
 
+    // Misaligned halfword access is not handled
     match lbh
     {
         0b000 => memory.store32(address, cpu.r[rd as usize]),
@@ -35,7 +36,7 @@ fn execute(cpu: &mut CPU, memory: &mut Memory, (lbh, ro, rb, rd): (u32, u32, u32
         0b100 => cpu.r[rd as usize] = memory.load32(address),
         0b101 => cpu.r[rd as usize] = memory.load16(address) as u32,
         0b110 => cpu.r[rd as usize] = memory.load8(address) as u32,
-        0b111 => cpu.r[rd as usize] = memory.load8(address) as i16 as i32 as u32,
+        0b111 => cpu.r[rd as usize] = memory.load16(address) as i16 as i32 as u32,
         _    => unreachable!(),
     }
 }
