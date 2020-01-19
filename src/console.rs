@@ -30,7 +30,8 @@ impl Console
     pub fn load_gamepak(&mut self, gamepak: &String)
     {
         self.memory.load_rom(gamepak);
-        self.cpu.r[15] = 0x08000004;
+        self.cpu.r[15] = 0x08000004; // PC fetch at 0x08000000
+        self.cpu.r[13] = 0x03007f00; // SP bottom at 0x03007f00
     }
 
     pub fn debug(&mut self) -> bool
