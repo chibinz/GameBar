@@ -21,8 +21,7 @@ fn decode(instruction: u16) -> (bool, u32, u32)
 #[inline]
 fn execute(cpu: &mut CPU, memory: &mut Memory, (l, rd, word8): (bool, u32, u32))
 {   
-    // Bit 1 of SP is forced to 0 to ensure it is word aligned.
-    let address = (cpu.r[13] & 0xfffffffc) + (word8 << 2);
+    let address = cpu.r[13] + (word8 << 2);
 
     if l
     {

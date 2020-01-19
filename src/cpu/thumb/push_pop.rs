@@ -40,6 +40,8 @@ fn execute(cpu: &mut CPU, memory: &mut Memory, (l, r, rlist): (bool, bool, u32))
     if r && l
     {
         cpu.r[15] = memory.load32(cpu.r[13]);
+        cpu.flush();
+        
         cpu.r[13] += 4;
     }
 }
