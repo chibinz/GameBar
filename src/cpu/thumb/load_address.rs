@@ -26,7 +26,10 @@ fn execute(cpu: &mut CPU, (sp, rd, word8): (bool, u32, u32))
     }
     else
     {
-        cpu.r[rd as usize] = cpu.r[15] + (word8 << 2);
+        // Bit 1 of PC is forced to 0.
+        // The value of the PC will be 4 bytes greater than the address 
+        // of the instruction before bit 1 is forced to 0.
+        cpu.r[rd as usize] = (cpu.r[15] & 0xfffffffc) + (word8 << 2);
     }
 }
 

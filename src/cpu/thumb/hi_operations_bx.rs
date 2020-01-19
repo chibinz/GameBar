@@ -34,7 +34,7 @@ fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32))
         {
             cpu.r[rd as usize] = alu::add(cpu, op1, op2, false);
 
-            if rd == 15 {cpu.r[15] &= 0xfffffffe}
+            if rd == 15 {cpu.flush()}
         },
         0b01 => 
         {
@@ -44,7 +44,7 @@ fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32))
         {
             cpu.r[rd as usize] = alu::mov(cpu, op1, op2, false);
             
-            if rd == 15 {cpu.r[15] &= 0xfffffffe}
+            if rd == 15 {cpu.flush()}
         },
         0b11 => 
         {
