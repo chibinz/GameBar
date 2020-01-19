@@ -10,6 +10,7 @@ pub mod single_transfer_imm;
 pub mod halfword_transfer_imm;
 pub mod sp_relative_load;
 pub mod load_address;
+pub mod add_sp;
 pub mod conditional_branch;
 pub mod unconditional_branch;
 
@@ -82,19 +83,19 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
         0b10011 => sp_relative_load::decode_execute(cpu, memory, instruction),
         0b10100 |
         0b10101 => load_address::decode_execute(cpu, instruction),
-        // 0b10110 | 0b10111 => 
-        // {
-        //     match b11_8()
-        //     {
-        //         // needs better implementation
-        //         0b0000 => format!("ADD SP #{}", if sign7() > 0 {offset7() as i16 * 2} else {-(offset7() as i16 * 2)}),
-        //         0b0100 => format!("PUSH R{{{:08b}}}", offset8()),
-        //         0b0101 => format!("PUSH R{{{:08b}, LR}}", offset8()),
-        //         0b1100 => format!("POP {{{:08b}}}", offset8()),
-        //         0b1101 => format!("POP {{{:08b}, PC}}", offset8()),
-        //         _      => format!("undefined"),
-        //     }
-        // },
+        0b10110 | 0b10111 => 
+        {
+            match b11_8()
+            {
+                // needs better implementation
+                0b0000 => add_sp::decode_execute(cpu, instruction),
+                0b0100 => format!("PUSH R{{{:08b}}}", offset8()),
+                0b0101 => format!("PUSH R{{{:08b}, LR}}", offset8()),
+                0b1100 => format!("POP {{{:08b}}}", offset8()),
+                0b1101 => format!("POP {{{:08b}, PC}}", offset8()),
+                _      => format!("undefined"),
+            }
+        },
         // 0b11000 => format!("STMIA R{}!, {{{:08b}}}", rb(), rlist()),
         // 0b11001 => format!("LDMIA R{}!, {{{:08b}}}", rb(), rlist()),
         0b11010 | 0b11011 => 
