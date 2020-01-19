@@ -1,5 +1,6 @@
 use crate::util::*;
 use crate::cpu::CPU;
+use crate::cpu::alu;
 use crate::cpu::barrel_shifter::shift;
 
 #[inline]
@@ -24,7 +25,8 @@ fn execute(cpu: &mut CPU, (op, offset5, rs, rd): (u32, u32, u32, u32))
 {
     let shifted = shift(cpu, cpu.r[rs as usize], offset5, op);
 
-    cpu.r[rd as usize] = shifted;
+    // Use alu's mov instead of direct assignment to set flags
+    cpu.r[rd as usize] = alu::mov(cpu, shifted, shifted, true);
 }
 
 #[cfg(test)]

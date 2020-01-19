@@ -25,7 +25,7 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
     fetch(cpu, memory);
 
     println!("{}", cpu);
-    print!("{:08x}: {:04x} | {:016b} ", cpu.r[15] - 4, cpu.instruction, cpu.instruction);
+    print!("{:08x}: {:04x} | {:016b} ", cpu.r[15] - 2, cpu.instruction, cpu.instruction);
     println!("{}", disassemble::disassemble(cpu.instruction as u16));
 
     execute(cpu, memory);

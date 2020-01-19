@@ -103,8 +103,8 @@ pub fn disassemble(opcode: u16) -> String
         0b10001 => format!("LDRH R{}, [R{}, #{}]",rd(), rb(), offset5() << 1),
         0b10010 => format!("STR R{}, [SP, #{}]", rdb(), offset8() << 2),
         0b10011 => format!("LDR R{}, [SP, #{}]", rdb(), offset8() << 2),
-        0b10100 => format!("ADD R{}, PC, #{}", rd(), offset8() << 2),
-        0b10101 => format!("ADD R{}, SP, #{}", rd(), offset8() << 2),
+        0b10100 => format!("ADD R{}, PC, #{}", rdb(), offset8() << 2),
+        0b10101 => format!("ADD R{}, SP, #{}", rdb(), offset8() << 2),
         0b10110 | 0b10111 => 
         {
             match b11_8()
