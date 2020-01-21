@@ -1,10 +1,12 @@
+#![allow(non_snake_case)]
+
 pub mod cpu;
 pub mod memory;
 pub mod console;
 pub mod util;
+pub mod debug;
 
 use std::env;
-use std::time::Instant;
 
 fn main() 
 {
@@ -18,15 +20,7 @@ fn main()
     let mut console = console::Console::new();
     console.memory.load_rom(&args[1]);
     console.memory.load_bios(&"rom/gba_bios.bin".to_string());
-
-    let start = Instant::now();
-    loop
-    {
-        if !console.debug()
-        {
-            break;
-        }
-    }
-
-    println!("time elapsed: {:?}", start.elapsed());
+    
+    let mut debugger = debug::Debugger::new(&mut console);
+    debugger.run();
 }
