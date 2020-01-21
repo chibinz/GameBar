@@ -57,7 +57,7 @@ impl Console
     pub fn debug(&mut self) -> bool
     {
         self.print();
-        
+
         print!("(debug) ");
         io::stdout().flush().ok().unwrap();
 

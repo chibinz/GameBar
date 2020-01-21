@@ -2,11 +2,13 @@ use crate::util::*;
 use crate::cpu::CPU;
 use crate::memory::Memory;
 
+#[inline]
 pub fn decode_execute(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
 {
     execute(cpu, memory, decode(instruction));
 }
 
+#[inline]
 pub fn decode(instruction: u32) -> (bool, bool, bool, bool, u32, u32, u32 ,u32)
 {
     debug_assert_eq!(instruction.bits(27, 25), 0b000);
@@ -30,6 +32,7 @@ pub fn decode(instruction: u32) -> (bool, bool, bool, bool, u32, u32, u32 ,u32)
     (p, u, i, w, lsh, rn, rd, offset)
 }
 
+#[inline]
 pub fn execute(cpu: &mut CPU, memory: &mut Memory, 
     (p, u, i, w, lsh, rn, rd, offset): (bool, bool, bool, bool, u32, u32, u32 ,u32))
 {

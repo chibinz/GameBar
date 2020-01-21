@@ -1,6 +1,7 @@
 use crate::util::*;
 use crate::cpu::CPU;
 
+#[inline]
 pub fn decode_execute(cpu: &mut CPU, instruction: u32)
 {
     // If the link bit is set, the old value of pc is written

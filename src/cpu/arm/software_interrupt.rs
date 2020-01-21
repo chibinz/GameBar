@@ -1,6 +1,7 @@
 use crate::cpu::CPU;
 use crate::cpu::register::PSRMode::Supervisor;
 
+#[inline]
 pub fn decode_execute(cpu: &mut CPU)
 {
     cpu.r[15] = 0x08;

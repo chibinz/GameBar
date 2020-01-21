@@ -2,6 +2,7 @@ use crate::util::*;
 use crate::cpu::CPU;
 use crate::cpu::register::PSRBit::T;
 
+#[inline]
 pub fn decode_execute(cpu: &mut CPU, instruction: u32)
 {
     debug_assert_eq!(instruction.bits(27, 4), 0b000100101111111111110001);

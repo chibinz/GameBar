@@ -2,6 +2,7 @@ use crate::util::*;
 use crate::cpu::CPU;
 use crate::cpu::barrel_shifter::rotate_immediate;
 
+#[inline]
 pub fn decode_execute(cpu: &mut CPU, instruction: u32)
 {
     let l = instruction.bit(21);

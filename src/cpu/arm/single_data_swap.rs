@@ -2,11 +2,13 @@ use crate::util::*;
 use crate::cpu::CPU;
 use crate::memory::Memory;
 
+#[inline]
 pub fn decode_execute(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
 {
     execute(cpu, memory, decode(instruction));
 }
 
+#[inline]
 pub fn decode(instruction: u32) -> (bool, u32, u32, u32)
 {
     let b = instruction.bit(22);
@@ -17,6 +19,7 @@ pub fn decode(instruction: u32) -> (bool, u32, u32, u32)
     (b, rn, rd, rm)
 }
 
+#[inline]
 pub fn execute(cpu: &mut CPU, memory: &mut Memory, (b, rn, rd, rm): (bool, u32, u32, u32))
 {
     if b
