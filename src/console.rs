@@ -27,15 +27,37 @@ impl Console
         self.cpu.step(&mut self.memory);
     }
 
-    pub fn load_gamepak(&mut self, gamepak: &String)
+    pub fn print(&self)
     {
-        self.memory.load_rom(gamepak);
-        self.cpu.r[15] = 0x08000004; // PC fetch at 0x08000000
-        self.cpu.r[13] = 0x03007f00; // SP bottom at 0x03007f00
+        self.cpu.print();
+
+        self.disassemble();
+    }
+
+    pub fn disassemble(&self)
+    {
+        if self.cpu.in_thumb_mode()
+        {
+            let address = self.cpu.r[15] - 2;
+            let instruction = self.memory.load16(address);
+            print!("{:08x}: ", address);
+            print!("{:04x} ", instruction);
+            println!("{}", cpu::thumb::disassemble::disassemble(instruction));
+        }
+        else
+        {
+            let address = self.cpu.r[15] - 4;
+            let instruction = self.memory.load32(address);
+            print!("{:08x}: ", address);
+            print!("{:08x} ", instruction);
+            println!("{}", cpu::arm::disassemble::disassemble(instruction));
+        }
     }
 
     pub fn debug(&mut self) -> bool
     {
+        self.print();
+        
         print!("(debug) ");
         io::stdout().flush().ok().unwrap();
 
@@ -58,28 +80,8 @@ impl Console
             _             => self.step(),
         };
 
+        self.step();
+
         true
-    }
-
-    pub fn print(&self)
-    {
-        println!("{}", self.cpu);
-    }
-
-
-    pub fn disassemble(&self)
-    {
-        if self.cpu.in_thumb_mode()
-        {
-            let halfword = self.memory.load16(self.cpu.r[15]);
-            print!("{:08x}: {:04x} | {:016b} ", self.cpu.r[15], halfword, halfword);
-            println!("{}", cpu::thumb::disassemble::disassemble(halfword));
-        }
-        else
-        {
-            let word = self.memory.load32(self.cpu.r[15]);
-            print!("{:08x}: {:08x} | {:032b} ", self.cpu.r[15], word, word);
-            println!("{}", cpu::arm::disassemble::disassemble(word));
-        }
     }
 }

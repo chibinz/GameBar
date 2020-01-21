@@ -102,28 +102,29 @@ pub fn disassemble(opcode: u32) -> String
         // actually (opcode >> 8 & 0b00001111) << 1, immediate value is rotated twice by this field
         let rotate = opcode >> 7 & 0b00011110;
         let immediate = opcode & 0b11111111;
+        let op2 = immediate.rotate_right(rotate);
 
         match b24_20()
         {
-            0b00000 | 0b00001 => format!("AND{}{} R{}, R{}, #{:#x}, #{:#x}", cond(), s(), rd(), rn(), immediate, rotate),
-            0b00010 | 0b00011 => format!("EOR{}{} R{}, R{}, #{:#x}, #{:#x}", cond(), s(), rd(), rn(), immediate, rotate),
-            0b00100 | 0b00101 => format!("SUB{}{} R{}, R{}, #{:#x}, #{:#x}", cond(), s(), rd(), rn(), immediate, rotate),
-            0b00110 | 0b00111 => format!("RSB{}{} R{}, R{}, #{:#x}, #{:#x}", cond(), s(), rd(), rn(), immediate, rotate),
-            0b01000 | 0b01001 => format!("ADD{}{} R{}, R{}, #{:#x}, #{:#x}", cond(), s(), rd(), rn(), immediate, rotate),
-            0b01010 | 0b01011 => format!("ADC{}{} R{}, R{}, #{:#x}, #{:#x}", cond(), s(), rd(), rn(), immediate, rotate),
-            0b01100 | 0b01101 => format!("SBC{}{} R{}, R{}, #{:#x}, #{:#x}", cond(), s(), rd(), rn(), immediate, rotate),
-            0b01110 | 0b01111 => format!("RSC{}{} R{}, R{}, #{:#x}, #{:#x}", cond(), s(), rd(), rn(), immediate, rotate),
-            0b10001           => format!("TST{}S R{}, #{:#x}, #{:#x}", cond(), rn(), immediate, rotate),
-            0b10011           => format!("TEQ{}S R{}, #{:#x}, #{:#x}", cond(), rn(), immediate, rotate),
-            0b10101           => format!("CMP{}S R{}, #{:#x}, #{:#x}", cond(), rn(), immediate, rotate),
-            0b10111           => format!("CMN{}S R{}, #{:#x}, #{:#x}", cond(), rn(), immediate, rotate),
-            0b11000 | 0b11001 => format!("ORR{}{} R{}, R{}, #{:#x}, #{:#x}", cond(), s(), rd(), rn(), immediate, rotate),
-            0b11010 | 0b11011 => format!("MOV{}{} R{}, #{:#x}, #{:#x}", cond(), s(), rd(), immediate, rotate),
-            0b11100 | 0b11101 => format!("BIC{}{} R{}, R{}, #{:#x}, #{:#x}", cond(), s(), rd(), rn(), immediate, rotate),
-            0b11110 | 0b11111 => format!("MVN{}{} R{}, #{:#x}, #{:#x}", cond(), s(), rd(), immediate, rotate),
+            0b00000 | 0b00001 => format!("AND{}{} R{}, R{}, #{:#x}", cond(), s(), rd(), rn(), op2),
+            0b00010 | 0b00011 => format!("EOR{}{} R{}, R{}, #{:#x}", cond(), s(), rd(), rn(), op2),
+            0b00100 | 0b00101 => format!("SUB{}{} R{}, R{}, #{:#x}", cond(), s(), rd(), rn(), op2),
+            0b00110 | 0b00111 => format!("RSB{}{} R{}, R{}, #{:#x}", cond(), s(), rd(), rn(), op2),
+            0b01000 | 0b01001 => format!("ADD{}{} R{}, R{}, #{:#x}", cond(), s(), rd(), rn(), op2),
+            0b01010 | 0b01011 => format!("ADC{}{} R{}, R{}, #{:#x}", cond(), s(), rd(), rn(), op2),
+            0b01100 | 0b01101 => format!("SBC{}{} R{}, R{}, #{:#x}", cond(), s(), rd(), rn(), op2),
+            0b01110 | 0b01111 => format!("RSC{}{} R{}, R{}, #{:#x}", cond(), s(), rd(), rn(), op2),
+            0b10001           => format!("TST{}S R{}, #{:#x}", cond(), rn(), op2),
+            0b10011           => format!("TEQ{}S R{}, #{:#x}", cond(), rn(), op2),
+            0b10101           => format!("CMP{}S R{}, #{:#x}", cond(), rn(), op2),
+            0b10111           => format!("CMN{}S R{}, #{:#x}", cond(), rn(), op2),
+            0b11000 | 0b11001 => format!("ORR{}{} R{}, R{}, #{:#x}", cond(), s(), rd(), rn(), op2),
+            0b11010 | 0b11011 => format!("MOV{}{} R{}, #{:#x}", cond(), s(), rd(), op2),
+            0b11100 | 0b11101 => format!("BIC{}{} R{}, R{}, #{:#x}", cond(), s(), rd(), rn(), op2),
+            0b11110 | 0b11111 => format!("MVN{}{} R{}, #{:#x}", cond(), s(), rd(), op2),
             
-            0b10110           => format!("MSR{} SPSR, #{:#x}, #{:#x}", cond(), immediate, rotate),
-            0b10010           => format!("MSR{} CPSR, #{:#x}, #{:#x}", cond(), immediate, rotate),
+            0b10110           => format!("MSR{} SPSR, #{:#x}", cond(), op2),
+            0b10010           => format!("MSR{} CPSR, #{:#x}", cond(), op2),
 
             _                 => format!("undefined"),
         }
@@ -290,8 +291,8 @@ mod tests
     #[test]
     fn psr_transfer_immediate()
     {
-        assert_eq!(disassemble(0b1110_0011001010001111000100000001), "MSR CPSR, #0x1, #0x2");
-        assert_eq!(disassemble(0b1110_0011011010001111000100000001), "MSR SPSR, #0x1, #0x2");
+        assert_eq!(disassemble(0b1110_0011001010001111000100000001), "MSR CPSR, #0x40000000");
+        assert_eq!(disassemble(0b1110_0011011010001111000100000001), "MSR SPSR, #0x40000000");
     }
 
     #[test]

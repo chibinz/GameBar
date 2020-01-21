@@ -250,7 +250,6 @@ impl CPU
     }
 
     /// Return true if condition is satified
-    #[inline]
     pub fn check_condition(&self, condition: u32) -> bool
     {
         match condition

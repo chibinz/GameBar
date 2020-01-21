@@ -4,8 +4,7 @@ pub mod thumb;
 pub mod alu;
 pub mod barrel_shifter;
 
-use std::fmt;
-
+use register::PSRBit::*;
 use crate::memory::Memory;
 
 pub struct CPU
@@ -29,6 +28,7 @@ impl CPU
 {
     pub fn new() -> Self
     {
+        let mut cpu =
         Self
         {
             instruction: 0,
@@ -39,7 +39,12 @@ impl CPU
             cpsr: 0b11010011, 
             spsr: 0,
             bank: [0; 27],
-        }
+        };
+
+        cpu.r[15] = 0x08000004;
+        cpu.r[13] = 0x03007f00;
+        
+        cpu
     }
 
     pub fn step(&mut self, memory: &mut Memory)
@@ -71,21 +76,34 @@ impl CPU
     #[inline]
     pub fn in_thumb_mode(&self) -> bool
     {
-        self.get_cpsr_bit(register::PSRBit::T)
+        self.get_cpsr_bit(T)
     }
-}
 
-impl fmt::Display for CPU
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
+    pub fn print(&self)
     {
+        let mut str = String::new();
+
+        // Print general purpose registers R0 - R15
         for i in 0..16
         {
-            if i % 4 == 0 && i > 0 {print!("\n");}
+            if i % 4 == 0 && i > 0 {str += "\n";}
 
-            print!("R{:<2} = {:08x} ", i, self.r[i as usize]);
+            str += &format!("R{:<2} = {:08x} ", i, self.r[i as usize]);
         }
 
-        write!(f, "\nCPSR = {:032b}", self.get_cpsr())
+        // Print current program status register
+        str += "\n";
+        str += &format!("PSR = {:08x} ", self.get_cpsr());
+        str += "[";
+        str += if self.get_cpsr_bit(N) {"N"} else {"."};
+        str += if self.get_cpsr_bit(Z) {"Z"} else {"."};
+        str += if self.get_cpsr_bit(C) {"C"} else {"."};
+        str += if self.get_cpsr_bit(V) {"V"} else {"."};
+        str += if self.get_cpsr_bit(I) {"I"} else {"."};
+        str += if self.get_cpsr_bit(F) {"F"} else {"."};
+        str += if self.get_cpsr_bit(T) {"T"} else {"."};
+        str += "]";
+
+        println!("{}", str)
     }
 }

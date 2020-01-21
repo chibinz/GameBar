@@ -28,9 +28,7 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
 {
     fetch(cpu, memory);
 
-    println!("{}", cpu);
-    print!("{:08x}: {:04x} | {:016b} ", cpu.r[15] - 2, cpu.instruction, cpu.instruction);
-    println!("{}", disassemble::disassemble(cpu.instruction as u16));
+    increment_pc(cpu);
 
     execute(cpu, memory);
 }
@@ -42,10 +40,14 @@ pub fn fetch(cpu: &mut CPU, memory: &mut Memory)
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
+pub fn increment_pc(cpu: &mut CPU)
 {
     cpu.r[15] += 2;
+}
 
+#[inline]
+pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
+{
     dispatch(cpu, memory);
 
     0

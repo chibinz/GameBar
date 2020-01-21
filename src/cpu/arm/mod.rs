@@ -20,9 +20,7 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
 {
     fetch(cpu, memory);
 
-    println!("{}", cpu);
-    print!("{:08x}: {:08x} | {:032b} ", cpu.r[15] - 4, cpu.instruction, cpu.instruction);
-    println!("{}", disassemble::disassemble(cpu.instruction));
+    increment_pc(cpu);
 
     execute(cpu, memory);
 }
@@ -34,17 +32,21 @@ pub fn fetch(cpu: &mut CPU, memory: &mut Memory)
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
+pub fn increment_pc(cpu: &mut CPU)
 {
     cpu.r[15] += 4;
-    
+}
+
+#[inline]
+pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
+{
     let cond = cpu.instruction.bits(31, 28);
     if cpu.check_condition(cond)
     {
         dispatch(cpu, memory);
     }
 
-    return 0;
+    0
 }
 
 #[inline]
@@ -53,7 +55,6 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
     let instruction = cpu.instruction;
 
     let b74 = || instruction >> 6 & 0b10 | instruction >> 4 & 0b01;
-    let b65 = || instruction >> 5 & 0b11;
 
     // Data Processing / PSR Transfer / branch and exchange
     let data_process_psr_bx = |cpu: &mut CPU|
@@ -71,7 +72,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
     // Multiply / Multiply Long / Single Data Swap
     let multiply_swap = |cpu: &mut CPU, memory: &mut Memory|
     {
-        match bits(instruction, 24, 20)
+        match instruction.bits(24, 20)
         {
             0b00000 | 0b00001 |
             0b00010 | 0b00011 => multiply_accumulate::decode_execute(cpu, instruction),
@@ -87,7 +88,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
         };
     };
     
-    match bits(instruction, 27, 25)
+    match instruction.bits(27, 25)
     {
         0b000 =>
         {
@@ -97,7 +98,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
             }
             else
             {
-                if b65() > 0
+                if instruction.bits(6, 5) > 0
                 {
                     halfword_data_transfer::decode_execute(cpu, memory, instruction)
                 }
