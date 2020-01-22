@@ -1,10 +1,12 @@
 use crate::cpu;
 use crate::cpu::CPU;
+use crate::ppu::PPU;
 use crate::memory::Memory;
 
 pub struct Console
 {
     pub cpu   : CPU,
+    pub ppu   : PPU,
     pub memory: Memory,
 }
 
@@ -15,6 +17,7 @@ impl Console
         Self
         {
             cpu   : CPU::new(),
+            ppu   : PPU::new(),
             memory: Memory::new(),
         }
     }
@@ -30,6 +33,7 @@ impl Console
     pub fn step(&mut self)
     {
         self.cpu.step(&mut self.memory);
+        self.ppu.render(&mut self.memory);
     }
 
     pub fn print(&self)

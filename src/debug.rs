@@ -6,7 +6,7 @@ use std::process::exit;
 
 pub struct Debugger<'a>
 {
-    console   : &'a mut Console,
+    pub console   : &'a mut Console,
     breakpoint: HashSet<u32>,
     command   : Vec<String>,
 }
@@ -27,11 +27,16 @@ impl<'a> Debugger<'a>
     {
         loop
         {   
-            self.console.print();
-            
-            self.prompt();
-            self.dispatch();
+            self.step();
         }
+    }
+
+    pub fn step(&mut self)
+    {
+        self.console.print();
+            
+        self.prompt();
+        self.dispatch();
     }
 
     pub fn prompt(&mut self)
