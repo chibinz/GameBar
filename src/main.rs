@@ -31,8 +31,8 @@ fn main()
     let mut window = Window::new
     (
         "ESC to exit",
-        240,
-        160,
+        256,
+        256,
         WindowOptions::default(),
     ).unwrap();
 
@@ -44,6 +44,6 @@ fn main()
 
         debugger.step();
 
-        window.update_with_buffer(&debugger.console.ppu.buffer, 240, 160).unwrap();
+        window.update_with_buffer(&debugger.console.ppu.buffer, 256, 256).unwrap();
     }
 }

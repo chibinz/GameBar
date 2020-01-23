@@ -33,8 +33,6 @@ impl<'a> Debugger<'a>
 
     pub fn step(&mut self)
     {
-        self.console.print();
-            
         self.prompt();
         self.dispatch();
     }
@@ -68,6 +66,7 @@ impl<'a> Debugger<'a>
             "b" => self.insert_breakpoint(),
             "d" => self.delete_breakpoint(),
             "l" => self.list_breakpoint(),
+            "x" => self.examine_memory(),
             "q" => exit(0),
             _   => println!("Invalid input"),
         }
@@ -124,5 +123,23 @@ impl<'a> Debugger<'a>
     fn breakpoint_hit(&mut self) -> bool
     {
         self.breakpoint.contains(&(self.console.cpu.r[15] - 2))
+    }
+
+    fn examine_memory(&mut self)
+    {
+        let address = u32::from_str_radix(self.command[1].as_str(), 16).unwrap();
+
+        for i in 0..16
+        {
+            print!("{:08x}:   ", address + i * 16);
+            for j in 0..16
+            {
+                let value = self.console.memory.load8(address + i * 16 + j);
+
+                print!("{:02x} ", value);
+            }
+            println!("");
+        }
+        
     }
 }

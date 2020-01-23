@@ -32,6 +32,7 @@ impl Console
 
     pub fn step(&mut self)
     {
+        self.print();
         self.cpu.step(&mut self.memory);
         self.ppu.render(&mut self.memory);
     }
