@@ -5,7 +5,7 @@ use crate::memory::Memory;
 use crate::cpu::arm::block_data_transfer;
 
 #[inline]
-pub fn decode_execute(cpu: &mut CPU, memory: &mut Memory, instruction: u16)
+pub fn interpret(cpu: &mut CPU, memory: &mut Memory, instruction: u16)
 {
     execute(cpu, memory, decode(instruction));
 }

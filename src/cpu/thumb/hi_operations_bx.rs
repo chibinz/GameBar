@@ -4,7 +4,7 @@ use crate::cpu::alu;
 use crate::cpu::register::PSRBit::T;
 
 #[inline]
-pub fn decode_execute(cpu: &mut CPU, instruction: u16)
+pub fn interpret(cpu: &mut CPU, instruction: u16)
 {
     execute(cpu, decode(instruction));
 }

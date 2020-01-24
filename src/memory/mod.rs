@@ -1,6 +1,9 @@
 use std::io::Read;
 use std::fs::File;
 
+pub mod vram;
+pub mod palette;
+
 pub struct Memory
 {
     bios : Vec<u8>,
@@ -21,15 +24,15 @@ impl Memory
     {
         Memory
         {
-            bios : vec![0; 0x00003fff - 0x00000000],
-            ewram: vec![0; 0x0203ffff - 0x02000000],
-            iwram: vec![0; 0x03007fff - 0x03000000],
-            ioram: vec![0; 0x040003ff - 0x04000000],
-            param: vec![0; 0x050003ff - 0x05000000],
-            vram : vec![0; 0x06017fff - 0x06000000],
-            oam  : vec![0; 0x070003ff - 0x07000000],
-            rom  : vec![0; 0x09ffffff - 0x08000000], 
-            sram : vec![0; 0x0e00ffff - 0x0e000000], 
+            bios : vec![0; 0x00004000 - 0x00000000],
+            ewram: vec![0; 0x02040000 - 0x02000000],
+            iwram: vec![0; 0x03008000 - 0x03000000],
+            ioram: vec![0; 0x04000400 - 0x04000000],
+            param: vec![0; 0x05000400 - 0x05000000],
+            vram : vec![0; 0x06018000 - 0x06000000],
+            oam  : vec![0; 0x07000400 - 0x07000000],
+            rom  : vec![0; 0x0a000000 - 0x08000000], 
+            sram : vec![0; 0x0e010000 - 0x0e000000], 
         }
     }
 

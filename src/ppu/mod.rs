@@ -19,6 +19,6 @@ impl PPU
 
     pub fn render(&mut self, memory: &mut Memory)
     {
-        self.render_mode_0(memory);
+        self.render_background(memory);
     }
 }

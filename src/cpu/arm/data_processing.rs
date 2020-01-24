@@ -4,7 +4,7 @@ use crate::cpu::alu;
 use crate::cpu::barrel_shifter::{shift_register, rotate_immediate};
 
 #[inline]
-pub fn decode_execute(cpu: &mut CPU, instruction: u32)
+pub fn interpret(cpu: &mut CPU, instruction: u32)
 {
     execute(cpu, decode(instruction));
 }

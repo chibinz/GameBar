@@ -3,7 +3,7 @@ use crate::cpu::CPU;
 use crate::cpu::barrel_shifter::rotate_immediate;
 
 #[inline]
-pub fn decode_execute(cpu: &mut CPU, instruction: u32)
+pub fn interpret(cpu: &mut CPU, instruction: u32)
 {
     let l = instruction.bit(21);
     let pd = instruction.bit(22);
@@ -58,11 +58,11 @@ mod tests
 
         // MSR CPSR
         cpu.r[0] = 0xf00000f1;
-        decode_execute(&mut cpu, 0b0000_00010_0_10100_1_1111_00000000_0000);
+        interpret(&mut cpu, 0b0000_00010_0_10100_1_1111_00000000_0000);
         assert_eq!(cpu.get_cpsr(), 0xf00000f1);
 
         // MSR SPSR flag bits
-        decode_execute(&mut cpu, 0b0000_00010_1_10100_0_1111_00000000_0000);
+        interpret(&mut cpu, 0b0000_00010_1_10100_0_1111_00000000_0000);
         assert_eq!(cpu.get_spsr(), 0xf0000000);
     }
 }

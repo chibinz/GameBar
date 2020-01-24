@@ -30,7 +30,7 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
 
     increment_pc(cpu);
 
-    execute(cpu, memory);
+    interpret(cpu, memory);
 }
 
 #[inline]
@@ -46,7 +46,7 @@ pub fn increment_pc(cpu: &mut CPU)
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
+pub fn interpret(cpu: &mut CPU, memory: &mut Memory) -> u32
 {
     dispatch(cpu, memory);
 
@@ -61,58 +61,58 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
     match instruction.bits(15, 11)
     {
         0b00000 ..= 
-        0b00010 => move_shifted::decode_execute(cpu, instruction),
-        0b00011 => add_subtract::decode_execute(cpu, instruction),
+        0b00010 => move_shifted::interpret(cpu, instruction),
+        0b00011 => add_subtract::interpret(cpu, instruction),
         0b00100 ..=
-        0b00111 => move_compare::decode_execute(cpu, instruction),
+        0b00111 => move_compare::interpret(cpu, instruction),
         0b01000 =>
         {
             match instruction.bits(10, 6)
             {
                 0b00000 ..=
-                0b01111 => alu_operations::decode_execute(cpu, instruction),
+                0b01111 => alu_operations::interpret(cpu, instruction),
 
                 0b10001 ..=
-                0b11101 => hi_operations_bx::decode_execute(cpu, instruction), 
+                0b11101 => hi_operations_bx::interpret(cpu, instruction), 
                 _       => unreachable!(),
             }
         },
-        0b01001 => pc_relative_load::decode_execute(cpu, memory, instruction),
+        0b01001 => pc_relative_load::interpret(cpu, memory, instruction),
         0b01010 |
-        0b01011 => data_transfer_reg::decode_execute(cpu, memory, instruction),
+        0b01011 => data_transfer_reg::interpret(cpu, memory, instruction),
         0b01100 ..=
-        0b01111 => single_transfer_imm::decode_execute(cpu, memory, instruction),
+        0b01111 => single_transfer_imm::interpret(cpu, memory, instruction),
         0b10000 |
-        0b10001 => halfword_transfer_imm::decode_execute(cpu, memory, instruction),
+        0b10001 => halfword_transfer_imm::interpret(cpu, memory, instruction),
         0b10010 |
-        0b10011 => sp_relative_load::decode_execute(cpu, memory, instruction),
+        0b10011 => sp_relative_load::interpret(cpu, memory, instruction),
         0b10100 |
-        0b10101 => load_address::decode_execute(cpu, instruction),
+        0b10101 => load_address::interpret(cpu, instruction),
         0b10110 | 0b10111 => 
         {
             match instruction.bits(11, 8)
             {
-                0b0000 => add_sp::decode_execute(cpu, instruction),
+                0b0000 => add_sp::interpret(cpu, instruction),
                 0b0100 ..=
-                0b1101 => push_pop::decode_execute(cpu, memory, instruction),
+                0b1101 => push_pop::interpret(cpu, memory, instruction),
                 _      => unreachable!(),
             }
         },
         0b11000 |
-        0b11001 => multiple_transfer::decode_execute(cpu, memory, instruction),
+        0b11001 => multiple_transfer::interpret(cpu, memory, instruction),
         0b11010 | 0b11011 => 
         {
             match instruction.bits(11, 8)
             {
                 0b0000 ..=
-                0b1101 => conditional_branch::decode_execute(cpu, instruction),
-                0b1111 => software_interrupt::decode_execute(cpu),
+                0b1101 => conditional_branch::interpret(cpu, instruction),
+                0b1111 => software_interrupt::interpret(cpu),
                 _      => unreachable!(),
             }
         },
-        0b11100 => unconditional_branch::decode_execute(cpu, instruction),
+        0b11100 => unconditional_branch::interpret(cpu, instruction),
         0b11110 |
-        0b11111 => long_branch::decode_execute(cpu, instruction),
+        0b11111 => long_branch::interpret(cpu, instruction),
         _       => unimplemented!(),
     };
 }

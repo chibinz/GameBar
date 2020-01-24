@@ -1,8 +1,10 @@
-use std::collections::HashSet;
-use crate::console::Console;
-
 use std::io::prelude::*;
 use std::process::exit;
+use std::collections::HashSet;
+
+use minifb::Window;
+use minifb::WindowOptions;
+use crate::console::Console;
 
 pub struct Debugger<'a>
 {
@@ -61,12 +63,13 @@ impl<'a> Debugger<'a>
         match self.command[0].as_str()
         {
             "s" => self.console.step(),
-            // "p" => self.console.print(),
+            "p" => self.console.print(),
             "c" => self.continue_run(),
             "b" => self.insert_breakpoint(),
             "d" => self.delete_breakpoint(),
             "l" => self.list_breakpoint(),
             "x" => self.examine_memory(),
+            "dp" => self.display_palette(),
             "q" => exit(0),
             _   => println!("Invalid input"),
         }
@@ -140,6 +143,36 @@ impl<'a> Debugger<'a>
             }
             println!("");
         }
-        
+    }
+
+    fn display_palette(&self)
+    {
+        let mut window = Window::new
+        (
+            "Close to continue",
+            32,
+            16,
+            WindowOptions
+            {
+                scale: minifb::Scale::X16,
+                ..WindowOptions::default()
+            },
+        ).unwrap();
+    
+        window.limit_update_rate(Some(std::time::Duration::from_secs(1)));
+
+        let mut buffer: Vec<u32> = vec![0; 32 * 16];
+
+        for i in 0..0x200
+        {
+            buffer[i] = self.console.memory.palette(i as u32);
+        }
+
+        while window.is_open()
+        {
+            window.update_with_buffer(&buffer, 32, 16).unwrap();
+        }
+
+        println!("");
     }
 }

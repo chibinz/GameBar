@@ -36,7 +36,7 @@ pub fn shift_register(cpu: &mut CPU, operand2: u32) -> u32
     } 
     else
     {
-        bits(operand2, 11, 7)
+        operand2.bits(11, 7)
     };
     
     shift(cpu, cpu.r[rm as usize], amount, stype)

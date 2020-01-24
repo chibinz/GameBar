@@ -2,7 +2,7 @@ use crate::util::*;
 use crate::cpu::CPU;
 
 #[inline]
-pub fn decode_execute(cpu: &mut CPU, instruction: u16)
+pub fn interpret(cpu: &mut CPU, instruction: u16)
 {
     execute(cpu, decode(instruction));
 }

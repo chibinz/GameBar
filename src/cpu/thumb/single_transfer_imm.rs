@@ -3,7 +3,7 @@ use crate::cpu::CPU;
 use crate::memory::Memory;
 
 #[inline]
-pub fn decode_execute(cpu: &mut CPU, memory: &mut Memory, instruction: u16)
+pub fn interpret(cpu: &mut CPU, memory: &mut Memory, instruction: u16)
 {
     execute(cpu, memory, decode(instruction));
 }

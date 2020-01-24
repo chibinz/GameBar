@@ -3,7 +3,7 @@ use crate::cpu::CPU;
 use crate::cpu::register::PSRBit::*;
 
 #[inline]
-pub fn decode_execute(cpu: &mut CPU, instruction: u32)
+pub fn interpret(cpu: &mut CPU, instruction: u32)
 {
     execute(cpu, decode(instruction));
 }

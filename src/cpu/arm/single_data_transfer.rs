@@ -4,7 +4,7 @@ use crate::cpu::barrel_shifter::shift_register;
 use crate::memory::Memory;
 
 #[inline]
-pub fn decode_execute(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
+pub fn interpret(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
 {
     execute(cpu, memory, decode(instruction));
 }

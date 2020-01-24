@@ -22,7 +22,7 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
 
     increment_pc(cpu);
 
-    execute(cpu, memory);
+    interpret(cpu, memory);
 }
 
 #[inline]
@@ -38,7 +38,7 @@ pub fn increment_pc(cpu: &mut CPU)
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, memory: &mut Memory) -> u32
+pub fn interpret(cpu: &mut CPU, memory: &mut Memory) -> u32
 {
     let cond = cpu.instruction.bits(31, 28);
     if cpu.check_condition(cond)
@@ -59,13 +59,13 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
     // Data Processing / PSR Transfer / branch and exchange
     let data_process_psr_bx = |cpu: &mut CPU|
     {
-        match bits(instruction, 24, 20)
+        match instruction.bits(24, 20)
         {
-            0b10000 | 0b10100 | 0b10110  => psr_transfer::decode_execute(cpu, instruction),
+            0b10000 | 0b10100 | 0b10110  => psr_transfer::interpret(cpu, instruction),
             0b10010           => if b74() == 0 
-                                {psr_transfer::decode_execute(cpu, instruction)} else
-                                {branch_exchange::decode_execute(cpu, instruction)},
-            _                 => data_processing::decode_execute(cpu, instruction)
+                                {psr_transfer::interpret(cpu, instruction)} else
+                                {branch_exchange::interpret(cpu, instruction)},
+            _                 => data_processing::interpret(cpu, instruction)
         };
     };
 
@@ -75,14 +75,14 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
         match instruction.bits(24, 20)
         {
             0b00000 | 0b00001 |
-            0b00010 | 0b00011 => multiply_accumulate::decode_execute(cpu, instruction),
+            0b00010 | 0b00011 => multiply_accumulate::interpret(cpu, instruction),
             0b01000 | 0b01001 |
             0b01010 | 0b01011 |
             0b01100 | 0b01101 |
-            0b01110 | 0b01111 => multiply_long_accumulate::decode_execute(cpu, instruction),
+            0b01110 | 0b01111 => multiply_long_accumulate::interpret(cpu, instruction),
 
             // Single data swap
-            0b10000 | 0b10100 => single_data_swap::decode_execute(cpu, memory, instruction),
+            0b10000 | 0b10100 => single_data_swap::interpret(cpu, memory, instruction),
 
             _                 => unreachable!(),
         };
@@ -100,7 +100,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
             {
                 if instruction.bits(6, 5) > 0
                 {
-                    halfword_data_transfer::decode_execute(cpu, memory, instruction)
+                    halfword_data_transfer::interpret(cpu, memory, instruction)
                 }
                 else
                 {
@@ -108,16 +108,16 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
                 }
             }
         },
-        0b001 => match bits(instruction, 24, 20)
+        0b001 => match instruction.bits(24, 20)
                 {
-                    0b10110 | 0b10010 => psr_transfer::decode_execute(cpu, instruction),
-                    _                 => data_processing::decode_execute(cpu, instruction)
+                    0b10110 | 0b10010 => psr_transfer::interpret(cpu, instruction),
+                    _                 => data_processing::interpret(cpu, instruction)
                 },
         0b010 |
-        0b011 => single_data_transfer::decode_execute(cpu, memory, instruction),
-        0b100 => block_data_transfer::decode_execute(cpu, memory, instruction),
-        0b101 => branch_long::decode_execute(cpu, instruction), 
-        0b111 => software_interrupt::decode_execute(cpu),
+        0b011 => single_data_transfer::interpret(cpu, memory, instruction),
+        0b100 => block_data_transfer::interpret(cpu, memory, instruction),
+        0b101 => branch_long::interpret(cpu, instruction), 
+        0b111 => software_interrupt::interpret(cpu),
         _     => unimplemented!(),
     };
 }
