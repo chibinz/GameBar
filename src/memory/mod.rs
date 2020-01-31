@@ -1,6 +1,7 @@
 use std::io::Read;
 use std::fs::File;
 
+pub mod io;
 pub mod vram;
 pub mod palette;
 

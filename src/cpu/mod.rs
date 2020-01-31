@@ -22,6 +22,8 @@ pub struct CPU
     // 18 - 20: R13_abt, R14_abt, SPSR_abt
     // 21 - 23: R13_irq, R14_irq, SPSR_irq
     // 24 - 26: R13_und, R14_und, SPSR_und
+
+    pub counter: u32,           // Number of cycles elapsed
 }
 
 impl CPU
@@ -39,6 +41,8 @@ impl CPU
             cpsr: 0b11010011, 
             spsr: 0,
             bank: [0; 27],
+
+            counter: 0
         };
 
         cpu.r[15] = 0x08000004;
@@ -47,8 +51,23 @@ impl CPU
         cpu
     }
 
+    pub fn run(&mut self, cycles: u32, memory: &mut Memory) -> u32
+    {
+        let stop = self.counter + cycles;
+
+        while self.counter < stop
+        {
+            self.step(memory)
+        }
+
+        // Number of cycles that run 'over' specified
+        self.counter - stop
+    }
+
     pub fn step(&mut self, memory: &mut Memory)
     {
+        self.print(memory);
+
         if self.in_thumb_mode()
         {
             thumb::step(self, memory);
@@ -57,6 +76,9 @@ impl CPU
         {
             arm::step(self, memory);
         }
+
+        // Normal execution takes 1S cycle
+        self.counter += 1;
     }
 
     pub fn flush(&mut self)
@@ -70,7 +92,10 @@ impl CPU
         {
             self.r[15] &= 0xfffffffc;
             self.r[15] += 4;
-        }
+        }        
+        
+        // A write to R15 or branch will add 1S + 1N cycles
+        self.counter += 2;
     }
 
     #[inline]
@@ -79,7 +104,7 @@ impl CPU
         self.get_cpsr_bit(T)
     }
 
-    pub fn print(&self)
+    pub fn print(&self, memory: &Memory)
     {
         let mut str = String::new();
 
@@ -103,7 +128,29 @@ impl CPU
         str += if self.get_cpsr_bit(F) {"F"} else {"."};
         str += if self.get_cpsr_bit(T) {"T"} else {"."};
         str += "]";
+        str += "\n";
+
+        if self.in_thumb_mode()
+        {
+            let address = self.r[15] - 2;
+            let instruction = memory.load16(address);
+            str += &format!("{:08x}: {:04x} ", address, instruction);
+            str += &format!("{}", thumb::disassemble::disassemble(instruction));
+        }
+        else
+        {
+            let address = self.r[15] - 4;
+            let instruction = memory.load32(address);
+            str += &format!("{:08x}: {:08x} ", address, instruction);
+            str += &format!("{}", arm::disassemble::disassemble(instruction));
+        }
+
+        str += "\n";
+        str += &format!("Cycles: {}", self.counter);
+
 
         println!("{}", str)
     }
+
+
 }

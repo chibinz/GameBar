@@ -63,7 +63,7 @@ impl<'a> Debugger<'a>
         match self.command[0].as_str()
         {
             "s" => self.console.step(),
-            "p" => self.console.print(),
+            // "p" => self.console.print(),
             "c" => self.continue_run(),
             "b" => self.insert_breakpoint(),
             "d" => self.delete_breakpoint(),

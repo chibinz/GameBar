@@ -1,13 +1,17 @@
-use crate::cpu;
 use crate::cpu::CPU;
 use crate::ppu::PPU;
 use crate::memory::Memory;
+
+use minifb::Window;
+use minifb::WindowOptions;
 
 pub struct Console
 {
     pub cpu   : CPU,
     pub ppu   : PPU,
     pub memory: Memory,
+
+    pub window: Window,
 }
 
 impl Console
@@ -19,43 +23,85 @@ impl Console
             cpu   : CPU::new(),
             ppu   : PPU::new(),
             memory: Memory::new(),
+
+            window: Window::new
+            (
+                "ESC to exit",
+                240,
+                160,
+                WindowOptions
+                {
+                    scale: minifb::Scale::X2,
+                    ..WindowOptions::default()
+                }
+            ).unwrap(),
         }
     }
 
+    // Render a frame
     pub fn run(&mut self)
     {
-        loop
+        for _ in 0..160
         {
-            self.step();
+            self.cpu.run(960, &mut self.memory);
+
+            self.ppu.render(&mut self.memory);
+            self.memory.set_hblank_flag(true);
+    
+            self.cpu.run(272, &mut self.memory);
+    
+            self.memory.inc_vcount();
+            self.memory.set_hblank_flag(false); 
         }
+        
+        self.memory.set_vblank_flag(true);
+
+        for _ in 0..68
+        {
+            self.cpu.run(1232, &mut self.memory);
+
+            self.memory.inc_vcount();
+        }
+
+        self.memory.clr_vcount();
+        self.memory.set_vblank_flag(false);
+        
+        self.window.update_with_buffer(&self.ppu.buffer, 240, 160).unwrap();
     }
 
+    // Single step CPU, for debugging purpose
     pub fn step(&mut self)
     {
-        self.print();
         self.cpu.step(&mut self.memory);
         self.ppu.render(&mut self.memory);
-    }
+        self.memory.inc_vcount();
 
-    pub fn print(&self)
-    {
-        self.cpu.print();
-        
-        if self.cpu.in_thumb_mode()
+        if self.memory.get_vcount() > 228
         {
-            let address = self.cpu.r[15] - 2;
-            let instruction = self.memory.load16(address);
-            print!("{:08x}: ", address);
-            print!("{:04x} ", instruction);
-            println!("{}", cpu::thumb::disassemble::disassemble(instruction));
+            self.memory.clr_vcount();
+        }
+
+        let f = self.cpu.counter % 280896; // Frame
+        let l = f % 1232;                  // Scanline
+
+        if f <= 197120
+        {
+            if l <= 960
+            {
+                self.memory.set_hblank_flag(false);
+            }
+            else
+            {
+                self.memory.set_hblank_flag(true);
+            }
         }
         else
         {
-            let address = self.cpu.r[15] - 4;
-            let instruction = self.memory.load32(address);
-            print!("{:08x}: ", address);
-            print!("{:08x} ", instruction);
-            println!("{}", cpu::arm::disassemble::disassemble(instruction));
+            self.memory.set_hblank_flag(false);
+            self.memory.set_vblank_flag(true);
         }
+
+        self.window.update_with_buffer(&self.ppu.buffer, 240, 160).unwrap();
+        // self.run();
     }
 }

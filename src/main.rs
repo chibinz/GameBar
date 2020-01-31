@@ -8,8 +8,6 @@ pub mod util;
 pub mod debug;
 
 use std::env;
-use minifb::Window;
-use minifb::WindowOptions;
 
 fn main() 
 {
@@ -26,23 +24,9 @@ fn main()
     
     let mut debugger = debug::Debugger::new(&mut console);
 
-    let mut window = Window::new
-    (
-        "ESC to exit",
-        256,
-        256,
-        WindowOptions
-        {
-            scale: minifb::Scale::X2,
-            ..WindowOptions::default()
-        }
-    ).unwrap();
-
-    while window.is_open() && !window.is_key_down(minifb::Key::Escape)
+    while debugger.console.window.is_open() 
+      && !debugger.console.window.is_key_down(minifb::Key::Escape)
     {
-
         debugger.step();
-
-        window.update_with_buffer(&debugger.console.ppu.buffer, 256, 256).unwrap();
     }
 }
