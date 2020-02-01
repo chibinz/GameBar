@@ -38,7 +38,7 @@ impl CPU
 
             // On reset, CPSR is forced to supervisor mode
             // and I and F bits in CPSR is set.
-            cpsr: 0b11010011, 
+            cpsr: 0b11011111, 
             spsr: 0,
             bank: [0; 27],
 
@@ -47,7 +47,11 @@ impl CPU
 
         cpu.r[15] = 0x08000004;
         cpu.r[13] = 0x03007f00;
-        
+
+        cpu.bank[5]  = 0x03007f00; // User SP
+        cpu.bank[12] = 0x03007fa0; // IRQ SP
+        cpu.bank[15] = 0x03007fe0; // Supervisor SP
+
         cpu
     }
 

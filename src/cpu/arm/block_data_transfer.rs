@@ -30,7 +30,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     (p, u, s, w, l, rn, rlist): (bool, bool, bool, bool, bool, u32, u32))
 {
     // Empty rlist not handled
-    debug_assert_ne!(rlist, 0);
+    // debug_assert_ne!(rlist, 0);
     
     // Misaligned address not handled
     let mut address = cpu.r[rn as usize];
@@ -115,6 +115,13 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
             cpu.set_cpsr(saved_cpsr, false);
         }
     }
+
+    cpu.counter += count_cycles(rlist);
+}
+
+fn count_cycles(rlist: u32) -> u32
+{
+    rlist.count_ones()
 }
 
 #[cfg(test)]

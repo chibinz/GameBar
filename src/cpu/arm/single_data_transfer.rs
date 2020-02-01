@@ -36,8 +36,8 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     let noffset = if !i {offset} else {shift_register(cpu, offset)};
 
     let post = cpu.r[rn as usize];
-    let pre = if u {cpu.r[rn as usize] + noffset} 
-              else {cpu.r[rn as usize] - noffset};
+    let pre = if u {cpu.r[rn as usize].wrapping_add(noffset)} 
+              else {cpu.r[rn as usize].wrapping_sub(noffset)};
 
     let address = if p {pre} else {post};
 

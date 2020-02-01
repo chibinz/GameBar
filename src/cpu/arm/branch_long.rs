@@ -13,7 +13,7 @@ pub fn interpret(cpu: &mut CPU, instruction: u32)
     
     if l
     {
-        cpu.r[14] = cpu.r[15];
+        cpu.r[14] = cpu.r[15] - 4;
     }
 
     cpu.r[15] = cpu.r[15].wrapping_add(offset as u32);

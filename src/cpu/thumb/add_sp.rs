@@ -21,10 +21,10 @@ fn execute(cpu: &mut CPU, (s, sword7): (bool, u32))
 {   
     if s
     {
-        cpu.r[13] += sword7 << 2;
+        cpu.r[13] -= sword7 << 2;
     }
     else
     {
-        cpu.r[13] -= sword7 << 2;
+        cpu.r[13] += sword7 << 2;
     }
 }

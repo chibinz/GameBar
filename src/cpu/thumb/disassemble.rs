@@ -110,7 +110,7 @@ pub fn disassemble(opcode: u16) -> String
             match b11_8()
             {
                 // needs better implementation
-                0b0000 => format!("ADD SP #{}", if sign7() > 0 {offset7() as i16 * 2} else {-(offset7() as i16 * 2)}),
+                0b0000 => format!("{} SP #{}", if sign7() == 0 {"ADD"} else {"SUB"}, offset7() << 2),
                 0b0100 => format!("PUSH R{{{:08b}}}", offset8()),
                 0b0101 => format!("PUSH R{{{:08b}, LR}}", offset8()),
                 0b1100 => format!("POP {{{:08b}}}", offset8()),

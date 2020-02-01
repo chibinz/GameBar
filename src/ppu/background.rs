@@ -1,6 +1,7 @@
 use crate::util::*;
 use crate::ppu::PPU;
 use crate::memory::Memory;
+use crate::memory::palette::RGB;
 
 pub struct Background
 {
@@ -25,7 +26,7 @@ impl Background
         }
     }
 
-    pub fn draw_tile(&mut self, memory: &Memory)
+    pub fn draw_text(&mut self, memory: &Memory)
     {
         let bgcnt = memory.get_bgcnt(self.index);
 
@@ -58,11 +59,34 @@ impl Background
             for j in 0..8
             {
                 let palette = row.bits((8 - j as u32) * 4 - 1, (7 - j as u32) * 4);
-                let c = if horizontal_flip {7 - j} else {j};
+                let c = if !horizontal_flip {7 - j} else {j};
                 
                 self.pixel[(tile_x * 8 + c) as usize] = 
                     memory.palette(palette_number | palette);
             }
+        }
+    }
+    
+    pub fn draw_bitmap3(&mut self, memory: &Memory)
+    {
+        let line_n = (memory.get_vcount() + memory.get_bgvofs(self.index)) as u32;
+
+        for x in 0..240
+        {
+            let pixel = memory.load16(0x06000000 + (line_n * 240 + x) * 2);
+            
+            self.pixel[x as usize] = RGB(pixel);
+        }
+    }
+
+    pub fn draw_bitmap4(&mut self, memory: &Memory)
+    {
+        let line_n = (memory.get_vcount() + memory.get_bgvofs(self.index)) as u32;
+        
+        for x in 0..240
+        {
+            let palette_entry = memory.load8(0x06000000 + line_n * 240 + x);
+            self.pixel[x as usize] = memory.palette(palette_entry as u32);
         }
     }
 }

@@ -89,7 +89,12 @@ impl Memory
     /// Load a word from memory
     pub fn load32(&self, address: u32) -> u32
     {
-        let offset = (address & 0x00fffffc) as usize;
+        let mut offset = (address & 0x00fffffc) as usize;
+
+        if address >> 24 == 0x03
+        {
+            offset = offset % 0x8000;
+        }
 
         let ld = |mem: &[u8]| mem[offset] as u32 | 
                                (mem[offset + 1] as u32) << 8 | 
@@ -160,7 +165,12 @@ impl Memory
     pub fn store32(&mut self, address: u32, data: u32)
     {
         // Accesses are forced to be word aligned
-        let offset = (address & 0x00fffffc) as usize;
+        let mut offset = (address & 0x00fffffc) as usize;
+
+        if address >> 24 == 0x03
+        {
+            offset = offset % 0x8000;
+        }
 
         let sth = |mem: &mut [u8]| 
         {

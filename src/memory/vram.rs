@@ -25,4 +25,16 @@ impl Memory
             *ptr.add((index * 0x800 / 2 + y * 32 + x) as usize)
         }
     }
+
+    /// Return tile map entry
+    #[inline]
+    pub fn bitmap_map(&self, index: u32, y: u32, x: u32) -> u16
+    {
+        unsafe
+        {
+            let ptr = self.vram.as_ptr() as *const u16;
+
+            *ptr.add((index * 0x800 / 2 + y * 32 + x) as usize)
+        }
+    }
 }

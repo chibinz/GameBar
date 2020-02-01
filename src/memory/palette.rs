@@ -24,7 +24,7 @@ impl Memory
 }
 
 #[inline]
-fn RGB(a: u16) -> u32
+pub fn RGB(a: u16) -> u32
 {
     let r = a.bits(4, 0) << 19;
     let g = a.bits(9, 5) << 11;
