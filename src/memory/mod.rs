@@ -40,7 +40,7 @@ impl Memory
     /// Load a byte from memory
     pub fn load8(&self, address: u32) -> u8
     {
-        let mut offset = (address & 0x00ffffff) as usize;
+        let offset = mirror(address & 0x00ffffff);
 
         match address >> 24
         {
@@ -53,7 +53,6 @@ impl Memory
             0x07 => self.oam[offset],
             0x08..=0x0d =>
             {
-                offset = (address % 0x02000000) as usize;
                 self.rom[offset]
             },
             0x0e => self.sram[offset],
@@ -64,7 +63,7 @@ impl Memory
     /// Load a halfword from memory
     pub fn load16(&self, address: u32) -> u16
     {
-        let offset = (address & 0x00fffffe) as usize;
+        let offset = mirror(address & 0x00fffffe);
 
         let ldh = |mem: &[u8]| mem[offset] as u16 | (mem[offset + 1] as u16) << 8;
 
@@ -89,17 +88,15 @@ impl Memory
     /// Load a word from memory
     pub fn load32(&self, address: u32) -> u32
     {
-        let mut offset = (address & 0x00fffffc) as usize;
+        let offset = mirror(address & 0x00fffffc);
 
-        if address >> 24 == 0x03
+        let ld = |mem: &[u8]|
         {
-            offset = offset % 0x8000;
-        }
-
-        let ld = |mem: &[u8]| mem[offset] as u32 | 
-                               (mem[offset + 1] as u32) << 8 | 
-                               (mem[offset + 2] as u32) << 16 | 
-                               (mem[offset + 3] as u32) << 24;
+             mem[offset] as u32 | 
+            (mem[offset + 1] as u32) << 8  | 
+            (mem[offset + 2] as u32) << 16 | 
+            (mem[offset + 3] as u32) << 24
+        };
 
         let value = match address >> 24
         {
@@ -125,7 +122,7 @@ impl Memory
     /// Store a byte in memory, only EWRAM, IWRAM, IORAM, SRAM are accessible
     pub fn store8(&mut self, address: u32, data: u8)
     {
-        let offset = (address & 0x00ffffff) as usize;
+        let offset = mirror(address & 0x00ffffff);
 
         match address >> 24
         {
@@ -141,7 +138,7 @@ impl Memory
     pub fn store16(&mut self, address: u32, data: u16)
     {
         // Accesses are forced to halfword aligned
-        let offset = (address & 0x00fffffe) as usize;
+        let offset = mirror(address & 0x00fffffe);
 
         let sth = |mem: &mut [u8]| 
         {
@@ -165,12 +162,7 @@ impl Memory
     pub fn store32(&mut self, address: u32, data: u32)
     {
         // Accesses are forced to be word aligned
-        let mut offset = (address & 0x00fffffc) as usize;
-
-        if address >> 24 == 0x03
-        {
-            offset = offset % 0x8000;
-        }
+        let offset = mirror(address & 0x00fffffc);
 
         let sth = |mem: &mut [u8]| 
         {
@@ -203,6 +195,7 @@ impl Memory
         self.rom.len()
     }
 
+    /// Load bios and return length
     pub fn load_bios(&mut self, name: &String) -> usize
     {
         self.bios.clear();
@@ -212,4 +205,33 @@ impl Memory
 
         self.bios.len()
     }
+}
+
+fn mirror(address: u32) -> usize
+{
+    let a = match address >> 24
+    {
+        0x02 => address % 0x40000,
+        0x03 => address % 0x8000,
+        0x04 => address % 0x10000,
+        0x05 => address % 0x400,
+        0x06 => 
+            {
+                let b = address % 0x20000;
+                if b > 0x06017fff
+                {
+                    b - 0x8000
+                }
+                else
+                {
+                    b
+                }
+            },
+        0x07 => address % 0x400,
+        0x08..=
+        0x0d => address % 0x02000000,
+        _    => address,
+    };
+
+    a as usize
 }
