@@ -14,7 +14,7 @@ pub struct Memory
     param: Vec<u8>,
     vram : Vec<u8>,
     oam  : Vec<u8>,
-    rom  : Vec<u8>, // rom1, rom2 are just image of rom, no need to declare extra fields
+    rom  : Vec<u8>,
     sram : Vec<u8>,
 }
 
@@ -207,6 +207,7 @@ impl Memory
     }
 }
 
+/// Return equivalent base address
 fn mirror(address: u32) -> usize
 {
     let a = match address >> 24

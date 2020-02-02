@@ -5,11 +5,30 @@ use crate::memory::palette::RGB;
 
 pub struct Background
 {
-    pub pixel   : Vec<u32>,   // Line buffer
-    pub index   : usize,      // 0 - 3
-    pub priority: u32,
-    pub width   : u32,
-    pub height  : u32,
+    pub index    : usize,   // 0 - 3
+    pub bgcnt    : u16,     // Raw background control register
+    pub priority : u32,     // Lower priority takes precedence
+    pub tile_n   : u32,     // Determine start address of tile data
+    pub map_n    : u32,     // Determine start address of tile map
+    pub mosaic_t : bool,    // Mosaic, 1 - on, 0 - off
+    pub palette_t: bool,    // Palette type, 1 - 256, 0 - 16x16
+    pub repeat_t : bool,    // Screen over of rotational backgrounds
+    pub vcount   : u32,     // Line number of current scanline
+
+    // Text background registers
+    pub hscroll  : u32,
+    pub vscroll  : u32,
+
+    // Affine background registers
+    pub xscale   : u32,
+    pub xshear   : u32,
+    pub yscale   : u32,
+    pub yshear   : u32,
+    pub xcoord   : u32,
+    pub ycoord   : u32,
+
+    // Line buffer
+    pub pixel    : Vec<u32>,  
 }
 
 impl Background
@@ -18,34 +37,42 @@ impl Background
     {
         Self
         {
-            pixel   : vec![0; 1024],   // The largest width of a background is 1024 pixels
-            index   : i,
-            priority: 0,
-            width   : 0,               // Width in tiles, x8 to get number of pixels
-            height  : 0,               // Height in tiles
+            index    : i,
+            bgcnt    : 0,
+            priority : 0,
+            tile_n   : 0,
+            map_n    : 0,
+            mosaic_t : false,
+            palette_t: false,
+            repeat_t : false,
+            vcount   : 0,
+            hscroll  : 0,
+            vscroll  : 0,
+            xscale   : 0,
+            xshear   : 0,
+            yscale   : 0,
+            yshear   : 0,
+            xcoord   : 0,
+            ycoord   : 0,
+
+            // The largest width of a background is 1024 pixels.
+            // Avoid reallocation when resizing background.
+            pixel    : vec![0; 1024],
         }
     }
 
     pub fn draw_text(&mut self, memory: &Memory)
     {
-        let bgcnt = memory.get_bgcnt(self.index);
+        memory.update_text_bg(self);
 
-        let s = bgcnt.bits(3, 2);
-        // let c = bgcnt.bit(6);
-        // let a = bgcnt.bit(7);
-        let m = bgcnt.bits(12, 8);
-
-        self.priority = bgcnt.bits(1, 0);
-        self.width = get_size(bgcnt, false).0;
-        self.height = get_size(bgcnt, false).1;
-
-        let line_n = (memory.get_vcount() + memory.get_bgvofs(self.index)) as u32;
-        let tile_y = (line_n / 8) % self.height;
+        let (width, height) = get_size(self.bgcnt, false);
+        let line_n = self.vcount + self.vscroll;
+        let tile_y = (line_n / 8) % height;
         
         // Tile column
-        for tile_x in 0..self.width
+        for tile_x in 0..width
         {
-            let tile_entry = memory.tile_map(m, tile_y, tile_x);
+            let tile_entry = memory.tile_map(self.map_n, tile_y, tile_x);
 
             let tile_number     = tile_entry.bits(9, 0);
             let horizontal_flip = tile_entry.bit(10);
@@ -53,7 +80,7 @@ impl Background
             let palette_number  = tile_entry.bits(15, 12) << 4;
     
             let r = if vertical_flip {7 - (line_n % 8)} else {line_n % 8};
-            let row = memory.tile_row32(s, tile_number, r);
+            let row = memory.tile_row32(self.tile_n, tile_number, r);
 
             // Pixel column
             for j in 0..8
@@ -67,26 +94,44 @@ impl Background
         }
     }
     
-    pub fn draw_bitmap3(&mut self, memory: &Memory)
+    pub fn draw_bitmap_3(&mut self, memory: &Memory)
     {
-        let line_n = (memory.get_vcount() + memory.get_bgvofs(self.index)) as u32;
+        memory.update_affine_bg(self);
+
+        let line_n = self.vcount;
 
         for x in 0..240
         {
-            let pixel = memory.load16(0x06000000 + (line_n * 240 + x) * 2);
-            
+            let pixel = memory.vram16((line_n * 240 + x) * 2);
             self.pixel[x as usize] = RGB(pixel);
         }
     }
 
-    pub fn draw_bitmap4(&mut self, memory: &Memory)
+    pub fn draw_bitmap_4(&mut self, flip: bool, memory: &Memory)
     {
-        let line_n = (memory.get_vcount() + memory.get_bgvofs(self.index)) as u32;
+        memory.update_affine_bg(self);
+
+        let start = if flip {0xa000} else {0};
+        let line_n = self.vcount;
         
         for x in 0..240
         {
-            let palette_entry = memory.load8(0x06000000 + line_n * 240 + x);
+            let palette_entry = memory.vram8(start + line_n * 240 + x);
             self.pixel[x as usize] = memory.palette(palette_entry as u32);
+        }
+    }
+
+    pub fn draw_bitmap_5(&mut self, flip: bool, memory: &Memory)
+    {
+        memory.update_affine_bg(self);
+
+        let start = if flip {0xa000} else {0};
+        let line_n = self.vcount;
+        
+        for x in 0..160
+        {
+            let pixel = memory.vram16(start + (line_n * 128 + x) * 2);
+            self.pixel[x as usize] = RGB(pixel);
         }
     }
 }

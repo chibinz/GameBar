@@ -7,7 +7,14 @@ use background::Background;
 
 pub struct PPU
 {
-    pub buffer: Vec<u32>, // Frame buffer, 240 * 160
+    pub dispcnt   : u16,            // Raw display control register
+    pub mode      : u32,            // Video mode
+    pub flip      : bool,           // Determine page flipping in bitmap modes
+    pub sequential: bool,           // Determine layout of sprites, 1 - 1d, 0 - 2d
+    pub fblank    : bool,           // Force blanking
+    pub vcount    : u32,            // Line number of current scanline
+
+    pub buffer    : Vec<u32>,       // Frame buffer, 240 * 160
     pub background: Vec<Background>,
 }
 
@@ -17,7 +24,14 @@ impl PPU
     {
         Self
         {
-            buffer: vec![0; 240 * 160],
+            dispcnt   : 0,
+            mode      : 0,
+            flip      : false,
+            sequential: false,
+            fblank    : false,
+            vcount    : 0,
+
+            buffer    : vec![0; 240 * 160],
             background: vec!
             [
                 Background::new(0),
@@ -30,93 +44,92 @@ impl PPU
 
     pub fn render(&mut self, memory: &Memory)
     {
-        let dispcnt = memory.get_dispcnt();
-        // breakpoint!();
-        // Currently, only mode 0 is supported
-        // assert_eq!(dispcnt.bits(2, 0), 0);
+        memory.update_ppu(self);
+
+        let dispcnt = self.dispcnt;
         
-        if dispcnt.bit(7)
+        if self.fblank {self.force_blank()}
+        if self.vcount >= 160 {return}       // Change to assertion
+        if dispcnt.bits(11, 8) == 0 {return} // Transparent background
+
+        match self.mode
         {
-            self.force_blank();
+            0 => self.draw_mode_0(memory),
+            3 => self.draw_mode_3(memory),
+            4 => self.draw_mode_4(memory),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn draw_mode_0(&mut self, memory: &Memory)
+    {
+        let dispcnt = self.dispcnt;
+
+        if dispcnt.bit(8)  {self.background[0].draw_text(memory)}
+        if dispcnt.bit(9)  {self.background[1].draw_text(memory)}
+        if dispcnt.bit(10) {self.background[2].draw_text(memory)}
+        if dispcnt.bit(11) {self.background[3].draw_text(memory)}
+
+        let mut min = 0b11;
+        let mut front = 0;
+        for i in 0..4
+        {
+            if self.background[i].priority < min
+            {
+                min = self.background[i].priority;
+                front = i;
+            }
         }
 
-        let mode = dispcnt.bits(2, 0);
-        
-        // Mode 0
-        if dispcnt.bits(11, 8) > 0
+        let line_n = self.vcount as usize;
+        let hscroll = self.background[front].hscroll as usize;
+
+        let width = 32; // TODO
+        for i in 0..240
         {
-            match mode
-            {
-                0 =>
-                {
-                    if dispcnt.bit(8)  {self.background[0].draw_text(memory)}
-                    if dispcnt.bit(9)  {self.background[1].draw_text(memory)}
-                    if dispcnt.bit(10) {self.background[2].draw_text(memory)}
-                    if dispcnt.bit(11) {self.background[3].draw_text(memory)}
+            let x = (hscroll + i) % (width * 8) as usize;
+            self.buffer[line_n * 240 + i] = self.background[front].pixel[x];
+        }
+    }
 
-                    let mut min = 0b11;
-                    let mut front = 0;
-                    for i in 0..4
-                    {
-                        if self.background[i].priority < min
-                        {
-                            min = self.background[i].priority;
-                            front = i;
-                        }
-                    }
+    pub fn draw_mode_3(&mut self, memory: &Memory)
+    {
+        debug_assert!(self.dispcnt.bit(10));
 
-                    let line_n = memory.get_vcount() as usize;
-                    let hofs = memory.get_bghofs(front) as usize;
+        self.background[2].draw_bitmap_3(memory);
 
-                    let width = self.background[front].width;
-                    for i in 0..240
-                    {
-                        if line_n < 160
-                        {
-                            let x = (hofs + i) % (width * 8) as usize;
+        let line_n = self.vcount as usize;
+        for i in 0..240
+        {
+            self.buffer[line_n * 240 + i] = self.background[2].pixel[i];
+        }
+    }
 
-                            self.buffer[line_n * 240 + i] = self.background[front].pixel[x];
-                        }
-                    }
-                },
-                3 =>
-                {
-                    if dispcnt.bit(10) {self.background[2].draw_bitmap3(memory)}
+    pub fn draw_mode_4(&mut self, memory: &Memory)
+    {
+        debug_assert!(self.dispcnt.bit(10));
 
-                    let line_n = memory.get_vcount() as usize;
-                    let hofs = memory.get_bghofs(2) as usize;
+        self.background[2].draw_bitmap_4(self.flip, memory);
 
-                    let width = 240;
-                    for i in 0..240
-                    {
-                        if line_n < 160
-                        {
-                            let x = (hofs + i) % (width) as usize;
+        let line_n = self.vcount as usize;
+        for i in 0..240
+        {
+            self.buffer[line_n * 240 + i] = self.background[2].pixel[i];
+        }
+    }
 
-                            self.buffer[line_n * 240 + i] = self.background[2].pixel[x];
-                        }
-                    }
-                },
-                4 =>
-                {
-                    if dispcnt.bit(10) {self.background[2].draw_bitmap4(memory)}
+    pub fn draw_mode_5(&mut self, memory: &Memory)
+    {
+        debug_assert!(self.dispcnt.bit(10));
 
-                    let line_n = memory.get_vcount() as usize;
-                    let hofs = memory.get_bghofs(2) as usize;
+        self.background[2].draw_bitmap_5(self.flip, memory);
 
-                    let width = 240;
-                    for i in 0..240
-                    {
-                        if line_n < 160
-                        {
-                            let x = (hofs + i) % (width) as usize;
+        let line_n = self.vcount as usize;
+        if line_n > 127 {return}
 
-                            self.buffer[line_n * 240 + i] = self.background[2].pixel[x];
-                        }
-                    }
-                },
-                _ => unimplemented!(),
-            }
+        for i in 0..160
+        {
+            self.buffer[line_n * 128 + i] = self.background[2].pixel[i];
         }
     }
 
