@@ -10,9 +10,9 @@ pub struct Background
     pub priority : u32,     // Lower priority takes precedence
     pub tile_n   : u32,     // Determine start address of tile data
     pub map_n    : u32,     // Determine start address of tile map
-    pub mosaic_t : bool,    // Mosaic, 1 - on, 0 - off
-    pub palette_t: bool,    // Palette type, 1 - 256, 0 - 16x16
-    pub repeat_t : bool,    // Screen over of rotational backgrounds
+    pub mosaic_f : bool,    // Mosaic, 1 - on, 0 - off
+    pub palette_f: bool,    // Palette type, 1 - 256, 0 - 16x16
+    pub repeat_f : bool,    // Screen over of rotational backgrounds
     pub vcount   : u32,     // Line number of current scanline
 
     // Text background registers
@@ -20,12 +20,8 @@ pub struct Background
     pub vscroll  : u32,
 
     // Affine background registers
-    pub xscale   : u32,
-    pub xshear   : u32,
-    pub yscale   : u32,
-    pub yshear   : u32,
-    pub xcoord   : u32,
-    pub ycoord   : u32,
+    pub matrix   : (u16, u16, u16, u16),
+    pub coord    : (u32, u32),
 
     // Line buffer
     pub pixel    : Vec<u32>,  
@@ -42,18 +38,14 @@ impl Background
             priority : 0,
             tile_n   : 0,
             map_n    : 0,
-            mosaic_t : false,
-            palette_t: false,
-            repeat_t : false,
+            mosaic_f : false,
+            palette_f: false,
+            repeat_f : false,
             vcount   : 0,
             hscroll  : 0,
             vscroll  : 0,
-            xscale   : 0,
-            xshear   : 0,
-            yscale   : 0,
-            yshear   : 0,
-            xcoord   : 0,
-            ycoord   : 0,
+            matrix   : (0, 0, 0, 0),
+            coord    : (0, 0),
 
             // The largest width of a background is 1024 pixels.
             // Avoid reallocation when resizing background.

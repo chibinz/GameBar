@@ -127,10 +127,10 @@ impl Memory
         bg.bgcnt     = bgcnt;
         bg.priority  = bgcnt.bits(1, 0);
         bg.tile_n    = bgcnt.bits(3, 2);
-        bg.mosaic_t  = bgcnt.bit(6);
-        bg.palette_t = bgcnt.bit(7);
+        bg.mosaic_f  = bgcnt.bit(6);
+        bg.palette_f = bgcnt.bit(7);
         bg.map_n     = bgcnt.bits(12, 8);
-        bg.repeat_t  = bgcnt.bit(13);
+        bg.repeat_f  = bgcnt.bit(13);
     }
 
     pub fn update_bgofs(&self, bg: &mut Background)
@@ -144,19 +144,15 @@ impl Memory
 
     pub fn update_bgpxy(&self, bg: &mut Background)
     {
-        let pa = self.ioram16(0x20 + (bg.index - 2) * 16) as u32;
-        let pb = self.ioram16(0x22 + (bg.index - 2) * 16) as u32;
-        let pc = self.ioram16(0x24 + (bg.index - 2) * 16) as u32;
-        let pd = self.ioram16(0x26 + (bg.index - 2) * 16) as u32;
+        let pa = self.ioram16(0x20 + (bg.index - 2) * 16);
+        let pb = self.ioram16(0x22 + (bg.index - 2) * 16);
+        let pc = self.ioram16(0x24 + (bg.index - 2) * 16);
+        let pd = self.ioram16(0x26 + (bg.index - 2) * 16);
         let x  = self.ioram32(0x28 + (bg.index - 2) * 16);
         let y  = self.ioram32(0x2c + (bg.index - 2) * 16);
 
-        bg.xscale = pa;
-        bg.xshear = pb;
-        bg.yshear = pc;
-        bg.yscale = pd;
-        bg.xcoord = x;
-        bg.ycoord = y;
+        bg.matrix = (pa, pb, pc, pd);
+        bg.coord  = (x, y);
     }
 }
 

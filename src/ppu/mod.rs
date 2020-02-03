@@ -1,3 +1,4 @@
+pub mod sprite;
 pub mod background;
 
 use crate::util::*;

@@ -4,6 +4,7 @@ use std::fs::File;
 pub mod io;
 pub mod vram;
 pub mod palette;
+pub mod oam;
 
 pub struct Memory
 {
