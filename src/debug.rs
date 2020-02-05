@@ -125,7 +125,7 @@ impl<'a> Debugger<'a>
 
     fn breakpoint_hit(&mut self) -> bool
     {
-        self.breakpoint.contains(&(self.console.cpu.r[15] - 2))
+        self.breakpoint.contains(&(self.console.cpu.r[15]))
     }
 
     fn examine_memory(&mut self)

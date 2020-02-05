@@ -1,6 +1,7 @@
 use crate::util::*;
 use crate::cpu::CPU;
 use crate::cpu::alu;
+use crate::cpu::register::PSRBit::C;
 use crate::cpu::barrel_shifter::{shift_register, rotate_immediate};
 
 #[inline]
@@ -25,9 +26,14 @@ pub fn decode(instruction: u32) -> (bool, u32, bool, u32, u32, u32)
 #[inline]
 pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32))
 {
+
+    let carry = cpu.get_cpsr_bit(C);
+
     let mut op1 = cpu.r[rn as usize];
     let mut op2 = if i {rotate_immediate(cpu, operand2)} 
                   else {shift_register(cpu, operand2)};
+
+    if !s {cpu.set_cpsr_bit(C, carry)}
 
     // If a register is used to specify shift amount, the value of pc
     // will be 12 head of the address of the currently executed instruction.

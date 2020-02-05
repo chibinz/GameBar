@@ -101,7 +101,7 @@ impl CPU
         
         self.spsr &= !mask;
         self.spsr |= r & mask;
-    }    
+    }
     
     #[inline]
     pub fn get_mode(mbits: u32) -> PSRMode
