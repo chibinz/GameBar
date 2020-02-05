@@ -59,7 +59,7 @@ impl Memory
             *ptr.add(index / 2) = value;
         }
     }
-
+    
     /// Update fields in struct `PPU`
     pub fn update_ppu(&self, ppu: &mut PPU)
     {
@@ -98,7 +98,8 @@ impl Memory
     {
         let mut dispstat = self.ioram16(0x04);
 
-        if value { dispstat |= 0b01 } else { dispstat &= !0b01 }
+        dispstat &= !0b01;
+        dispstat |= value as u16;
 
         self.ioram16_s(0x04, dispstat);
     }
@@ -107,7 +108,8 @@ impl Memory
     {
         let mut dispstat = self.ioram16(0x04);
 
-        if value { dispstat |= 0b10 } else { dispstat &= !0b10 }
+        dispstat &= !0b10;
+        dispstat |= (value as u16) << 1;
 
         self.ioram16_s(0x04, dispstat);
     }
@@ -144,11 +146,11 @@ impl Memory
 
         bg.bgcnt     = bgcnt;
         bg.priority  = bgcnt.bits(1, 0);
-        bg.tile_n    = bgcnt.bits(3, 2);
+        bg.tile_b    = bgcnt.bits(3, 2);
         bg.mosaic_f  = bgcnt.bit(6);
         bg.palette_f = bgcnt.bit(7);
-        bg.map_n     = bgcnt.bits(12, 8);
-        bg.repeat_f  = bgcnt.bit(13);
+        bg.map_b     = bgcnt.bits(12, 8);
+        bg.wrap_f    = bgcnt.bit(13);
         bg.size_r    = bgcnt.bits(15, 14);
 
         bg.width  = BG_DIMENSION[bg.affine_f as usize][bg.size_r as usize].0;
@@ -166,15 +168,14 @@ impl Memory
 
     pub fn update_bgpxy(&self, bg: &mut Background)
     {
-        let pa = self.ioram16(0x20 + (bg.index - 2) * 16);
-        let pb = self.ioram16(0x22 + (bg.index - 2) * 16);
-        let pc = self.ioram16(0x24 + (bg.index - 2) * 16);
-        let pd = self.ioram16(0x26 + (bg.index - 2) * 16);
-        let x  = self.ioram32(0x28 + (bg.index - 2) * 16);
-        let y  = self.ioram32(0x2c + (bg.index - 2) * 16);
+        let pa = self.ioram16(0x20 + (bg.index - 2) * 16) as i16 as i32;
+        let pb = self.ioram16(0x22 + (bg.index - 2) * 16) as i16 as i32;
+        let pc = self.ioram16(0x24 + (bg.index - 2) * 16) as i16 as i32;
+        let pd = self.ioram16(0x26 + (bg.index - 2) * 16) as i16 as i32;
+        let x  = self.ioram32(0x28 + (bg.index - 2) * 16) as i32;
+        let y  = self.ioram32(0x2c + (bg.index - 2) * 16) as i32;
 
         bg.matrix = (pa, pb, pc, pd);
-        bg.coord  = (x, y);
+        if bg.vcount == 0 {bg.coord  = (x, y)};
     }
 }
-

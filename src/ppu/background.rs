@@ -9,12 +9,12 @@ pub struct Background
     pub index    : usize,   // 0 - 3
     pub bgcnt    : u16,     // Raw background control register
     pub priority : u32,     // Lower priority takes precedence
-    pub tile_n   : u32,     // Determine start address of tile data
-    pub map_n    : u32,     // Determine start address of tile map
+    pub tile_b   : u32,     // Determine base address of tile data
+    pub map_b    : u32,     // Determine base address of tile map
     pub affine_f : bool,    // Background type, 1 - affine, 0 - text
     pub mosaic_f : bool,    // Mosaic, 1 - on, 0 - off
     pub palette_f: bool,    // Palette type, 1 - 256, 0 - 16x16
-    pub repeat_f : bool,    // Screen over of rotational backgrounds
+    pub wrap_f   : bool,    // Screen over of rotational backgrounds
     pub size_r   : u32,     // Raw bits 15 - 14 of bgcnt
     pub width    : u32,     // width in tiles
     pub height   : u32,     // height in tiles
@@ -25,8 +25,8 @@ pub struct Background
     pub vscroll  : u32,
 
     // Affine background registers
-    pub matrix   : (u16, u16, u16, u16),
-    pub coord    : (u32, u32),
+    pub matrix   : (i32, i32, i32, i32),
+    pub coord    : (i32, i32),
 
     // Line buffer
     pub pixel    : Vec<u32>,  
@@ -41,12 +41,12 @@ impl Background
             index    : i,
             bgcnt    : 0,
             priority : 0,
-            tile_n   : 0,
-            map_n    : 0,
+            tile_b   : 0,
+            map_b    : 0,
             affine_f : false,
             mosaic_f : false,
             palette_f: false,
-            repeat_f : false,
+            wrap_f   : false,
             size_r   : 0,
             width    : 0,
             height   : 0,
@@ -86,15 +86,15 @@ impl Background
         // Tile column
         for tile_x in 0..self.width
         {
-            let tile_entry = memory.tile_map(self.map_n, self.size_r, tile_y, tile_x);
+            let tile_entry = memory.text_tile_map(self.map_b, self.size_r, tile_y, tile_x);
 
-            let tile_number     = tile_entry.bits(9, 0);
+            let tile_bumber     = tile_entry.bits(9, 0);
             let horizontal_flip = tile_entry.bit(10);
             let vertical_flip   = tile_entry.bit(11);
             let palette_number  = tile_entry.bits(15, 12) << 4;
     
             let r = if vertical_flip {7 - (line_n % 8)} else {line_n % 8};
-            let row = memory.tile_row32(self.tile_n, tile_number, r);
+            let row = memory.tile_row32(self.tile_b, tile_bumber, r);
 
             // Pixel column
             for j in 0..8
@@ -118,14 +118,14 @@ impl Background
         // Tile column
         for tile_x in 0..self.width
         {
-            let tile_entry = memory.tile_map(self.map_n, self.size_r, tile_y, tile_x);
+            let tile_entry = memory.text_tile_map(self.map_b, self.size_r, tile_y, tile_x);
 
-            let tile_number     = tile_entry.bits(9, 0);
+            let tile_bumber     = tile_entry.bits(9, 0);
             let horizontal_flip = tile_entry.bit(10);
             let vertical_flip   = tile_entry.bit(11);
     
             let r = if vertical_flip {7 - (line_n % 8)} else {line_n % 8};
-            let row = memory.tile_row64(self.tile_n, tile_number, r);
+            let row = memory.tile_row64(self.tile_b, tile_bumber, r);
 
             // Pixel column
             for j in 0..8
@@ -137,6 +137,60 @@ impl Background
                     memory.palette(palette);
             }
         }
+    }
+
+    pub fn draw_affine(&mut self, memory: &mut Memory)
+    {
+        memory.update_affine_bg(self);
+
+        for i in 0..self.width*8
+        {
+            let mut text_x = (self.matrix.0 * i as i32 + self.coord.0) >> 8;
+            let mut text_y = (self.matrix.2 * i as i32 + self.coord.1) >> 8;
+
+            if text_x >= self.width as i32 * 8 || text_x < 0
+            {
+                if self.wrap_f
+                {
+                    text_x %= self.width as i32 * 8;
+
+                    if text_x < 0 {text_x += self.width as i32 * 8}
+                }
+                else
+                {
+                    self.pixel[i as usize] = 0;
+                }
+            }
+
+            if text_y >= self.height as i32 * 8 || text_y < 0
+            {
+                if self.wrap_f
+                {
+                    text_y %= self.height as i32 * 8;
+
+                    if text_y < 0 {text_y += self.height as i32 * 8}
+                }
+                else
+                {
+                    self.pixel[i as usize] = 0;
+                    continue;
+                }
+            }
+
+            let tile_x = (text_x / 8) as u32;
+            let tile_y = (text_y / 8) as u32;
+            
+            let tile_n = 
+                memory.affine_tile_map(self.map_b, self.size_r, tile_y, tile_x) as u32;
+
+            let palette = 
+                memory.vram8(self.tile_b * 0x4000 + (tile_n * 8 + text_y as u32 % 8) * 8 + text_x as u32 % 8);
+            
+            self.pixel[i as usize] = memory.palette(palette as u32);
+        }
+
+        self.coord.0 += self.matrix.1;
+        self.coord.1 += self.matrix.3;
     }
     
     pub fn draw_bitmap_3(&mut self, memory: &Memory)
@@ -175,7 +229,7 @@ impl Background
         
         for x in 0..160
         {
-            let pixel = memory.vram16(start + (line_n * 128 + x) * 2);
+            let pixel = memory.vram16(start + (line_n * 160 + x) * 2);
             self.pixel[x as usize] = RGB(pixel);
         }
     }
@@ -204,9 +258,9 @@ impl PPU
     #[inline]
     pub fn render_text_tile(&mut self, y: u32, x: u32, memory: &Memory)
     {
-        let tile_entry = memory.tile_map(1, 0, x, y);
+        let tile_entry = memory.text_tile_map(1, 0, x, y);
 
-        let tile_number     = tile_entry.bits(9, 0);
+        let tile_bumber     = tile_entry.bits(9, 0);
         let horizontal_flip = tile_entry.bit(10);
         let vertical_flip   = tile_entry.bit(11);
         let palette_number  = tile_entry.bits(15, 12) << 4;
@@ -214,7 +268,7 @@ impl PPU
         // Pixel row
         for i in 0..8
         {
-            let row = memory.tile_row32(0x4000, tile_number, i as u32);
+            let row = memory.tile_row32(0x4000, tile_bumber, i as u32);
             let r = if vertical_flip {7 - i} else {i};
 
             // Pixel column

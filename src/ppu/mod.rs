@@ -43,7 +43,7 @@ impl PPU
         }
     }
 
-    pub fn render(&mut self, memory: &Memory)
+    pub fn render(&mut self, memory: &mut Memory)
     {
         memory.update_ppu(self);
 
@@ -56,6 +56,7 @@ impl PPU
         match self.mode
         {
             0 => self.draw_mode_0(memory),
+            1 => self.draw_mode_1(memory),
             3 => self.draw_mode_3(memory),
             4 => self.draw_mode_4(memory),
             5 => self.draw_mode_5(memory),
@@ -94,6 +95,26 @@ impl PPU
         }
     }
 
+    pub fn draw_mode_1(&mut self, memory: &mut Memory)
+    {
+        let dispcnt = self.dispcnt;
+
+        // if dispcnt.bit(8)  {self.background[0].draw_text(memory)}
+        // if dispcnt.bit(9)  {self.background[1].draw_text(memory)}
+        if dispcnt.bit(10) {self.background[2].draw_affine(memory)}
+        // if dispcnt.bit(11) {self.background[3].draw_affine(memory)}
+
+        let front_bg = &self.background[2];
+        let line_n = self.vcount as usize;
+
+        for i in 0..240
+        {
+            let x = (i) % (front_bg.width * 8) as usize;
+            self.buffer[line_n * 240 + i] = front_bg.pixel[x];
+        }
+    }
+
+
     pub fn draw_mode_3(&mut self, memory: &Memory)
     {
         debug_assert!(self.dispcnt.bit(10));
@@ -131,7 +152,7 @@ impl PPU
 
         for i in 0..160
         {
-            self.buffer[line_n * 128 + i] = self.background[2].pixel[i];
+            self.buffer[line_n * 240 + i] = self.background[2].pixel[i];
         }
     }
 

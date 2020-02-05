@@ -70,7 +70,7 @@ impl CPU
 
     pub fn step(&mut self, memory: &mut Memory)
     {
-        self.print(memory);
+        // self.print(memory);
 
         if self.in_thumb_mode()
         {
