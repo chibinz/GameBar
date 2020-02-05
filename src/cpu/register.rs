@@ -78,14 +78,10 @@ impl CPU
     #[inline]
     pub fn set_cpsr_bit(&mut self, bit: PSRBit, t: bool)
     {
-        if t
-        {
-            self.cpsr |= 1 << (bit as u32)
-        }
-        else
-        {
-            self.cpsr &= !(1 << (bit as u32))
-        }
+        let b = bit as u32;
+
+        self.cpsr &= !(1 << b);
+        self.cpsr |= (t as u32) << b;
     }
 
     /// Get SPSR of current mode

@@ -58,6 +58,7 @@ impl PPU
             0 => self.draw_mode_0(memory),
             3 => self.draw_mode_3(memory),
             4 => self.draw_mode_4(memory),
+            5 => self.draw_mode_5(memory),
             _ => unimplemented!(),
         }
     }
@@ -82,14 +83,14 @@ impl PPU
             }
         }
 
+        let front_bg = &self.background[front];
         let line_n = self.vcount as usize;
-        let hscroll = self.background[front].hscroll as usize;
+        let hscroll = front_bg.hscroll as usize;
 
-        let width = 32; // TODO
         for i in 0..240
         {
-            let x = (hscroll + i) % (width * 8) as usize;
-            self.buffer[line_n * 240 + i] = self.background[front].pixel[x];
+            let x = (hscroll + i) % (front_bg.width * 8) as usize;
+            self.buffer[line_n * 240 + i] = front_bg.pixel[x];
         }
     }
 

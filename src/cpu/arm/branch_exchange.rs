@@ -13,13 +13,6 @@ pub fn interpret(cpu: &mut CPU, instruction: u32)
     // If bit 0 of rn = 1, subsequent instructions are decoded as THUMB instructions
     cpu.set_cpsr_bit(T, cpu.r[rn as usize].bit(0));
 
-    if cpu.r[rn as usize].bit(0)
-    {
-        cpu.r[15] = cpu.r[rn as usize] & 0xfffffffe;
-    }
-    else
-    {
-        cpu.r[15] = cpu.r[rn as usize] & 0xfffffffc;
-    }
+    cpu.r[15] = cpu.r[rn as usize];
     cpu.flush();
 }

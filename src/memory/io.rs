@@ -4,6 +4,24 @@ use crate::ppu::background::Background;
 
 use super::Memory;
 
+static BG_DIMENSION: [[(u32, u32); 4]; 2] =
+[
+    // Text
+    [
+        (32, 32),
+        (64, 32),
+        (32, 64),
+        (64, 64),
+    ],
+    // Affine
+    [
+        ( 16,  16),
+        ( 32,  32),
+        ( 64,  64),
+        (128, 128),
+    ],
+];
+
 impl Memory
 {
     /// Return a halfword from ioram, offset is in bytes
@@ -131,6 +149,10 @@ impl Memory
         bg.palette_f = bgcnt.bit(7);
         bg.map_n     = bgcnt.bits(12, 8);
         bg.repeat_f  = bgcnt.bit(13);
+        bg.size_r    = bgcnt.bits(15, 14);
+
+        bg.width  = BG_DIMENSION[bg.affine_f as usize][bg.size_r as usize].0;
+        bg.height = BG_DIMENSION[bg.affine_f as usize][bg.size_r as usize].1;
     }
 
     pub fn update_bgofs(&self, bg: &mut Background)

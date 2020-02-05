@@ -52,10 +52,8 @@ impl Memory
             0x05 => self.param[offset],
             0x06 => self.vram[offset],
             0x07 => self.oam[offset],
-            0x08..=0x0d =>
-            {
-                self.rom[offset]
-            },
+            0x08..=
+            0x0d => self.rom[offset],
             0x0e => self.sram[offset],
             _    => panic!("Invalid memory address {:08x}", address),
         }
@@ -70,18 +68,16 @@ impl Memory
 
         match address >> 24
         {
-            0x00 => ldh(self.bios.as_slice()),
-            0x02 => ldh(self.ewram.as_slice()),
-            0x03 => ldh(self.iwram.as_slice()),
-            0x04 => ldh(self.ioram.as_slice()),
-            0x05 => ldh(self.param.as_slice()),
-            0x06 => ldh(self.vram.as_slice()),
-            0x07 => ldh(self.oam.as_slice()),
-            0x08..=0x0d => 
-            {
-                ldh(self.rom.as_slice())
-            },
-            0x0e => ldh(self.sram.as_slice()),
+            0x00 => ldh(&self.bios),
+            0x02 => ldh(&self.ewram),
+            0x03 => ldh(&self.iwram),
+            0x04 => ldh(&self.ioram),
+            0x05 => ldh(&self.param),
+            0x06 => ldh(&self.vram),
+            0x07 => ldh(&self.oam),
+            0x08..=
+            0x0d => ldh(&self.rom),
+            0x0e => ldh(&self.sram),
             _    => panic!("Invalid memory address {:08x}", address),
         }
     }
@@ -101,18 +97,16 @@ impl Memory
 
         let value = match address >> 24
         {
-            0x00 => ld(self.bios.as_slice()),
-            0x02 => ld(self.ewram.as_slice()),
-            0x03 => ld(self.iwram.as_slice()),
-            0x04 => ld(self.ioram.as_slice()),
-            0x05 => ld(self.param.as_slice()),
-            0x06 => ld(self.vram.as_slice()),
-            0x07 => ld(self.oam.as_slice()),
-            0x08..=0x0d => 
-            {
-                ld(self.rom.as_slice())
-            },
-            0x0e => ld(self.sram.as_slice()),
+            0x00 => ld(&self.bios),
+            0x02 => ld(&self.ewram),
+            0x03 => ld(&self.iwram),
+            0x04 => ld(&self.ioram),
+            0x05 => ld(&self.param),
+            0x06 => ld(&self.vram),
+            0x07 => ld(&self.oam),
+            0x08..=
+            0x0d => ld(&self.rom),
+            0x0e => ld(&self.sram),
             _    => panic!("Invalid memory address {:08x}", address),
         };
 
@@ -149,12 +143,12 @@ impl Memory
 
         match address >> 24
         {
-            0x02 => sth(self.ewram.as_mut_slice()),
-            0x03 => sth(self.iwram.as_mut_slice()),
-            0x04 => sth(self.ioram.as_mut_slice()),
-            0x05 => sth(self.param.as_mut_slice()),
-            0x06 => sth(self.vram.as_mut_slice()),
-            0x07 => sth(self.oam.as_mut_slice()),
+            0x02 => sth(&mut self.ewram),
+            0x03 => sth(&mut self.iwram),
+            0x04 => sth(&mut self.ioram),
+            0x05 => sth(&mut self.param),
+            0x06 => sth(&mut self.vram),
+            0x07 => sth(&mut self.oam),
             _    => panic!("Invalid memory address {:08x}", address),
         };
     }
@@ -175,12 +169,12 @@ impl Memory
 
         match address >> 24
         {
-            0x02 => sth(self.ewram.as_mut_slice()),
-            0x03 => sth(self.iwram.as_mut_slice()),
-            0x04 => sth(self.ioram.as_mut_slice()),
-            0x05 => sth(self.param.as_mut_slice()),
-            0x06 => sth(self.vram.as_mut_slice()),
-            0x07 => sth(self.oam.as_mut_slice()),
+            0x02 => sth(&mut self.ewram),
+            0x03 => sth(&mut self.iwram),
+            0x04 => sth(&mut self.ioram),
+            0x05 => sth(&mut self.param),
+            0x06 => sth(&mut self.vram),
+            0x07 => sth(&mut self.oam),
             _    => panic!("Invalid memory address {:08x}", address),
         };
     }

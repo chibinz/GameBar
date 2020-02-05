@@ -3,21 +3,23 @@ use crate::ppu::sprite::Sprite;
 
 use super::Memory;
 
-#[allow(non_upper_case_globals)]
-static dimension: [[(u32, u32); 4]; 3] =
+static SPRITE_DIMENSION: [[(u32, u32); 4]; 3] =
 [
+    // Square
     [
         ( 8,  8),
         (16, 16),
         (32, 32),
         (64, 64),
     ],
+    // Horizontal
     [
         (16,  8),
         (32,  8),
         (32, 16),
         (64, 32),
     ],
+    // Vertical
     [
         ( 8, 16),
         ( 8, 32),
@@ -64,8 +66,8 @@ impl Memory
         sprite.hflip    = !attr0.bit(8) && attr1.bit(12);
         sprite.vflip    = !attr0.bit(8) && attr1.bit(13);
         sprite.affine_i = attr1.bits(11, 10);
-        sprite.width    = dimension[size][shape].0;
-        sprite.height   = dimension[size][shape].1;
+        sprite.width    = SPRITE_DIMENSION[shape][size].0;
+        sprite.height   = SPRITE_DIMENSION[shape][size].1;
     }
 
     #[inline]

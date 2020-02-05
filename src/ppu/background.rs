@@ -3,6 +3,7 @@ use crate::ppu::PPU;
 use crate::memory::Memory;
 use crate::memory::palette::RGB;
 
+
 pub struct Background
 {
     pub index    : usize,   // 0 - 3
@@ -10,9 +11,13 @@ pub struct Background
     pub priority : u32,     // Lower priority takes precedence
     pub tile_n   : u32,     // Determine start address of tile data
     pub map_n    : u32,     // Determine start address of tile map
+    pub affine_f : bool,    // Background type, 1 - affine, 0 - text
     pub mosaic_f : bool,    // Mosaic, 1 - on, 0 - off
     pub palette_f: bool,    // Palette type, 1 - 256, 0 - 16x16
     pub repeat_f : bool,    // Screen over of rotational backgrounds
+    pub size_r   : u32,     // Raw bits 15 - 14 of bgcnt
+    pub width    : u32,     // width in tiles
+    pub height   : u32,     // height in tiles
     pub vcount   : u32,     // Line number of current scanline
 
     // Text background registers
@@ -38,9 +43,13 @@ impl Background
             priority : 0,
             tile_n   : 0,
             map_n    : 0,
+            affine_f : false,
             mosaic_f : false,
             palette_f: false,
             repeat_f : false,
+            size_r   : 0,
+            width    : 0,
+            height   : 0,
             vcount   : 0,
             hscroll  : 0,
             vscroll  : 0,
@@ -52,19 +61,32 @@ impl Background
             pixel    : vec![0; 1024],
         }
     }
-
+    
     pub fn draw_text(&mut self, memory: &Memory)
     {
         memory.update_text_bg(self);
 
-        let (width, height) = get_size(self.bgcnt, false);
+        if self.palette_f
+        {
+            self.draw_text_256(memory)
+        }
+        else
+        {
+            self.draw_text_16(memory)
+        }
+    }
+
+    pub fn draw_text_16(&mut self, memory: &Memory)
+    {
+        memory.update_text_bg(self);
+
         let line_n = self.vcount + self.vscroll;
-        let tile_y = (line_n / 8) % height;
+        let tile_y = (line_n / 8) % self.height;
         
         // Tile column
-        for tile_x in 0..width
+        for tile_x in 0..self.width
         {
-            let tile_entry = memory.tile_map(self.map_n, tile_y, tile_x);
+            let tile_entry = memory.tile_map(self.map_n, self.size_r, tile_y, tile_x);
 
             let tile_number     = tile_entry.bits(9, 0);
             let horizontal_flip = tile_entry.bit(10);
@@ -82,6 +104,37 @@ impl Background
                 
                 self.pixel[(tile_x * 8 + c) as usize] = 
                     memory.palette(palette_number | palette);
+            }
+        }
+    }
+
+    pub fn draw_text_256(&mut self, memory: &Memory)
+    {
+        memory.update_text_bg(self);
+
+        let line_n = self.vcount + self.vscroll;
+        let tile_y = (line_n / 8) % self.height;
+        
+        // Tile column
+        for tile_x in 0..self.width
+        {
+            let tile_entry = memory.tile_map(self.map_n, self.size_r, tile_y, tile_x);
+
+            let tile_number     = tile_entry.bits(9, 0);
+            let horizontal_flip = tile_entry.bit(10);
+            let vertical_flip   = tile_entry.bit(11);
+    
+            let r = if vertical_flip {7 - (line_n % 8)} else {line_n % 8};
+            let row = memory.tile_row64(self.tile_n, tile_number, r);
+
+            // Pixel column
+            for j in 0..8
+            {
+                let palette = (row >> ((7 - j) * 8)) as u8 as u32;
+                let c = if !horizontal_flip {7 - j} else {j};
+                
+                self.pixel[(tile_x * 8 + c) as usize] = 
+                    memory.palette(palette);
             }
         }
     }
@@ -128,35 +181,6 @@ impl Background
     }
 }
 
-#[inline]
-fn get_size(bgcnt: u16, affine: bool) -> (u32, u32)
-{
-    let z = bgcnt.bits(15, 14);
-
-    if affine
-    {
-        match z
-        {
-            0b00 => (16, 16),
-            0b01 => (32, 32),
-            0b10 => (64, 64),
-            0b11 => (128, 128),
-            _  => unreachable!(),
-        }
-    }
-    else
-    {
-        match z
-        {
-            0b00 => (32, 32),
-            0b01 => (64, 32),
-            0b10 => (32, 64),
-            0b11 => (64, 64),
-            _  => unreachable!(),
-        }
-    }
-}
-
 impl PPU
 {
     pub fn render_background(&mut self, memory: &Memory) 
@@ -180,7 +204,7 @@ impl PPU
     #[inline]
     pub fn render_text_tile(&mut self, y: u32, x: u32, memory: &Memory)
     {
-        let tile_entry = memory.tile_map(0x800, x, y);
+        let tile_entry = memory.tile_map(1, 0, x, y);
 
         let tile_number     = tile_entry.bits(9, 0);
         let horizontal_flip = tile_entry.bit(10);
