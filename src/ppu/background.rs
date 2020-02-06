@@ -3,7 +3,7 @@ use crate::ppu::PPU;
 use crate::memory::Memory;
 use crate::memory::palette::RGB;
 
-
+#[derive(Clone)]
 pub struct Background
 {
     pub index    : usize,   // 0 - 3
@@ -34,11 +34,11 @@ pub struct Background
 
 impl Background
 {
-    pub fn new(i: usize) -> Self
+    pub fn new() -> Self
     {
         Self
         {
-            index    : i,
+            index    : 0,
             bgcnt    : 0,
             priority : 0,
             tile_b   : 0,

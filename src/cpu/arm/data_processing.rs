@@ -91,7 +91,6 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
 mod tests
 {
     use super::*;
-    use crate::cpu::register::PSRBit::*;
     
     #[test]
     fn data_execute()

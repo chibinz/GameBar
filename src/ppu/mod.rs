@@ -5,6 +5,7 @@ use crate::util::*;
 use crate::memory::Memory;
 
 use background::Background;
+use sprite::Sprite;
 
 pub struct PPU
 {
@@ -15,15 +16,16 @@ pub struct PPU
     pub fblank    : bool,           // Force blanking
     pub vcount    : u32,            // Line number of current scanline
 
-    pub buffer    : Vec<u32>,       // Frame buffer, 240 * 160
-    pub background: Vec<Background>,
+    pub background  : Vec<Background>,   // Background 0 - 3
+    pub sprite      : Vec<Sprite>,       // Sprite 0 - 127
+    pub buffer      : Vec<u32>,          // Frame buffer, 240 * 160
 }
 
 impl PPU
 {
     pub fn new() -> Self
     {
-        Self
+        let mut p = Self
         {
             dispcnt   : 0,
             mode      : 0,
@@ -32,26 +34,30 @@ impl PPU
             fblank    : false,
             vcount    : 0,
 
-            buffer    : vec![0; 240 * 160],
-            background: vec!
-            [
-                Background::new(0),
-                Background::new(1),
-                Background::new(2),
-                Background::new(3)
-            ],
+            background  : vec![Background::new(); 4],
+            sprite      : vec![Sprite::new(); 128],
+            buffer      : vec![0; 240 * 160],
+        };
+
+        for i in 0..4
+        {
+            p.background[i].index = i;
         }
+
+        for i in 0..128
+        {
+            p.sprite[i].index = i;
+        }
+
+        p
     }
 
     pub fn render(&mut self, memory: &mut Memory)
     {
         memory.update_ppu(self);
 
-        let dispcnt = self.dispcnt;
-        
         if self.fblank {self.force_blank()}
-        if self.vcount >= 160 {return}       // Change to assertion
-        if dispcnt.bits(11, 8) == 0 {return} // Transparent background
+        if self.vcount >= 160 {return} // Change to assertion
 
         match self.mode
         {
@@ -62,55 +68,82 @@ impl PPU
             5 => self.draw_mode_5(memory),
             _ => unimplemented!(),
         }
+
+        // self.draw_sprite(memory);
+    }
+
+    pub fn draw_sprite(&mut self, memory: &Memory)
+    {
+        let mut pixel: Vec<u32> = vec![0; 240]; // Line buffer for sprites
+
+        for _ in 0..128
+        {
+            self.sprite[0].draw_text(self.vcount, self.sequential, &mut pixel, memory);
+        }
+
+        for i in 0..240
+        {
+            self.buffer[self.vcount as usize * 240 + i] = pixel[i];
+        }
     }
 
     pub fn draw_mode_0(&mut self, memory: &Memory)
     {
-        let dispcnt = self.dispcnt;
-
-        if dispcnt.bit(8)  {self.background[0].draw_text(memory)}
-        if dispcnt.bit(9)  {self.background[1].draw_text(memory)}
-        if dispcnt.bit(10) {self.background[2].draw_text(memory)}
-        if dispcnt.bit(11) {self.background[3].draw_text(memory)}
-
-        let mut min = 0b11;
-        let mut front = 0;
-        for i in 0..4
+        let mut min = 4;
+        for i in 0..1
         {
-            if self.background[i].priority < min
+            if self.dispcnt.bit(8 + i as u32) && self.background[i].priority < min
             {
                 min = self.background[i].priority;
-                front = i;
+
+                self.background[i].draw_text(memory);
+                let bg = &self.background[i];
+                let line_n = self.vcount as usize;
+                let hscroll = bg.hscroll as usize;
+
+                for i in 0..240
+                {
+                    let x = (hscroll + i) % (bg.width * 8) as usize;
+                    self.buffer[line_n * 240 + i] = bg.pixel[x];
+                }
             }
-        }
-
-        let front_bg = &self.background[front];
-        let line_n = self.vcount as usize;
-        let hscroll = front_bg.hscroll as usize;
-
-        for i in 0..240
-        {
-            let x = (hscroll + i) % (front_bg.width * 8) as usize;
-            self.buffer[line_n * 240 + i] = front_bg.pixel[x];
         }
     }
 
     pub fn draw_mode_1(&mut self, memory: &mut Memory)
     {
-        let dispcnt = self.dispcnt;
-
-        // if dispcnt.bit(8)  {self.background[0].draw_text(memory)}
-        // if dispcnt.bit(9)  {self.background[1].draw_text(memory)}
-        if dispcnt.bit(10) {self.background[2].draw_affine(memory)}
-        // if dispcnt.bit(11) {self.background[3].draw_affine(memory)}
-
-        let front_bg = &self.background[2];
-        let line_n = self.vcount as usize;
-
-        for i in 0..240
+        let mut min = 0b11;
+        for i in 0..2
         {
-            let x = (i) % (front_bg.width * 8) as usize;
-            self.buffer[line_n * 240 + i] = front_bg.pixel[x];
+            if self.dispcnt.bit(8 + i as u32) && self.background[i].priority < min
+            {
+                min = self.background[i].priority;
+
+                self.background[i].draw_text(memory);
+                let bg = &self.background[i];
+                let line_n = self.vcount as usize;
+                let hscroll = bg.hscroll as usize;
+
+                for i in 0..240
+                {
+                    let x = (hscroll + i) % (bg.width * 8) as usize;
+                    self.buffer[line_n * 240 + i] = bg.pixel[x];
+                }
+            }
+        }
+
+        if self.dispcnt.bit(10)
+        {
+            self.background[2].draw_affine(memory);
+
+            let front_bg = &self.background[2];
+            let line_n = self.vcount as usize;
+
+            for i in 0..240
+            {
+                let x = (i) % (front_bg.width * 8) as usize;
+                self.buffer[line_n * 240 + i] = front_bg.pixel[x];
+            }
         }
     }
 
