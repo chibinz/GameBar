@@ -92,10 +92,10 @@ impl Memory
     #[inline]
     pub fn update_matrix(&self, sprite: &mut Sprite)
     {
-        let pa = self.oam16(0x06 + sprite.affine_i * 0x20);
-        let pb = self.oam16(0x0e + sprite.affine_i * 0x20);
-        let pc = self.oam16(0x16 + sprite.affine_i * 0x20);
-        let pd = self.oam16(0x1e + sprite.affine_i * 0x20);
+        let pa = self.oam16(0x06 + sprite.affine_i * 0x20) as i16 as i32;
+        let pb = self.oam16(0x0e + sprite.affine_i * 0x20) as i16 as i32;
+        let pc = self.oam16(0x16 + sprite.affine_i * 0x20) as i16 as i32;
+        let pd = self.oam16(0x1e + sprite.affine_i * 0x20) as i16 as i32;
 
         sprite.matrix = (pa, pb, pc, pd);
     }

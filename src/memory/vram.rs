@@ -6,12 +6,7 @@ impl Memory
     #[inline]
     pub fn vram8(&self, offset: u32) -> u8
     {
-        unsafe
-        {
-            let ptr = self.vram.as_ptr() as *const u8;
-
-            *ptr.add(offset as usize)
-        }
+        self.vram[offset as usize]
     }
 
     /// Return a halfword from vram, offset is in bytes
@@ -48,6 +43,22 @@ impl Memory
 
             *ptr.add((offset / 8) as usize)
         }
+    }
+
+    #[inline]
+    pub fn tile_data4(&self, tile_b: u32, tile_n: u32, pixel_x: u32, pixel_y: u32) -> u32
+    {
+        let b = self.vram8(tile_b * 0x4000 + tile_n * 32 + pixel_y * 4 + pixel_x / 2);
+
+        if pixel_x & 1 == 1 {b as u32 >> 4} else {b as u32 & 0x0f}
+    }
+
+    #[inline]
+    pub fn tile_data8(&self, tile_b: u32, tile_n: u32, pixel_x: u32, pixel_y: u32) -> u32
+    {
+        let b = self.vram8(tile_b * 0x4000 + tile_n * 64 + pixel_y * 8 + pixel_x);
+
+        b as u32
     }
 
     /// Return a row of 4-bit tile data as a word

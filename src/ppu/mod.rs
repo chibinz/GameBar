@@ -59,26 +59,26 @@ impl PPU
         if self.fblank {self.force_blank()}
         if self.vcount >= 160 {return} // Change to assertion
 
-        match self.mode
-        {
-            0 => self.draw_mode_0(memory),
-            1 => self.draw_mode_1(memory),
-            3 => self.draw_mode_3(memory),
-            4 => self.draw_mode_4(memory),
-            5 => self.draw_mode_5(memory),
-            _ => unimplemented!(),
-        }
+        // match self.mode
+        // {
+        //     0 => self.draw_mode_0(memory),
+        //     1 => self.draw_mode_1(memory),
+        //     3 => self.draw_mode_3(memory),
+        //     4 => self.draw_mode_4(memory),
+        //     5 => self.draw_mode_5(memory),
+        //     _ => unimplemented!(),
+        // }
 
-        // self.draw_sprite(memory);
+        self.draw_sprite(memory);
     }
 
     pub fn draw_sprite(&mut self, memory: &Memory)
     {
-        let mut pixel: Vec<u32> = vec![0; 240]; // Line buffer for sprites
+        let mut pixel: Vec<u32> = vec![0; 512]; // Line buffer for sprites
 
         for _ in 0..128
         {
-            self.sprite[0].draw_text(self.vcount, self.sequential, &mut pixel, memory);
+            self.sprite[0].draw(self.vcount, self.sequential, &mut pixel, memory);
         }
 
         for i in 0..240

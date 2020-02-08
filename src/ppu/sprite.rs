@@ -1,7 +1,7 @@
 use crate::util::*;
 use crate::memory::Memory;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Sprite
 {
     pub index    : usize,    // Index of sprite, 0 - 127
@@ -22,7 +22,7 @@ pub struct Sprite
     pub palette_n: u32,      // Palette number (for 16 color sprites)
 
     // Transform matrix used for Rotation and scaling
-    pub matrix   : (u16, u16, u16, u16) 
+    pub matrix   : (i32, i32, i32, i32) 
 }
 
 impl Sprite
@@ -48,6 +48,23 @@ impl Sprite
             priority : 0,
             palette_n: 0,     
             matrix   : (0, 0, 0, 0) 
+        }
+    }
+
+    pub fn draw(&mut self, vcount: u32, sequential: bool, pixel: &mut Vec<u32>, memory: &Memory)
+    {
+        memory.update_sprite(self);
+
+        if !self.disabled() && self.visible(vcount)
+        {
+            if self.affine_f
+            {
+                self.draw_affine(vcount, sequential, pixel, memory)
+            }
+            else
+            {
+                self.draw_text(vcount, sequential, pixel, memory)
+            }
         }
     }
 
@@ -81,7 +98,7 @@ impl Sprite
         }
     }
 
-    pub fn draw_text_256(&mut self, vcount: u32, pixel: &mut Vec<u32>, memory: &Memory)
+    pub fn draw_text_256(&mut self, vcount: u32, sequential: bool, pixel: &mut Vec<u32>, memory: &Memory)
     {
         assert_eq!(self.affine_f, false);
         memory.update_sprite(self);
@@ -89,12 +106,12 @@ impl Sprite
         if !self.disabled() && self.visible(vcount)
         {
             let tile_y = (vcount - self.ycoord) / 8;
-            let r = (vcount - self.ycoord) % 8;
-
+            let r = if !self.vflip {7 - (vcount - self.ycoord) % 8} else {(vcount - self.ycoord) % 8};
 
             for tile_x in 0..self.width/8
             {
-                let row = memory.tile_row64(4, self.tile_n + tile_y * self.width/8 + tile_x, r);
+                let w = if sequential {self.height / 8} else {8};
+                let row = memory.tile_row64(4, self.tile_n + tile_y * w + tile_x, r);
 
                 for j in 0..8
                 {
@@ -110,6 +127,51 @@ impl Sprite
         }
     }
     
+    pub fn draw_affine(&mut self, vcount: u32, sequential: bool, pixel: &mut Vec<u32>, memory: &Memory)
+    {
+        memory.update_sprite(self);
+
+        let mut half_width = self.width as i32 / 2;
+        let mut half_height = self.height as i32 / 2;
+
+        let mut xcenter = self.xcoord as i32 + half_width;
+        let mut ycenter = self.ycoord as i32 + half_height;
+
+        // Double size only doubles the viewport size not the sprite itself
+        if self.double_f
+        {
+            xcenter     += half_width;
+            ycenter     += half_height;
+            half_width  *= 2;
+            half_height *= 2;
+        }
+
+        let y = vcount as i32 - ycenter;
+
+        if self.visible(vcount)
+        {
+            for x in -half_width..half_width
+            {
+                // Due to the linearity of the transform matrix, the origin is preserved.
+                // That is the screen origin overlaps the texture origin
+                // The transform matrix take relative ONSCREEN distance to the origin as input
+                // and transforms it into relative TEXTURE distance to origin
+                let text_x = ((self.matrix.0 * x + self.matrix.1 * y) >> 8) + half_width;
+                let text_y = ((self.matrix.2 * x + self.matrix.3 * y) >> 8) + half_height;
+
+                let tile_x = text_x as u32 / 8;
+                let tile_y = text_y as u32 / 8;
+                let pixel_x = text_x as u32 % 8;
+                let pixel_y = text_y as u32 % 8;
+                let tile_n = self.tile_n + tile_y * 8 + tile_x;
+
+                let palette_entry = memory.tile_data4(4, tile_n, pixel_x, pixel_y);
+                let palette = (self.palette_n << 4) | palette_entry;
+
+                pixel[(xcenter + x) as usize] = memory.palette(0x100 + palette);
+            }
+        }
+    }
 
     pub fn disabled(&self) -> bool
     {
@@ -118,7 +180,8 @@ impl Sprite
 
     pub fn visible(&self, vcount: u32) -> bool
     {
-        self.xcoord < 240 && self.ycoord < vcount 
-            && self.ycoord + self.height > vcount
+           self.xcoord < 240 
+        && self.ycoord <= vcount 
+        && self.ycoord + self.height * (self.double_f as u32 + 1) > vcount
     }
 }
