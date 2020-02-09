@@ -1,25 +1,16 @@
-use super::Memory;
-
 use crate::util::*;
+
+use super::Memory;
+use super::into16;
 
 impl Memory
 {
     /// Take index to palette, return 0RGD u32 color.
-    /// This function contain unsafe code because is frequently called in
-    /// rendering loops. However, it will NOT function properly on a big
-    /// endian system.
     #[inline]
     pub fn palette(&self, index: u32) -> u32
     {
-        // Object palette starts at 0x05000200
-        // let offset = (index + if obj {0x100} else {0}) as usize;
-
-        unsafe
-        {
-            let ptr = self.param.as_ptr() as *const u16;
-
-            RGB(*ptr.add(index as usize))
-        }
+        let a = index as usize * 2;
+        RGB(into16(&self.param[a..a+2]))
     }
 }
 

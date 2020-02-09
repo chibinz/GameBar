@@ -1,4 +1,5 @@
 use super::Memory;
+use super::into16;
 
 impl Memory
 {   
@@ -13,12 +14,8 @@ impl Memory
     #[inline]
     pub fn vram16(&self, offset: u32) -> u16
     {
-        unsafe
-        {
-            let ptr = self.vram.as_ptr() as *const u16;
-
-            *ptr.add((offset / 2) as usize)
-        }
+        let a = offset as usize;
+        into16(&self.vram[a..a+2])
     }
 
     #[inline]

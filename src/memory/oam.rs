@@ -3,6 +3,7 @@ use crate::ppu::sprite::Sprite;
 use crate::ppu::sprite::DIMENSION;
 
 use super::Memory;
+use super::into16;
 
 impl Memory
 {   
@@ -10,12 +11,8 @@ impl Memory
     #[inline]
     pub fn oam16(&self, offset: u32) -> u16
     {
-        unsafe
-        {
-            let ptr = self.oam.as_ptr() as *const u16;
-
-            *ptr.add((offset / 2) as usize)
-        }
+        let a = offset as usize;
+        into16(&self.oam[a..a+2])
     }
 
     #[inline]

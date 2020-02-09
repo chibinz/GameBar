@@ -4,45 +4,34 @@ use crate::ppu::background::Background;
 use crate::ppu::background::DIMENSION;
 
 use super::Memory;
-
-
+use super::into16;
+use super::into32;
 
 impl Memory
 {
     /// Return a halfword from ioram, offset is in bytes
     #[inline]
-    pub fn ioram16(&self, index: usize) -> u16
+    pub fn ioram16(&self, offset: usize) -> u16
     {
-        unsafe
-        {
-            let ptr = self.ioram.as_ptr() as *const u16;
-
-            *ptr.add(index / 2)
-        }
+        let a = offset as usize;
+        into16(&self.ioram[a..a+2])
     }
 
     /// Return a word from vram, offset is in bytes
     #[inline]
-    pub fn ioram32(&self, index: usize) -> u32
+    pub fn ioram32(&self, offset: usize) -> u32
     {
-        unsafe
-        {
-            let ptr = self.ioram.as_ptr() as *const u32;
-
-            *ptr.add(index / 4)
-        }
+        let a = offset as usize;
+        into32(&self.ioram[a..a+4])
     }
 
     /// Store a halfword in vram, offset is in bytes
     #[inline]
-    pub fn ioram16_s(&mut self, index: usize, value: u16)
+    pub fn ioram16_s(&mut self, offset: usize, value: u16)
     {
-        unsafe
-        {
-            let ptr = self.ioram.as_mut_ptr() as *mut u16;
-
-            *ptr.add(index / 2) = value;
-        }
+        let a = value.to_le_bytes();
+        self.ioram[offset]     = a[0];
+        self.ioram[offset + 1] = a[1];
     }
     
     /// Update fields in struct `PPU`

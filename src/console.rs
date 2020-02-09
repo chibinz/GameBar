@@ -38,14 +38,14 @@ impl Console
         }
     }
 
-    // Render a frame
-    pub fn run(&mut self)
+    /// Render a frame
+    pub fn step_frame(&mut self)
     {
         for _ in 0..160
         {
             self.cpu.run(960, &mut self.memory);
 
-            self.ppu.render(&mut self.memory);
+            self.ppu.render(&self.memory);
             self.memory.set_hblank_flag(true);
     
             self.cpu.run(272, &mut self.memory);
@@ -69,7 +69,7 @@ impl Console
         self.window.update_with_buffer(&self.ppu.buffer, 240, 160).unwrap();
     }
 
-    // Single step CPU, for debugging purpose
+    /// Single step CPU, for debugging purpose
     pub fn step(&mut self)
     {
         // self.cpu.step(&mut self.memory);
@@ -87,6 +87,6 @@ impl Console
         // }
         
         // self.cpu.step(&mut self.memory);
-        self.run();
+        self.step_frame();
     }
 }

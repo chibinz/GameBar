@@ -1,5 +1,6 @@
 use std::io::Read;
 use std::fs::File;
+use std::convert::TryInto;
 
 pub mod io;
 pub mod vram;
@@ -64,7 +65,7 @@ impl Memory
     {
         let offset = mirror(address & 0x00fffffe);
 
-        let ldh = |mem: &[u8]| mem[offset] as u16 | (mem[offset + 1] as u16) << 8;
+        let ldh = |mem: &[u8]| into16(&mem[offset..offset+2]);
 
         match address >> 24
         {
@@ -87,13 +88,7 @@ impl Memory
     {
         let offset = mirror(address & 0x00fffffc);
 
-        let ld = |mem: &[u8]|
-        {
-             mem[offset] as u32 | 
-            (mem[offset + 1] as u32) << 8  | 
-            (mem[offset + 2] as u32) << 16 | 
-            (mem[offset + 3] as u32) << 24
-        };
+        let ld = |mem: &[u8]| into32(&mem[offset..offset+4]);
 
         let value = match address >> 24
         {
@@ -115,30 +110,31 @@ impl Memory
     }
 
     /// Store a byte in memory, only EWRAM, IWRAM, IORAM, SRAM are accessible
-    pub fn store8(&mut self, address: u32, data: u8)
+    pub fn store8(&mut self, address: u32, value: u8)
     {
         let offset = mirror(address & 0x00ffffff);
 
         match address >> 24
         {
-            0x02 => self.ewram[offset] = data,
-            0x03 => self.iwram[offset] = data,
-            0x04 => self.ioram[offset] = data,
-            0x0e => self.sram[offset]  = data,
+            0x02 => self.ewram[offset] = value,
+            0x03 => self.iwram[offset] = value,
+            0x04 => self.ioram[offset] = value,
+            0x0e => self.sram[offset]  = value,
             _    => panic!("Invalid memory address {:08x}", address),
         };
     }
 
     /// Store an halfword in memory, BIOS, ROM, SRAM are inaccessible
-    pub fn store16(&mut self, address: u32, data: u16)
+    pub fn store16(&mut self, address: u32, value: u16)
     {
         // Accesses are forced to halfword aligned
         let offset = mirror(address & 0x00fffffe);
 
         let sth = |mem: &mut [u8]| 
         {
-            mem[offset] = (data & 0b11111111) as u8;
-            mem[offset + 1] = (data >> 8) as u8;
+            let a = value.to_le_bytes();
+            mem[offset]     = a[0];
+            mem[offset + 1] = a[1];
         };
 
         match address >> 24
@@ -154,17 +150,18 @@ impl Memory
     }
 
     /// Store a word in memory, BIOS, ROM, SRAM are inaccessible
-    pub fn store32(&mut self, address: u32, data: u32)
+    pub fn store32(&mut self, address: u32, value: u32)
     {
         // Accesses are forced to be word aligned
         let offset = mirror(address & 0x00fffffc);
 
-        let sth = |mem: &mut [u8]| 
+        let sth = |mem: &mut [u8]|
         {
-            mem[offset] = (data & 0b11111111) as u8;
-            mem[offset + 1] = (data >> 8 & 0b11111111) as u8;
-            mem[offset + 2] = (data >> 16 & 0b11111111) as u8;
-            mem[offset + 3] = (data >> 24) as u8;
+            let a = value.to_le_bytes();
+            mem[offset]     = a[0];
+            mem[offset + 1] = a[1];
+            mem[offset + 2] = a[2];
+            mem[offset + 3] = a[3];
         };
 
         match address >> 24
@@ -230,4 +227,16 @@ fn mirror(address: u32) -> usize
     };
 
     a as usize
+}
+
+#[inline]
+pub fn into16(a: &[u8]) -> u16
+{
+    u16::from_le_bytes(a[0..2].try_into().unwrap())
+}
+
+#[inline]
+pub fn into32(a: &[u8]) -> u32
+{
+    u32::from_le_bytes(a[0..4].try_into().unwrap())
 }

@@ -109,7 +109,7 @@ impl Background
         }
     }
 
-    pub fn draw_affine(&mut self, memory: &mut Memory)
+    pub fn draw_affine(&mut self, memory: &Memory)
     {
         memory.update_affine_bg(self);
 
