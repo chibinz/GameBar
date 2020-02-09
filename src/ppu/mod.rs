@@ -16,9 +16,9 @@ pub struct PPU
     pub fblank    : bool,           // Force blanking
     pub vcount    : u32,            // Line number of current scanline
 
-    pub background  : Vec<Background>,   // Background 0 - 3
-    pub sprite      : Vec<Sprite>,       // Sprite 0 - 127
-    pub buffer      : Vec<u32>,          // Frame buffer, 240 * 160
+    pub background: Vec<Background>,   // Background 0 - 3
+    pub sprite    : Vec<Sprite>,       // Sprite 0 - 127
+    pub buffer    : Vec<u32>,          // Frame buffer, 240 * 160
 }
 
 impl PPU

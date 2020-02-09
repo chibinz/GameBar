@@ -1,7 +1,32 @@
-use crate::util::*;
 use crate::memory::Memory;
 
-#[derive(Clone, Debug)]
+/// Sprite dimension in pixels
+pub static DIMENSION: [[(u32, u32); 4]; 3] =
+[
+    // Square
+    [
+        ( 8,  8),
+        (16, 16),
+        (32, 32),
+        (64, 64),
+    ],
+    // Horizontal
+    [
+        (16,  8),
+        (32,  8),
+        (32, 16),
+        (64, 32),
+    ],
+    // Vertical
+    [
+        ( 8, 16),
+        ( 8, 32),
+        (16, 32),
+        (32, 64),
+    ],
+];
+
+#[derive(Clone)]
 pub struct Sprite
 {
     pub index    : usize,    // Index of sprite, 0 - 127
@@ -70,74 +95,45 @@ impl Sprite
 
     pub fn draw_text(&mut self, vcount: u32, sequential: bool, pixel: &mut Vec<u32>, memory: &Memory)
     {
-        assert_eq!(self.affine_f, false);
-        memory.update_sprite(self);
+        let w = if sequential {self.width / 8} else {8};
+        let y = vcount - self.ycoord;
 
-        if !self.disabled() && self.visible(vcount)
+        let mut tile_y  = y / 8;
+        let mut pixel_y = y % 8;
+        if self.vflip
         {
-            let tile_y = (vcount - self.ycoord) / 8;
-            let r = if !self.vflip {7 - (vcount - self.ycoord) % 8} else {(vcount - self.ycoord) % 8};
+            tile_y  = self.height / 8 - tile_y - 1;
+            pixel_y = 7 - pixel_y;
+        }
 
-            for tile_x in 0..self.width/8
+        for i in 0..self.width
+        {
+            let mut tile_x  = i / 8;
+            let mut pixel_x = i % 8;
+            if self.hflip
             {
-                // Why 8? weird...
-                let w = if sequential {self.height / 8} else {8};
-                let row = memory.tile_row32(4, self.tile_n + tile_y * w + tile_x, r);
-
-                for j in 0..8
-                {
-                    let palette = row.bits((8 - j as u32) * 4 - 1, (7 - j as u32) * 4);
-                    let c = if self.hflip {7 - j} else {j};
-
-                    if self.xcoord + tile_x * 8 + c >= 240 {break}
-                    
-                    pixel[(self.xcoord + tile_x * 8 + c) as usize] = 
-                        memory.palette(0x100 + palette);
-                }
+                tile_x  = self.width / 8 - tile_x - 1;
+                pixel_x = 7 - pixel_x;
             }
+
+            // Sprite tile data starts at 4 * 0x4000 = 0x10000
+            let tile_b = 4;
+            let tile_n = self.tile_n + tile_y * w + tile_x;
+
+            let palette = memory.tile_data(self.palette_f, tile_b, tile_n, pixel_x, pixel_y);
+            pixel[(self.xcoord + i) as usize] = memory.palette(0x100 + (self.palette_n << 4 | palette));
         }
     }
 
-    pub fn draw_text_256(&mut self, vcount: u32, sequential: bool, pixel: &mut Vec<u32>, memory: &Memory)
-    {
-        assert_eq!(self.affine_f, false);
-        memory.update_sprite(self);
-
-        if !self.disabled() && self.visible(vcount)
-        {
-            let tile_y = (vcount - self.ycoord) / 8;
-            let r = if !self.vflip {7 - (vcount - self.ycoord) % 8} else {(vcount - self.ycoord) % 8};
-
-            for tile_x in 0..self.width/8
-            {
-                let w = if sequential {self.height / 8} else {8};
-                let row = memory.tile_row64(4, self.tile_n + tile_y * w + tile_x, r);
-
-                for j in 0..8
-                {
-                    let palette = (row >> ((7 - j) * 8)) as u8 as u32;
-                    let c = if !self.hflip {7 - j} else {j};
-
-                    if self.xcoord + tile_x * 8 + c >= 240 {break}
-                    
-                    pixel[(self.xcoord + tile_x * 8 + c) as usize] = 
-                        memory.palette(0x100 + palette);
-                }
-            }
-        }
-    }
-    
     pub fn draw_affine(&mut self, vcount: u32, sequential: bool, pixel: &mut Vec<u32>, memory: &Memory)
     {
-        memory.update_sprite(self);
-
         let mut half_width = self.width as i32 / 2;
         let mut half_height = self.height as i32 / 2;
 
         let mut xcenter = self.xcoord as i32 + half_width;
         let mut ycenter = self.ycoord as i32 + half_height;
 
-        // Double size only doubles the viewport size not the sprite itself
+        // Double flag only doubles the viewport size, not the sprite size
         if self.double_f
         {
             xcenter     += half_width;
@@ -146,6 +142,7 @@ impl Sprite
             half_height *= 2;
         }
 
+        let w = if sequential {self.width / 8} else {8};
         let y = vcount as i32 - ycenter;
 
         if self.visible(vcount)
@@ -153,9 +150,9 @@ impl Sprite
             for x in -half_width..half_width
             {
                 // Due to the linearity of the transform matrix, the origin is preserved.
-                // That is the screen origin overlaps the texture origin
-                // The transform matrix take relative ONSCREEN distance to the origin as input
-                // and transforms it into relative TEXTURE distance to origin
+                // That is, the screen origin overlaps the texture origin.
+                // The transform matrix takes relative ONSCREEN distance to the origin as input
+                // and transforms it into relative TEXTURE distance to origin.
                 let text_x = ((self.matrix.0 * x + self.matrix.1 * y) >> 8) + half_width;
                 let text_y = ((self.matrix.2 * x + self.matrix.3 * y) >> 8) + half_height;
 
@@ -163,12 +160,14 @@ impl Sprite
                 let tile_y = text_y as u32 / 8;
                 let pixel_x = text_x as u32 % 8;
                 let pixel_y = text_y as u32 % 8;
-                let tile_n = self.tile_n + tile_y * 8 + tile_x;
 
-                let palette_entry = memory.tile_data4(4, tile_n, pixel_x, pixel_y);
+                let tile_b = 4;
+                let tile_n = self.tile_n + tile_y * w + tile_x;
+
+                let palette_entry = memory.tile_data(self.palette_f, tile_b, tile_n, pixel_x, pixel_y);
                 let palette = (self.palette_n << 4) | palette_entry;
 
-                pixel[(xcenter + x) as usize] = memory.palette(0x100 + palette);
+                pixel[(xcenter + x) as usize] = memory.palette(0x100 + (self.palette_n << 4 | palette));
             }
         }
     }

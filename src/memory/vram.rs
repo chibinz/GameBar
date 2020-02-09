@@ -21,27 +21,16 @@ impl Memory
         }
     }
 
-    /// Return a word from vram, offset is in bytes
     #[inline]
-    pub fn vram32(&self, offset: u32) -> u32
+    pub fn tile_data(&self, palette_f: bool, tile_b: u32, tile_n: u32, pixel_x: u32, pixel_y: u32) -> u32
     {
-        unsafe
+        if palette_f
         {
-            let ptr = self.vram.as_ptr() as *const u32;
-
-            *ptr.add((offset / 4) as usize)
+            self.tile_data8(tile_b, tile_n, pixel_x, pixel_y)
         }
-    }
-
-    /// Return a word from vram, offset is in bytes
-    #[inline]
-    pub fn vram64(&self, offset: u32) -> u64
-    {
-        unsafe
+        else
         {
-            let ptr = self.vram.as_ptr() as *const u64;
-
-            *ptr.add((offset / 8) as usize)
+            self.tile_data4(tile_b, tile_n, pixel_x, pixel_y)
         }
     }
 
@@ -59,20 +48,6 @@ impl Memory
         let b = self.vram8(tile_b * 0x4000 + tile_n * 64 + pixel_y * 8 + pixel_x);
 
         b as u32
-    }
-
-    /// Return a row of 4-bit tile data as a word
-    #[inline]
-    pub fn tile_row32(&self, index: u32, tile_number: u32, row: u32) -> u32
-    {
-        self.vram32(index * 0x4000 + (tile_number * 8 + row) * 4)
-    }
-
-    /// Return a row of 4-bit tile data as a word
-    #[inline]
-    pub fn tile_row64(&self, index: u32, tile_number: u32, row: u32) -> u64
-    {
-        self.vram64(index * 0x4000 + (tile_number * 8 + row) * 8)
     }
 
     /// Return tile map entry
