@@ -152,4 +152,14 @@ impl Memory
         bg.matrix = (pa, pb, pc, pd);
         if bg.vcount == 0 {bg.coord  = (x, y)};
     }
+
+    pub fn get_keyinput(&self) -> u16
+    {
+        self.ioram16(0x130)
+    }
+
+    pub fn set_keyinput(&mut self, input: u16)
+    {
+        self.ioram16_s(0x130, input);
+    }
 }

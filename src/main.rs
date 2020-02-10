@@ -4,6 +4,7 @@ pub mod cpu;
 pub mod ppu;
 pub mod memory;
 pub mod console;
+pub mod keyboard;
 pub mod util;
 pub mod debug;
 
@@ -22,11 +23,14 @@ fn main()
     console.memory.load_rom(&args[1]);
     console.memory.load_bios(&"rom/gba_bios.bin".to_string());
     
-    let mut debugger = debug::Debugger::new(&mut console);
+    // let mut debugger = debug::Debugger::new(&mut console);
 
-    while debugger.console.window.is_open() 
-      && !debugger.console.window.is_key_down(minifb::Key::Escape)
-    {
-        debugger.step();
+    while console.window.is_open()
+    {   
+        let input = keyboard::input(&console.window);
+        console.memory.set_keyinput(input);
+        console.step_frame();
+        
+        // debugger.step();
     }
 }

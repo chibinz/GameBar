@@ -72,21 +72,20 @@ impl Console
     /// Single step CPU, for debugging purpose
     pub fn step(&mut self)
     {
-        // self.cpu.step(&mut self.memory);
+        self.cpu.step(&mut self.memory);
 
-        // if self.memory.get_vcount() > 228
-        // {
-        //     self.memory.clr_vcount();
-        // }
+        if self.memory.get_vcount() > 228
+        {
+            self.memory.clr_vcount();
+        }
 
-        // if self.cpu.counter % 1232 == 0
-        // {
-        //     self.ppu.render(&mut self.memory);
-        //     self.memory.inc_vcount();
-        //     self.window.update_with_buffer(&self.ppu.buffer, 240, 160).unwrap();
-        // }
+        if self.cpu.counter % 1232 == 0
+        {
+            self.ppu.render(&mut self.memory);
+            self.memory.inc_vcount();
+            self.window.update_with_buffer(&self.ppu.buffer, 240, 160).unwrap();
+        }
         
-        // self.cpu.step(&mut self.memory);
-        self.step_frame();
+        self.cpu.step(&mut self.memory);
     }
 }
