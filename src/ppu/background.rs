@@ -84,7 +84,8 @@ impl Background
     {
         memory.update_text_bg(self);
 
-        let line_n = self.vcount + self.vscroll;
+        // Vertical wrap around
+        let line_n = (self.vcount + self.vscroll) % self.height;
         
         for i in 0..self.width
         {   
@@ -93,7 +94,7 @@ impl Background
             let mut pixel_x = i % 8;
             let mut pixel_y = line_n % 8;
 
-            let tile_entry = memory.text_tile_map(self.map_b, self.size_r, tile_y, tile_x);
+            let tile_entry = memory.text_tile_map(self.map_b, self.size_r, tile_x, tile_y);
 
             let tile_n    = tile_entry.bits(9, 0);
             let hflip     = tile_entry.bit(10);
@@ -115,16 +116,42 @@ impl Background
 
         for i in 0..self.width
         {
-            let text_x = (self.matrix.0 * i as i32 + self.coord.0) >> 8;
-            let text_y = (self.matrix.2 * i as i32 + self.coord.1) >> 8;
+            let mut text_x = (self.matrix.0 * i as i32 + self.coord.0) >> 8;
+            let mut text_y = (self.matrix.2 * i as i32 + self.coord.1) >> 8;
+
+            // TODO: Refactor into macro 
+            if out_of_bound(text_x, self.width)
+            {
+                if self.wrap_f
+                {
+                    text_x = wrap_around(text_x, self.width)
+                }
+                else
+                {
+                    self.pixel[i as usize] = 0xff000000;
+                    continue
+                }
+            }
+
+            if out_of_bound(text_y, self.height)
+            {
+                if self.wrap_f
+                {
+                    text_y = wrap_around(text_y, self.height)
+                }
+                else
+                {
+                    self.pixel[i as usize] = 0xff000000;
+                    continue
+                }
+            }
 
             let tile_x  = text_x as u32 / 8;
             let tile_y  = text_y as u32 / 8;
             let pixel_x = text_x as u32 % 8;
             let pixel_y = text_y as u32 % 8;
             
-            let tile_n = memory.affine_tile_map(self.map_b, self.size_r, tile_y, tile_x) as u32;
-
+            let tile_n = memory.affine_tile_map(self.map_b, self.size_r, tile_x, tile_y) as u32;
             let palette = memory.tile_data8(self.tile_b, tile_n, pixel_x, pixel_y);
 
             self.pixel[i as usize] = memory.palette(palette as u32);
@@ -174,4 +201,25 @@ impl Background
             self.pixel[x as usize] = RGB(pixel);
         }
     }
+}
+
+#[inline]
+pub fn out_of_bound(a: i32, max: u32) -> bool
+{
+    a < 0 || a >= max as i32
+}
+
+#[inline]
+pub fn wrap_around(a: i32, max: u32) -> i32
+{
+    let mut b = a;
+
+    b %= max as i32;
+
+    if a < 0
+    {
+        b += max as i32;
+    }
+
+    b as i32
 }

@@ -103,7 +103,8 @@ impl PPU
 
                 for i in 0..240
                 {
-                    let x = (hscroll + i) % (bg.width * 8) as usize;
+                    // Horizontal wrap around
+                    let x = (hscroll + i) % bg.width as usize;
                     self.buffer[line_n * 240 + i] = bg.pixel[x];
                 }
             }
@@ -126,7 +127,7 @@ impl PPU
 
                 for i in 0..240
                 {
-                    let x = (hscroll + i) % (bg.width * 8) as usize;
+                    let x = (hscroll + i) % bg.width as usize;
                     self.buffer[line_n * 240 + i] = bg.pixel[x];
                 }
             }
@@ -141,12 +142,11 @@ impl PPU
 
             for i in 0..240
             {
-                let x = (i) % (front_bg.width * 8) as usize;
+                let x = (i) % front_bg.width as usize;
                 self.buffer[line_n * 240 + i] = front_bg.pixel[x];
             }
         }
     }
-
 
     pub fn draw_mode_3(&mut self, memory: &Memory)
     {

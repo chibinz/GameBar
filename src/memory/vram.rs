@@ -49,7 +49,7 @@ impl Memory
 
     /// Return tile map entry
     #[inline]
-    pub fn text_tile_map(&self, index: u32, size_r: u32, tile_y: u32, tile_x: u32) -> u16
+    pub fn text_tile_map(&self, index: u32, size_r: u32, tile_x: u32, tile_y: u32) -> u16
     {
         let offset = map_entry(size_r, tile_y, tile_x) * 2;
 
@@ -57,7 +57,7 @@ impl Memory
     }
 
     #[inline]
-    pub fn affine_tile_map(&self, index: u32, size_r: u32, tile_y: u32, tile_x: u32) -> u8
+    pub fn affine_tile_map(&self, index: u32, size_r: u32, tile_x: u32, tile_y: u32) -> u8
     {
         let offset = tile_y * (16 << size_r) + tile_x;
 
