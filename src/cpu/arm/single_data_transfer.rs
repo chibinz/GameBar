@@ -1,5 +1,6 @@
 use crate::util::*;
 use crate::cpu::CPU;
+use crate::cpu::register::PSRBit::C;
 use crate::cpu::barrel_shifter::shift_register;
 use crate::memory::Memory;
 
@@ -32,8 +33,12 @@ pub fn decode(instruction: u32) -> (bool, bool, bool, bool, u32, u32, u32, u32)
 pub fn execute(cpu: &mut CPU, memory: &mut Memory, 
     (i, p, u, w, lb, rn, rd, offset): (bool, bool, bool, bool, u32, u32, u32, u32))
 {
+    // Shifts does not set CPSR C flag
+    let carry = cpu.get_cpsr_bit(C);
+
     // 0 for i means immediate
     let noffset = if !i {offset} else {shift_register(cpu, offset)};
+    cpu.set_cpsr_bit(C, carry);
 
     let post = cpu.r[rn as usize];
     let pre = if u {cpu.r[rn as usize].wrapping_add(noffset)} 

@@ -85,7 +85,5 @@ impl Console
             self.memory.inc_vcount();
             self.window.update_with_buffer(&self.ppu.buffer, 240, 160).unwrap();
         }
-        
-        self.cpu.step(&mut self.memory);
     }
 }

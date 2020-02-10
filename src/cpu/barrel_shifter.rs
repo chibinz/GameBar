@@ -13,33 +13,25 @@ pub fn shift_register(cpu: &mut CPU, operand2: u32) -> u32
 {
     let rm = operand2.bits(3, 0);
     let stype = operand2.bits(6, 5);
+    // Register specified shift operates differently when shift amount
+    // equals to zero, thus a flag is needed.
+    let r = operand2.bit(4);
     let amount = 
-    if operand2.bit(4)
+    if r
     {
         let rs = operand2.bits(11, 8);
 
         debug_assert_ne!(rs, 15);
         debug_assert_eq!(operand2.bit(7), false);
-
-        // If shift register equals zero, shift operand and
-        // CPSR flags remain untouched.
-        if cpu.r[rs as usize] == 0
-        {
-            return cpu.r[rm as usize];
-        }
-        else
-        {
-            // Only the least significant byte is used to determine
-            // the shift amount.
-            cpu.r[rs as usize] & 0xff
-        }
+        
+        cpu.r[rs as usize] & 0xff
     } 
     else
     {
         operand2.bits(11, 7)
     };
     
-    shift(cpu, cpu.r[rm as usize], amount, stype)
+    shift(cpu, cpu.r[rm as usize], amount, stype, !r)
 }
 
 /// Perform rotate on an immediate, return rotated result.
@@ -67,21 +59,21 @@ pub fn rotate_immediate(cpu: &mut CPU, operand2: u32) -> u32
 /// Shift a value according to shift amount and type and return the shifted result.
 /// Set carry bits of CPSR accordingly.
 #[inline]
-pub fn shift(cpu: &mut CPU, operand: u32, amount: u32, stype: u32) -> u32
+pub fn shift(cpu: &mut CPU, operand: u32, amount: u32, stype: u32, i: bool) -> u32
 {
     match stype
     {
-        0b00 => logical_left(cpu, operand, amount),
-        0b01 => logical_right(cpu, operand, amount),
-        0b10 => arithmetic_right(cpu, operand, amount),
-        0b11 => rotate_right(cpu, operand, amount),
+        0b00 => logical_left(cpu, operand, amount, i),
+        0b01 => logical_right(cpu, operand, amount, i),
+        0b10 => arithmetic_right(cpu, operand, amount, i),
+        0b11 => rotate_right(cpu, operand, amount, i),
         _    => unreachable!("Invalid shift type!"),
     }
 }
 
-/// Note that LSL #0 maintains the old CPSR C flag
+/// LSL #0 maintains the old CPSR C flag
 #[inline]
-pub fn logical_left(cpu: &mut CPU, operand: u32, amount: u32) -> u32
+pub fn logical_left(cpu: &mut CPU, operand: u32, amount: u32, _i: bool) -> u32
 {
 
     if amount == 0
@@ -110,16 +102,23 @@ pub fn logical_left(cpu: &mut CPU, operand: u32, amount: u32) -> u32
     }
 }
 
-/// Note that LSR #0 is equivalent to LSR #32
+/// Note that LSR #0 for immediate shift is equivalent to LSR #32
 #[inline]
-pub fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
+pub fn logical_right(cpu: &mut CPU, operand: u32, amount: u32, i: bool) -> u32
 {
-    if amount == 0 || amount == 32
+    if amount == 0
     {
-        let carry = operand.bit(31);
-        cpu.set_cpsr_bit(C, carry);
+        if i
+        {
+            let carry = operand.bit(31);
+            cpu.set_cpsr_bit(C, carry);
 
-        0
+            0
+        }
+        else
+        {
+            operand
+        }
     }
     else if amount < 32
     {
@@ -127,6 +126,13 @@ pub fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
         cpu.set_cpsr_bit(C, carry);
 
         operand >> amount
+    }
+    else if amount == 32
+    {
+        let carry = operand.bit(31);
+        cpu.set_cpsr_bit(C, carry);
+
+        0 
     }
     else
     {
@@ -136,16 +142,30 @@ pub fn logical_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
     }
 }
 
-/// Note that ASR #0 is equivalent to ASR #32
+/// Note that ASR #0 for immediate shift is equivalent to ASR #32
 #[inline]
-pub fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
+pub fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32, i: bool) -> u32
 {
-    if amount == 0 || amount >= 32
+    if amount == 0
+    {
+        if i
+        {
+            let carry = operand.bit(31);
+            cpu.set_cpsr_bit(C, carry);
+            
+            (operand as i32 >> 31) as u32
+        }
+        else
+        {
+            operand
+        }
+    }
+    else if amount >= 32
     {
         let carry = operand.bit(31);
         cpu.set_cpsr_bit(C, carry);
         
-        (operand as i32 >> 31) as u32
+        (operand as i32 >> 31) as u32 
     }
     else
     {
@@ -156,18 +176,25 @@ pub fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
     }
 }
 
-/// Note that ROR #0 is RRX, rotate right extended
+/// Note that ROR #0 for immediate shift is RRX, rotate right extended
 #[inline]
-pub fn rotate_right(cpu: &mut CPU, operand: u32, amount: u32) -> u32
+pub fn rotate_right(cpu: &mut CPU, operand: u32, amount: u32, i: bool) -> u32
 {
     if amount == 0
     {
-        let c = if cpu.get_cpsr_bit(C) {0x80000000} else {0};
-
-        let carry = operand & 1 == 1;
-        cpu.set_cpsr_bit(C, carry);
-        
-        c | (operand >> 1)
+        if i
+        {
+            let c = (cpu.get_cpsr_bit(C) as u32) << 31;
+            
+            let carry = operand.bit(0);
+            cpu.set_cpsr_bit(C, carry);
+            
+            c | (operand >> 1)
+        }
+        else
+        {
+            operand
+        }
     }
     else
     {
@@ -218,11 +245,11 @@ mod tests
     fn shift_logical_left()
     {
         let mut cpu = CPU::new();
-        assert_eq!(logical_left(&mut cpu, 3, 31), 0x80000000);
+        assert_eq!(logical_left(&mut cpu, 3, 31, true), 0x80000000);
         assert!(cpu.get_cpsr_bit(C));
 
         cpu.set_cpsr_bit(C, true);
-        assert_eq!(logical_left(&mut cpu, 3, 34), 0);
+        assert_eq!(logical_left(&mut cpu, 3, 34, true), 0);
         assert!(!cpu.get_cpsr_bit(C));
     }
 
@@ -230,11 +257,11 @@ mod tests
     fn shift_logical_right()
     {
         let mut cpu = CPU::new();
-        assert_eq!(logical_right(&mut cpu, 0x80000000, 0), 0);
+        assert_eq!(logical_right(&mut cpu, 0x80000000, 0, true), 0);
         assert!(cpu.get_cpsr_bit(C));
 
         cpu.set_cpsr_bit(C, false);
-        assert_eq!(logical_right(&mut cpu, 0x80000000, 63), 0);
+        assert_eq!(logical_right(&mut cpu, 0x80000000, 63, true), 0);
         assert!(!cpu.get_cpsr_bit(C));
     }
 
@@ -242,15 +269,15 @@ mod tests
     fn shift_arithmetic_right()
     {
         let mut cpu = CPU::new();
-        assert_eq!(arithmetic_right(&mut cpu, 0x80000000, 31), 0xffffffff);
+        assert_eq!(arithmetic_right(&mut cpu, 0x80000000, 31, true), 0xffffffff);
         assert!(!cpu.get_cpsr_bit(C));
 
         cpu.set_cpsr_bit(C, false);
-        assert_eq!(arithmetic_right(&mut cpu, 0x80000000, 0), 0xffffffff);
+        assert_eq!(arithmetic_right(&mut cpu, 0x80000000, 0, true), 0xffffffff);
         assert!(cpu.get_cpsr_bit(C));
 
         cpu.set_cpsr_bit(C, false);
-        assert_eq!(arithmetic_right(&mut cpu, 0x80000000, 99), 0xffffffff);
+        assert_eq!(arithmetic_right(&mut cpu, 0x80000000, 99, true), 0xffffffff);
         assert!(cpu.get_cpsr_bit(C));
     }
 
@@ -259,15 +286,15 @@ mod tests
     {
         let mut cpu = CPU::new();
         cpu.set_cpsr_bit(C, true);
-        assert_eq!(rotate_right(&mut cpu, 1, 0), 0x80000000);
+        assert_eq!(rotate_right(&mut cpu, 1, 0, true), 0x80000000);
         assert!(cpu.get_cpsr_bit(C));
         
         cpu.set_cpsr_bit(C, false);
-        assert_eq!(rotate_right(&mut cpu, 0xf0f0f0f0, 4), 0x0f0f0f0f);
+        assert_eq!(rotate_right(&mut cpu, 0xf0f0f0f0, 4, true), 0x0f0f0f0f);
         assert!(!cpu.get_cpsr_bit(C));
 
         cpu.set_cpsr_bit(C, false);
-        assert_eq!(rotate_right(&mut cpu, 0xf0f0f0f0, 64), 0xf0f0f0f0);
+        assert_eq!(rotate_right(&mut cpu, 0xf0f0f0f0, 64, true), 0xf0f0f0f0);
         assert!(cpu.get_cpsr_bit(C));
     }
 }
