@@ -1,3 +1,4 @@
+use crate::util::*;
 use crate::memory::Memory;
 
 /// Sprite dimension in pixels
@@ -95,8 +96,9 @@ impl Sprite
 
     pub fn draw_text(&mut self, vcount: u32, sequential: bool, pixel: &mut Vec<u32>, memory: &Memory)
     {
+        // Vertical wrap around
+        let y = (vcount - self.ycoord) % 256; 
         let w = if sequential {self.width / 8} else {8};
-        let y = vcount - self.ycoord;
 
         let mut tile_y  = y / 8;
         let mut pixel_y = y % 8;
@@ -121,13 +123,16 @@ impl Sprite
             let tile_n = self.tile_n + tile_y * w + tile_x;
 
             let palette = memory.tile_data(self.palette_f, tile_b, tile_n, pixel_x, pixel_y);
-            pixel[(self.xcoord + i) as usize] = memory.palette(0x100 + (self.palette_n << 4 | palette));
+
+            // Horizontal wrap around
+            pixel[(self.xcoord + i) as usize % 512] = memory.palette(0x100 + (self.palette_n << 4 | palette));
         }
     }
 
+    #[allow(unused_assignments)]
     pub fn draw_affine(&mut self, vcount: u32, sequential: bool, pixel: &mut Vec<u32>, memory: &Memory)
     {
-        let mut half_width = self.width as i32 / 2;
+        let mut half_width = self.width as i32/ 2;
         let mut half_height = self.height as i32 / 2;
 
         let mut xcenter = self.xcoord as i32 + half_width;
@@ -142,33 +147,41 @@ impl Sprite
             half_height *= 2;
         }
 
-        let w = if sequential {self.width / 8} else {8};
+        // Wrap around
+        xcenter %= 512;
+        ycenter %= 256;
+
         let y = vcount as i32 - ycenter;
+        let w = if sequential {self.width / 8} else {8};
 
-        if self.visible(vcount)
+        for x in -half_width..half_width
         {
-            for x in -half_width..half_width
+            // Due to the linearity of the transform matrix, the origin is preserved.
+            // That is, the screen origin overlaps the texture origin.
+            // The transform matrix takes relative ONSCREEN distance to the origin as input
+            // and transforms it into relative TEXTURE distance to origin.
+            let text_x = ((self.matrix.0 * x + self.matrix.1 * y) >> 8) + self.width as i32 / 2;
+            let text_y = ((self.matrix.2 * x + self.matrix.3 * y) >> 8) + self.height as i32 / 2;
+
+            // Avoid replication
+            if text_x < 0 || text_x >= self.width as i32
+            || text_y < 0 || text_y >= self.height as i32
             {
-                // Due to the linearity of the transform matrix, the origin is preserved.
-                // That is, the screen origin overlaps the texture origin.
-                // The transform matrix takes relative ONSCREEN distance to the origin as input
-                // and transforms it into relative TEXTURE distance to origin.
-                let text_x = ((self.matrix.0 * x + self.matrix.1 * y) >> 8) + half_width;
-                let text_y = ((self.matrix.2 * x + self.matrix.3 * y) >> 8) + half_height;
-
-                let tile_x = text_x as u32 / 8;
-                let tile_y = text_y as u32 / 8;
-                let pixel_x = text_x as u32 % 8;
-                let pixel_y = text_y as u32 % 8;
-
-                let tile_b = 4;
-                let tile_n = self.tile_n + tile_y * w + tile_x;
-
-                let palette_entry = memory.tile_data(self.palette_f, tile_b, tile_n, pixel_x, pixel_y);
-                let palette = (self.palette_n << 4) | palette_entry;
-
-                pixel[(xcenter + x) as usize] = memory.palette(0x100 + (self.palette_n << 4 | palette));
+                continue;
             }
+
+            let tile_x = text_x as u32 / 8;
+            let tile_y = text_y as u32 / 8;
+            let pixel_x = text_x as u32 % 8;
+            let pixel_y = text_y as u32 % 8;
+
+            let tile_b = 4;
+            let tile_n = self.tile_n + tile_y * w + tile_x;
+
+            let palette_entry = memory.tile_data(self.palette_f, tile_b, tile_n, pixel_x, pixel_y);
+            let palette = (self.palette_n << 4) | palette_entry;
+
+            pixel[(xcenter + x) as usize] = memory.palette(0x100 + (self.palette_n << 4 | palette));
         }
     }
 
@@ -179,8 +192,20 @@ impl Sprite
 
     pub fn visible(&self, vcount: u32) -> bool
     {
-           self.xcoord < 240 
-        && self.ycoord <= vcount 
-        && self.ycoord + self.height * (self.double_f as u32 + 1) > vcount
+        let x = sign_extend(self.xcoord, 8);
+        let y = sign_extend(self.ycoord, 7);
+        let mut w = self.width as i32;
+        let mut h = self.height as i32;
+        
+        if self.double_f
+        {
+            w *= 2;
+            h *= 2;
+        }
+
+           x < 240
+        && x + w >= 0
+        && y <= vcount as i32
+        && y + h > vcount as i32
     }
 }
