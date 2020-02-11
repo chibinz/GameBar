@@ -163,9 +163,14 @@ impl<'a> Debugger<'a>
 
         let mut buffer: Vec<u32> = vec![0; 32 * 16];
 
-        for i in 0..0x200
+        for i in 0..0x100
         {
-            buffer[i] = self.console.memory.palette(i as u32);
+            buffer[i] = self.console.memory.bg_palette(0, i as u32);
+        }
+
+        for i in 0..0x100
+        {
+            buffer[i + 0x100] = self.console.memory.obj_palette(0, i as u32);
         }
 
         while window.is_open()

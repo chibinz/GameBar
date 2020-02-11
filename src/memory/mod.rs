@@ -42,7 +42,7 @@ impl Memory
     /// Load a byte from memory
     pub fn load8(&self, address: u32) -> u8
     {
-        let offset = mirror(address & 0x00ffffff);
+        let offset = mirror(address) & 0x00ffffff;
 
         match address >> 24
         {
@@ -63,7 +63,7 @@ impl Memory
     /// Load a halfword from memory
     pub fn load16(&self, address: u32) -> u16
     {
-        let offset = mirror(address & 0x00fffffe);
+        let offset = mirror(address) & 0x00fffffe;
 
         let ldh = |mem: &[u8]| into16(&mem[offset..offset+2]);
 
@@ -86,7 +86,7 @@ impl Memory
     /// Load a word from memory
     pub fn load32(&self, address: u32) -> u32
     {
-        let offset = mirror(address & 0x00fffffc);
+        let offset = mirror(address) & 0x00fffffc;
 
         let ld = |mem: &[u8]| into32(&mem[offset..offset+4]);
 
@@ -112,7 +112,7 @@ impl Memory
     /// Store a byte in memory, only EWRAM, IWRAM, IORAM, SRAM are accessible
     pub fn store8(&mut self, address: u32, value: u8)
     {
-        let offset = mirror(address & 0x00ffffff);
+        let offset = mirror(address) & 0x00ffffff;
 
         match address >> 24
         {
@@ -128,7 +128,7 @@ impl Memory
     pub fn store16(&mut self, address: u32, value: u16)
     {
         // Accesses are forced to halfword aligned
-        let offset = mirror(address & 0x00fffffe);
+        let offset = mirror(address) & 0x00fffffe;
 
         let sth = |mem: &mut [u8]| 
         {
@@ -153,7 +153,7 @@ impl Memory
     pub fn store32(&mut self, address: u32, value: u32)
     {
         // Accesses are forced to be word aligned
-        let offset = mirror(address & 0x00fffffc);
+        let offset = mirror(address) & 0x00fffffc;
 
         let sth = |mem: &mut [u8]|
         {

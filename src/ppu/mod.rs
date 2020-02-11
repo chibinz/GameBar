@@ -1,9 +1,13 @@
-pub mod sprite;
+pub mod color;
+pub mod layer;
 pub mod background;
+pub mod sprite;
 
 use crate::util::*;
 use crate::memory::Memory;
 
+use color::*;
+use layer::Layer;
 use background::Background;
 use sprite::Sprite;
 
@@ -18,6 +22,8 @@ pub struct PPU
 
     pub background: Vec<Background>,   // Background 0 - 3
     pub sprite    : Vec<Sprite>,       // Sprite 0 - 127
+
+    pub layer     : Vec<Layer>,
     pub buffer    : Vec<u32>,          // Frame buffer, 240 * 160
 }
 
@@ -36,6 +42,7 @@ impl PPU
 
             background  : vec![Background::new(); 4],
             sprite      : vec![Sprite::new(); 128],
+            layer       : vec![Layer::new(); 4],
             buffer      : vec![0; 240 * 160],
         };
 
@@ -59,92 +66,72 @@ impl PPU
         if self.fblank {self.force_blank()}
         if self.vcount >= 160 {return} // Change to assertion
 
-        // match self.mode
-        // {
-        //     0 => self.draw_mode_0(memory),
-        //     1 => self.draw_mode_1(memory),
-        //     3 => self.draw_mode_3(memory),
-        //     4 => self.draw_mode_4(memory),
-        //     5 => self.draw_mode_5(memory),
-        //     _ => unimplemented!(),
-        // }
+        for i in 0..4
+        {
+            self.layer[i].clear();
+        }
+
+        match self.mode
+        {
+            0 => self.draw_mode_0(memory),
+            1 => self.draw_mode_1(memory),
+            2 => self.draw_mode_2(memory),
+            3 => self.draw_mode_3(memory),
+            4 => self.draw_mode_4(memory),
+            5 => self.draw_mode_5(memory),
+            _ => unreachable!(),
+        }
 
         self.draw_sprite(memory);
+
+        self.combine_layers();
     }
 
-    pub fn draw_sprite(&mut self, memory: &Memory)
+    
+    pub fn combine_layers(&mut self)
     {
-        let mut pixel: Vec<u32> = vec![0; 512]; // Line buffer for sprites
-
-        for _ in 0..128
-        {
-            self.sprite[0].draw(self.vcount, self.sequential, &mut pixel, memory);
-        }
+        let n = self.vcount as usize * 240;
+        let line = &mut self.buffer[n..n+240];
 
         for i in 0..240
         {
-            self.buffer[self.vcount as usize * 240 + i] = pixel[i];
+            for j in 0..4
+            {
+                let pixel = self.layer[j].pixel[i];
+
+                // Render the topmost opaque color
+                if pixel != TRANSPARENT
+                {
+                    line[i] = pixel;
+                    break
+                }
+            }
         }
     }
 
     pub fn draw_mode_0(&mut self, memory: &Memory)
     {
-        let mut min = 4;
-        for i in 0..1
+        for i in (0..4).rev()
         {
-            if self.dispcnt.bit(8 + i as u32) && self.background[i].priority < min
-            {
-                min = self.background[i].priority;
-
-                self.background[i].draw_text(memory);
-                let bg = &self.background[i];
-                let line_n = self.vcount as usize;
-                let hscroll = bg.hscroll as usize;
-
-                for i in 0..240
-                {
-                    // Horizontal wrap around
-                    let x = (hscroll + i) % bg.width as usize;
-                    self.buffer[line_n * 240 + i] = bg.pixel[x];
-                }
-            }
+            self.draw_text_bg(i, memory);
         }
     }
 
     pub fn draw_mode_1(&mut self, memory: &Memory)
     {
-        let mut min = 0b11;
-        for i in 0..2
+        self.draw_affine_bg(2, memory);
+        
+        for i in (0..2).rev()
         {
-            if self.dispcnt.bit(8 + i as u32) && self.background[i].priority < min
-            {
-                min = self.background[i].priority;
-
-                self.background[i].draw_text(memory);
-                let bg = &self.background[i];
-                let line_n = self.vcount as usize;
-                let hscroll = bg.hscroll as usize;
-
-                for i in 0..240
-                {
-                    let x = (hscroll + i) % bg.width as usize;
-                    self.buffer[line_n * 240 + i] = bg.pixel[x];
-                }
-            }
+            self.draw_text_bg(i, memory);
         }
+    }
 
-        if self.dispcnt.bit(10)
+    pub fn draw_mode_2(&mut self, memory: &Memory)
+    {
+        for i in (2..4).rev()
         {
-            self.background[2].draw_affine(memory);
-
-            let front_bg = &self.background[2];
-            let line_n = self.vcount as usize;
-
-            for i in 0..240
-            {
-                let x = (i) % front_bg.width as usize;
-                self.buffer[line_n * 240 + i] = front_bg.pixel[x];
-            }
+            self.draw_affine_bg(i, memory);
         }
     }
 
@@ -187,6 +174,50 @@ impl PPU
         {
             self.buffer[line_n * 240 + i] = self.background[2].pixel[i];
         }
+    }
+
+    pub fn draw_sprite(&mut self, memory: &Memory)
+    {
+        for i in (0..128).rev()
+        {
+            let sprite = &mut self.sprite[i];
+            memory.update_sprite(sprite);
+
+            let priority = sprite.priority as usize;
+            let layer = &mut self.layer[priority];
+
+            sprite.draw(self.vcount, self.sequential, layer, memory);
+        }
+    }
+
+    pub fn draw_text_bg(&mut self, i: u32, memory: &Memory)
+    {
+        let bg = &mut self.background[i as usize];
+
+        if self.dispcnt.bit(8 + i) 
+        {
+            memory.update_text_bg(bg);
+
+            let priority = bg.priority as usize;
+            let layer = &mut self.layer[priority as usize];
+
+            bg.draw_text(layer, memory);
+        } 
+    }
+
+    pub fn draw_affine_bg(&mut self, i: u32, memory: &Memory)
+    {
+        let bg = &mut self.background[i as usize];
+        
+        if self.dispcnt.bit(8 + i) 
+        {
+            memory.update_affine_bg(bg);
+
+            let priority = bg.priority as usize;
+            let layer = &mut self.layer[priority as usize];
+
+            bg.draw_affine(layer, memory);
+        } 
     }
 
     pub fn force_blank(&mut self)

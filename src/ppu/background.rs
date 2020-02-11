@@ -1,6 +1,8 @@
 use crate::util::*;
 use crate::memory::Memory;
-use crate::memory::palette::RGB;
+
+use super::color::*;
+use super::layer::Layer;
 
 /// Background dimension in pixels
 pub static DIMENSION: [[(u32, u32); 4]; 2] =
@@ -80,10 +82,8 @@ impl Background
         }
     }
     
-    pub fn draw_text(&mut self, memory: &Memory)
+    pub fn draw_text(&mut self, layer: &mut Layer, memory: &Memory)
     {
-        memory.update_text_bg(self);
-
         // Vertical wrap around
         let line_n = (self.vcount + self.vscroll) % self.height;
         
@@ -99,22 +99,24 @@ impl Background
             let tile_n    = tile_entry.bits(9, 0);
             let hflip     = tile_entry.bit(10);
             let vflip     = tile_entry.bit(11);
-            let palette_b = tile_entry.bits(15, 12);
+            let palette_n = tile_entry.bits(15, 12);
     
             if hflip {pixel_x = 7 - pixel_x};
             if vflip {pixel_y = 7 - pixel_y};
 
-            let palette = memory.tile_data(self.palette_f, self.tile_b, tile_n, pixel_x, pixel_y);
+            let palette_entry = memory.tile_data(self.palette_f, self.tile_b, tile_n, pixel_x, pixel_y);
 
-            self.pixel[i as usize] = memory.palette((palette_b << 4) | palette);
+            // Horizontal wrap around
+            let x = (i.wrapping_sub(self.hscroll)) % self.width;
+            let color = memory.bg_palette(palette_n, palette_entry);
+            
+            layer.paint(x, color);
         }
     }
 
-    pub fn draw_affine(&mut self, memory: &Memory)
+    pub fn draw_affine(&mut self, layer: &mut Layer, memory: &Memory)
     {
-        memory.update_affine_bg(self);
-
-        for i in 0..self.width
+        for i in 0..240
         {
             let mut text_x = (self.matrix.0 * i as i32 + self.coord.0) >> 8;
             let mut text_y = (self.matrix.2 * i as i32 + self.coord.1) >> 8;
@@ -128,7 +130,7 @@ impl Background
                 }
                 else
                 {
-                    self.pixel[i as usize] = 0xff000000;
+                    self.pixel[i as usize] = TRANSPARENT;
                     continue
                 }
             }
@@ -141,7 +143,7 @@ impl Background
                 }
                 else
                 {
-                    self.pixel[i as usize] = 0xff000000;
+                    self.pixel[i as usize] = TRANSPARENT;
                     continue
                 }
             }
@@ -152,9 +154,11 @@ impl Background
             let pixel_y = text_y as u32 % 8;
             
             let tile_n = memory.affine_tile_map(self.map_b, self.size_r, tile_x, tile_y) as u32;
-            let palette = memory.tile_data8(self.tile_b, tile_n, pixel_x, pixel_y);
+            let palette_entry = memory.tile_data8(self.tile_b, tile_n, pixel_x, pixel_y);
 
-            self.pixel[i as usize] = memory.palette(palette as u32);
+            let color = memory.bg_palette(0, palette_entry);
+
+            layer.paint(i, color);
         }
 
         self.coord.0 += self.matrix.1;
@@ -184,7 +188,7 @@ impl Background
         for x in 0..240
         {
             let palette_entry = memory.vram8(start + line_n * 240 + x);
-            self.pixel[x as usize] = memory.palette(palette_entry as u32);
+            self.pixel[x as usize] = memory.bg_palette(0, palette_entry as u32);
         }
     }
 

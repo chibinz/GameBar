@@ -1,6 +1,8 @@
 use crate::util::*;
 use crate::memory::Memory;
 
+use super::layer::Layer;
+
 /// Sprite dimension in pixels
 pub static DIMENSION: [[(u32, u32); 4]; 3] =
 [
@@ -77,24 +79,22 @@ impl Sprite
         }
     }
 
-    pub fn draw(&mut self, vcount: u32, sequential: bool, pixel: &mut Vec<u32>, memory: &Memory)
+    pub fn draw(&mut self, vcount: u32, sequential: bool, layer: &mut Layer, memory: &Memory)
     {
-        memory.update_sprite(self);
-
         if !self.disabled() && self.visible(vcount)
         {
             if self.affine_f
             {
-                self.draw_affine(vcount, sequential, pixel, memory)
+                self.draw_affine(vcount, sequential, layer, memory)
             }
             else
             {
-                self.draw_text(vcount, sequential, pixel, memory)
+                self.draw_text(vcount, sequential, layer, memory)
             }
         }
     }
 
-    pub fn draw_text(&mut self, vcount: u32, sequential: bool, pixel: &mut Vec<u32>, memory: &Memory)
+    pub fn draw_text(&mut self, vcount: u32, sequential: bool, layer: &mut Layer, memory: &Memory)
     {
         // Vertical wrap around
         let y = (vcount - self.ycoord) % 256; 
@@ -122,15 +122,18 @@ impl Sprite
             let tile_b = 4;
             let tile_n = self.tile_n + tile_y * w + tile_x;
 
-            let palette = memory.tile_data(self.palette_f, tile_b, tile_n, pixel_x, pixel_y);
+            let palette_entry = memory.tile_data(self.palette_f, tile_b, tile_n, pixel_x, pixel_y);
 
             // Horizontal wrap around
-            pixel[(self.xcoord + i) as usize % 512] = memory.palette(0x100 + (self.palette_n << 4 | palette));
+            let x = self.xcoord + i % 512;
+            let color = memory.obj_palette(self.palette_n, palette_entry);
+
+            layer.paint(x, color);
         }
     }
 
     #[allow(unused_assignments)]
-    pub fn draw_affine(&mut self, vcount: u32, sequential: bool, pixel: &mut Vec<u32>, memory: &Memory)
+    pub fn draw_affine(&mut self, vcount: u32, sequential: bool, layer: &mut Layer, memory: &Memory)
     {
         let mut half_width = self.width as i32/ 2;
         let mut half_height = self.height as i32 / 2;
@@ -179,9 +182,11 @@ impl Sprite
             let tile_n = self.tile_n + tile_y * w + tile_x;
 
             let palette_entry = memory.tile_data(self.palette_f, tile_b, tile_n, pixel_x, pixel_y);
-            let palette = (self.palette_n << 4) | palette_entry;
 
-            pixel[(xcenter + x) as usize] = memory.palette(0x100 + (self.palette_n << 4 | palette));
+            let i = (xcenter + x) as u32;
+            let color = memory.obj_palette(self.palette_n, palette_entry);
+            
+            layer.paint(i, color);
         }
     }
 

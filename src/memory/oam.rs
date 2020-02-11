@@ -27,7 +27,7 @@ impl Memory
     #[inline]
     pub fn update_attr0(&self, sprite: &mut Sprite)
     {
-        let attr0 = self.oam16(sprite.index as u32 * 0x20);
+        let attr0 = self.oam16(sprite.index as u32 * 8);
 
         sprite.ycoord   = attr0.bits(7, 0);
         sprite.affine_f = attr0.bit(8);
@@ -39,8 +39,8 @@ impl Memory
     #[inline]
     pub fn update_attr1(&self, sprite: &mut Sprite)
     {
-        let attr0 = self.oam16(sprite.index as u32 * 0x20);
-        let attr1 = self.oam16(0x02 + sprite.index as u32* 0x20);
+        let attr0 = self.oam16(sprite.index as u32 * 8);
+        let attr1 = self.oam16(0x02 + sprite.index as u32 * 8);
         let shape = attr0.bits(15, 14) as usize;
         let size  = attr1.bits(15, 14) as usize;
 
@@ -55,7 +55,7 @@ impl Memory
     #[inline]
     pub fn update_attr2(&self, sprite: &mut Sprite)
     {
-        let attr2 = self.oam16(0x04 + sprite.index as u32 * 0x20);
+        let attr2 = self.oam16(0x04 + sprite.index as u32 * 8);
 
         sprite.tile_n    = attr2.bits(9, 0);
         sprite.priority  = attr2.bits(11, 10);

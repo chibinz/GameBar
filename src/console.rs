@@ -26,7 +26,7 @@ impl Console
 
             window: Window::new
             (
-                "ESC to exit",
+                "GameBar",
                 240,
                 160,
                 WindowOptions

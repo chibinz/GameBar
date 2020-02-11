@@ -45,7 +45,7 @@ impl CPU
             counter: 0
         };
 
-        cpu.r[15] = 0x08000004;
+        cpu.r[15] = 0x00000004;
         cpu.r[13] = 0x03007f00;
 
         cpu.bank[5]  = 0x03007f00; // User SP

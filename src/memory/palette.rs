@@ -1,4 +1,4 @@
-use crate::util::*;
+use crate::ppu::color::*;
 
 use super::Memory;
 use super::into16;
@@ -7,19 +7,20 @@ impl Memory
 {
     /// Take index to palette, return 0RGD u32 color.
     #[inline]
-    pub fn palette(&self, index: u32) -> u32
+    pub fn bg_palette(&self, palette_n: u32, index: u32) -> u32
     {
-        let a = index as usize * 2;
+        if index == 0 {return BACKDROP}
+
+        let a = (palette_n << 4 | index) as usize * 2;
         RGB(into16(&self.param[a..a+2]))
     }
-}
 
-#[inline]
-pub fn RGB(a: u16) -> u32
-{
-    let r = a.bits(4, 0) << 19;
-    let g = a.bits(9, 5) << 11;
-    let b = a.bits(14, 10) << 3;
+    #[inline]
+    pub fn obj_palette(&self, palette_n: u32, index: u32) -> u32
+    {
+        if index == 0 {return TRANSPARENT}
 
-    r | g | b
+        let a = (palette_n << 4 | index) as usize * 2 + 0x200;
+        RGB(into16(&self.param[a..a+2]))
+    }
 }
