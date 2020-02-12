@@ -3,6 +3,7 @@ use crate::memory::Memory;
 
 use super::color::*;
 use super::layer::Layer;
+use super::window::Window;
 
 /// Background dimension in pixels
 pub static DIMENSION: [[(u32, u32); 4]; 2] =
@@ -82,7 +83,7 @@ impl Background
         }
     }
     
-    pub fn draw_text(&mut self, layer: &mut Layer, memory: &Memory)
+    pub fn draw_text(&mut self, window: &Window, layer: &mut Layer, memory: &Memory)
     {
         // Vertical wrap around
         let line_n = (self.vcount + self.vscroll) % self.height;
@@ -110,11 +111,11 @@ impl Background
             let x = (i.wrapping_sub(self.hscroll)) % self.width;
             let color = memory.bg_palette(palette_n, palette_entry);
             
-            layer.paint(x, color);
+            layer.paint(x, color, window, self.index as u32);
         }
     }
 
-    pub fn draw_affine(&mut self, layer: &mut Layer, memory: &Memory)
+    pub fn draw_affine(&mut self, window: &Window, layer: &mut Layer, memory: &Memory)
     {
         for i in 0..self.width
         {
@@ -158,7 +159,7 @@ impl Background
 
             let color = memory.bg_palette(0, palette_entry);
 
-            layer.paint(i, color);
+            layer.paint(i, color, window, self.index as u32);
         }
 
         self.coord.0 += self.matrix.1;

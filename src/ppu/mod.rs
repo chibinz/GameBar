@@ -2,6 +2,7 @@ pub mod color;
 pub mod layer;
 pub mod background;
 pub mod sprite;
+pub mod window;
 
 use crate::util::*;
 use crate::memory::Memory;
@@ -10,6 +11,7 @@ use color::*;
 use layer::Layer;
 use background::Background;
 use sprite::Sprite;
+use window::Window;
 
 pub struct PPU
 {
@@ -22,6 +24,7 @@ pub struct PPU
 
     pub background: Vec<Background>,   // Background 0 - 3
     pub sprite    : Vec<Sprite>,       // Sprite 0 - 127
+    pub window    : Window,
 
     pub layer     : Vec<Layer>,        // Layer 0 - 3, and an extra layer for backdrop
     pub buffer    : Vec<u32>,          // Frame buffer, 240 * 160
@@ -42,6 +45,8 @@ impl PPU
 
             background  : vec![Background::new(); 4],
             sprite      : vec![Sprite::new(); 128],
+            window      : Window::new(),
+
             layer       : vec![Layer::new(); 5],
             buffer      : vec![0; 240 * 160],
         };
@@ -75,6 +80,8 @@ impl PPU
         {
             self.layer[i].clear();
         }
+
+        self.draw_window(memory);
 
         match self.mode
         {
@@ -180,15 +187,54 @@ impl PPU
 
     pub fn draw_sprite(&mut self, memory: &Memory)
     {
-        for i in (0..128).rev()
+        for sprite in self.sprite.iter_mut().rev()
         {
-            let sprite = &mut self.sprite[i];
             memory.update_sprite(sprite);
 
             let priority = sprite.priority as usize;
             let layer = &mut self.layer[priority];
 
-            sprite.draw(self.vcount, self.sequential, layer, memory);
+            sprite.draw(self.vcount, self.sequential, &self.window, layer, memory);
+        }
+    }
+
+    pub fn draw_window(&mut self, memory: &Memory)
+    {
+        let window = &mut self.window;
+        window.clear();
+
+        if self.dispcnt.bits(15, 13) > 0
+        {
+            window.draw_winout(memory);
+        }
+
+        if self.dispcnt.bit(15)
+        {
+            let mut layer = Layer::new();
+            let mut dummy = Window::new(); // Dummy window to let all sprite be drawn
+            dummy.clear();
+
+            for sprite in self.sprite.iter_mut().rev()
+            {
+                memory.update_sprite(sprite);
+
+                if sprite.mode == 0b10 // Window mode
+                {
+                    sprite.draw(self.vcount, self.sequential, &dummy, &mut layer, memory);
+                }
+            }
+
+            window.draw_objwin(&layer, memory)
+        }
+
+        if self.dispcnt.bit(14)
+        {
+            window.draw_winin(self.vcount, 1, memory);
+        }
+
+        if self.dispcnt.bit(13)
+        {
+            window.draw_winin(self.vcount, 0, memory);
         }
     }
 
@@ -203,7 +249,7 @@ impl PPU
             let priority = bg.priority as usize;
             let layer = &mut self.layer[priority as usize];
 
-            bg.draw_text(layer, memory);
+            bg.draw_text(&self.window, layer, memory);
         } 
     }
 
@@ -218,7 +264,7 @@ impl PPU
             let priority = bg.priority as usize;
             let layer = &mut self.layer[priority as usize];
 
-            bg.draw_affine(layer, memory);
+            bg.draw_affine(&self.window, layer, memory);
         } 
     }
 

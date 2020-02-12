@@ -2,6 +2,7 @@ use crate::util::*;
 use crate::memory::Memory;
 
 use super::layer::Layer;
+use super::window::Window;
 
 /// Sprite dimension in pixels
 pub static DIMENSION: [[(u32, u32); 4]; 3] =
@@ -79,22 +80,22 @@ impl Sprite
         }
     }
 
-    pub fn draw(&mut self, vcount: u32, sequential: bool, layer: &mut Layer, memory: &Memory)
+    pub fn draw(&mut self, vcount: u32, sequential: bool, window: &Window, layer: &mut Layer, memory: &Memory)
     {
         if !self.disabled() && self.visible(vcount)
         {
             if self.affine_f
             {
-                self.draw_affine(vcount, sequential, layer, memory)
+                self.draw_affine(vcount, sequential, window, layer, memory)
             }
             else
             {
-                self.draw_text(vcount, sequential, layer, memory)
+                self.draw_text(vcount, sequential, window, layer, memory)
             }
         }
     }
 
-    pub fn draw_text(&mut self, vcount: u32, sequential: bool, layer: &mut Layer, memory: &Memory)
+    pub fn draw_text(&mut self, vcount: u32, sequential: bool, window: &Window, layer: &mut Layer, memory: &Memory)
     {
         // Vertical wrap around
         let y = (vcount - self.ycoord) % 256; 
@@ -128,12 +129,12 @@ impl Sprite
             let x = (self.xcoord + i) % 512;
             let color = memory.obj_palette(self.palette_n, palette_entry);
 
-            layer.paint(x, color);
+            layer.paint(x, color, window, 4);
         }
     }
 
     #[allow(unused_assignments)]
-    pub fn draw_affine(&mut self, vcount: u32, sequential: bool, layer: &mut Layer, memory: &Memory)
+    pub fn draw_affine(&mut self, vcount: u32, sequential: bool, window: &Window, layer: &mut Layer, memory: &Memory)
     {
         let mut half_width = self.width as i32/ 2;
         let mut half_height = self.height as i32 / 2;
@@ -186,7 +187,7 @@ impl Sprite
             let i = (xcenter + x) as u32;
             let color = memory.obj_palette(self.palette_n, palette_entry);
             
-            layer.paint(i, color);
+            layer.paint(i, color, window, 4);
         }
     }
 

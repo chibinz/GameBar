@@ -153,6 +153,45 @@ impl Memory
         if bg.vcount == 0 {bg.coord  = (x, y)};
     }
 
+    pub fn get_winh(&self, index: usize) -> (u32, u32)
+    {
+        let winh = self.ioram16(0x40 + index * 2);
+
+        let x1 = winh.bits(15, 8);
+        let x2 = winh.bits(7, 0);
+        
+        (x1, x2)
+    }
+
+    pub fn get_winv(&self, index: usize) -> (u32, u32)
+    {
+        let winv = self.ioram16(0x44 + index * 2);
+
+        let y1 = winv.bits(15, 8);
+        let y2 = winv.bits(7, 0);
+        
+        (y1, y2)
+    }
+
+    pub fn get_winin(&self, index: usize) -> u8
+    {
+        let winin = self.ioram16(0x48);
+
+        if index == 0 
+        {
+            winin as u8
+        }
+        else
+        {
+            (winin >> 8) as u8
+        }
+    }
+
+    pub fn get_winout(&self) -> u16
+    {
+        self.ioram16(0x4a)
+    }
+
     pub fn get_keyinput(&self) -> u16
     {
         self.ioram16(0x130)
