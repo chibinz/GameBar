@@ -125,7 +125,7 @@ impl Sprite
             let palette_entry = memory.tile_data(self.palette_f, tile_b, tile_n, pixel_x, pixel_y);
 
             // Horizontal wrap around
-            let x = self.xcoord + i % 512;
+            let x = (self.xcoord + i) % 512;
             let color = memory.obj_palette(self.palette_n, palette_entry);
 
             layer.paint(x, color);

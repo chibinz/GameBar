@@ -116,7 +116,7 @@ impl Background
 
     pub fn draw_affine(&mut self, layer: &mut Layer, memory: &Memory)
     {
-        for i in 0..240
+        for i in 0..self.width
         {
             let mut text_x = (self.matrix.0 * i as i32 + self.coord.0) >> 8;
             let mut text_y = (self.matrix.2 * i as i32 + self.coord.1) >> 8;

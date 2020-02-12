@@ -23,7 +23,7 @@ pub struct PPU
     pub background: Vec<Background>,   // Background 0 - 3
     pub sprite    : Vec<Sprite>,       // Sprite 0 - 127
 
-    pub layer     : Vec<Layer>,
+    pub layer     : Vec<Layer>,        // Layer 0 - 3, and an extra layer for backdrop
     pub buffer    : Vec<u32>,          // Frame buffer, 240 * 160
 }
 
@@ -42,7 +42,7 @@ impl PPU
 
             background  : vec![Background::new(); 4],
             sprite      : vec![Sprite::new(); 128],
-            layer       : vec![Layer::new(); 4],
+            layer       : vec![Layer::new(); 5],
             buffer      : vec![0; 240 * 160],
         };
 
@@ -54,6 +54,11 @@ impl PPU
         for i in 0..128
         {
             p.sprite[i].index = i;
+        }
+
+        for i in 0..240
+        {
+            p.layer[4].pixel[i] = BACKDROP;
         }
 
         p
@@ -95,7 +100,7 @@ impl PPU
 
         for i in 0..240
         {
-            for j in 0..4
+            for j in 0..5
             {
                 let pixel = self.layer[j].pixel[i];
 
@@ -111,28 +116,25 @@ impl PPU
 
     pub fn draw_mode_0(&mut self, memory: &Memory)
     {
-        for i in (0..4).rev()
-        {
-            self.draw_text_bg(i, memory);
-        }
+        // Background is drawn in reverse order to give
+        // precedence to ones with lower index.
+        self.draw_text_bg(3, memory);
+        self.draw_text_bg(2, memory);
+        self.draw_text_bg(1, memory);
+        self.draw_text_bg(0, memory);
     }
 
     pub fn draw_mode_1(&mut self, memory: &Memory)
     {
         self.draw_affine_bg(2, memory);
-        
-        for i in (0..2).rev()
-        {
-            self.draw_text_bg(i, memory);
-        }
+        self.draw_text_bg(1, memory);
+        self.draw_text_bg(0, memory);
     }
 
     pub fn draw_mode_2(&mut self, memory: &Memory)
     {
-        for i in (2..4).rev()
-        {
-            self.draw_affine_bg(i, memory);
-        }
+        self.draw_affine_bg(3, memory);
+        self.draw_affine_bg(2, memory);
     }
 
     pub fn draw_mode_3(&mut self, memory: &Memory)

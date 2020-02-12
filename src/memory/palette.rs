@@ -9,7 +9,18 @@ impl Memory
     #[inline]
     pub fn bg_palette(&self, palette_n: u32, index: u32) -> u32
     {
-        if index == 0 {return BACKDROP}
+        if index == 0 
+        {
+            if palette_n == 0
+            {
+                // Color 0 of bg palette bank 0 is the backdrop color
+                return BACKDROP
+            }
+            else
+            {
+                return TRANSPARENT
+            }
+        }
 
         let a = (palette_n << 4 | index) as usize * 2;
         RGB(into16(&self.param[a..a+2]))

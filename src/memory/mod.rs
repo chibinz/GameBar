@@ -120,7 +120,7 @@ impl Memory
             0x03 => self.iwram[offset] = value,
             0x04 => self.ioram[offset] = value,
             0x0e => self.sram[offset]  = value,
-            _    => panic!("Invalid memory address {:08x}", address),
+            _    => println!("Attempt to store byte at address 0x{:08x}", address),
         };
     }
 
@@ -145,7 +145,7 @@ impl Memory
             0x05 => sth(&mut self.param),
             0x06 => sth(&mut self.vram),
             0x07 => sth(&mut self.oam),
-            _    => panic!("Invalid memory address {:08x}", address),
+            _    => println!("Attempt to store halfword at address 0x{:08x}", address),
         };
     }
 
@@ -172,7 +172,7 @@ impl Memory
             0x05 => sth(&mut self.param),
             0x06 => sth(&mut self.vram),
             0x07 => sth(&mut self.oam),
-            _    => panic!("Invalid memory address {:08x}", address),
+            _    => println!("Attempt to store word at address 0x{:08x}", address),
         };
     }
 
