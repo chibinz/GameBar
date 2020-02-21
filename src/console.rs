@@ -1,5 +1,6 @@
 use crate::cpu::CPU;
 use crate::ppu::PPU;
+use crate::dma::DMA;
 use crate::memory::Memory;
 
 use minifb::Window;
@@ -9,6 +10,7 @@ pub struct Console
 {
     pub cpu   : CPU,
     pub ppu   : PPU,
+    pub dma   : Vec<DMA>,
     pub memory: Memory,
 
     pub window: Window,
@@ -18,10 +20,11 @@ impl Console
 {
     pub fn new() -> Console
     {
-        Self
+        let mut c = Self
         {
             cpu   : CPU::new(),
             ppu   : PPU::new(),
+            dma   : vec![DMA::new(); 4],
             memory: Memory::new(),
 
             window: Window::new
@@ -35,7 +38,14 @@ impl Console
                     ..WindowOptions::default()
                 }
             ).unwrap(),
+        };
+
+        for i in 0..4
+        {
+            c.dma[i].index = i;
         }
+
+        c
     }
 
     /// Render a frame
@@ -52,6 +62,8 @@ impl Console
     
             self.memory.inc_vcount();
             self.memory.set_hblank_flag(false); 
+
+            self.dma_transfer();
         }
         
         self.memory.set_vblank_flag(true);
@@ -84,6 +96,16 @@ impl Console
             self.ppu.render(&mut self.memory);
             self.memory.inc_vcount();
             self.window.update_with_buffer(&self.ppu.buffer, 240, 160).unwrap();
+        }
+    }
+
+    pub fn dma_transfer(&mut self)
+    {
+        for i in 0..4
+        {
+            self.memory.update_dma(&mut self.dma[i]);
+
+            self.dma[i].transfer(&mut self.memory);
         }
     }
 }

@@ -2,6 +2,7 @@
 
 pub mod cpu;
 pub mod ppu;
+pub mod dma;
 pub mod memory;
 pub mod console;
 pub mod keyboard;
