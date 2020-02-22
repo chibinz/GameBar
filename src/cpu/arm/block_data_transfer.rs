@@ -119,9 +119,9 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     cpu.counter += count_cycles(rlist);
 }
 
-fn count_cycles(rlist: u32) -> u32
+fn count_cycles(rlist: u32) -> u64
 {
-    rlist.count_ones()
+    rlist.count_ones() as u64
 }
 
 #[cfg(test)]

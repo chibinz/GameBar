@@ -3,6 +3,8 @@ use crate::ppu::PPU;
 use crate::ppu::background::Background;
 use crate::ppu::background::DIMENSION;
 use crate::dma::DMA;
+use crate::timer::Timer;
+use crate::timer::PRESCALER;
 
 use super::Memory;
 use super::into16;
@@ -199,7 +201,7 @@ impl Memory
         self.update_dmadad(dma);
         self.update_dmacnt(dma);
     }
-    
+
     pub fn update_dmasad(&self, dma: &mut DMA)
     {
         let mut addr = self.ioram32(0xb0 + dma.index * 0xc);
@@ -255,6 +257,21 @@ impl Memory
         cnt &= !0x8000;
 
         self.ioram16_s(0xba + index * 0xc, cnt);
+    }
+
+    pub fn update_tmcnt(&self, timer: &mut Timer)
+    {
+        let cnt = self.ioram16(0x102 + timer.index * 4);
+
+        timer.prescaler = PRESCALER[cnt.bits(1, 0) as usize];
+        timer.cascade_f = cnt.bit(2);
+        timer.irq_f     = cnt.bit(6);
+        timer.enable    = cnt.bit(7);
+    }
+
+    pub fn get_timer_data(&mut self, index: usize) -> *mut u16
+    {
+        (&mut self.ioram[0x100 + index * 4]) as *mut u8 as *mut u16
     }
 
     pub fn get_keyinput(&self) -> u16

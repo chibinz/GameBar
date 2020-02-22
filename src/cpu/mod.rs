@@ -23,7 +23,7 @@ pub struct CPU
     // 21 - 23: R13_irq, R14_irq, SPSR_irq
     // 24 - 26: R13_und, R14_und, SPSR_und
 
-    pub counter: u32,           // Number of cycles elapsed
+    pub counter: u64,       // Number of cycles elapsed
 }
 
 impl CPU
@@ -55,7 +55,7 @@ impl CPU
         cpu
     }
 
-    pub fn run(&mut self, cycles: u32, memory: &mut Memory) -> u32
+    pub fn run(&mut self, cycles: u64, memory: &mut Memory) -> u64
     {
         let stop = self.counter + cycles;
 
