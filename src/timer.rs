@@ -1,3 +1,5 @@
+use crate::memory::Memory;
+
 pub static PRESCALER: [u32; 4] =
 [
     1,
@@ -6,18 +8,52 @@ pub static PRESCALER: [u32; 4] =
     1024,
 ];
 
+pub struct Timers
+{
+    pub timer: Vec<Timer>
+}
+
 #[derive(Clone, Debug)]
 pub struct Timer
 {
-    pub index    : usize,
-    pub counter  : u32,
+    pub index    : usize,       // 0 - 3
+    pub counter  : u32,         // Accumulater counts, should be < prescaler
 
-    pub data     : *mut u16,
+    pub data     : *mut u16,    // Pointer to ioram timer data
 
-    pub prescaler: u32,
-    pub irq_f    : bool,
-    pub cascade_f: bool,
-    pub enable   : bool,
+    pub prescaler: u32,         // 1, 64, 256, 1024
+    pub irq_f    : bool,        // Interrupt on overflow
+    pub cascade_f: bool,        // Cascade flag
+    pub enable   : bool,        // Enable flag
+}
+
+impl Timers
+{
+    pub fn new(memory: &mut Memory) -> Self
+    {
+        let mut t = Self
+        {
+            timer: vec![Timer::new(); 4],
+        };
+
+        for i in 0..4
+        {
+            t.timer[i].index = i;
+            t.timer[i].data  = memory.get_timer_data(i);
+        }
+
+        t
+    }
+
+    pub fn update(&mut self, value: u32, memory: &mut Memory)
+    {
+        for i in 0..4
+        {
+            memory.update_tmcnt(&mut self.timer[i]);
+
+            self.timer[i].increment_counter(value);
+        }
+    }
 }
 
 impl Timer

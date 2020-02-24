@@ -2,7 +2,7 @@ use crate::util::*;
 use crate::ppu::PPU;
 use crate::ppu::background::Background;
 use crate::ppu::background::DIMENSION;
-use crate::dma::DMA;
+use crate::dma::DMAChannel;
 use crate::timer::Timer;
 use crate::timer::PRESCALER;
 
@@ -195,14 +195,14 @@ impl Memory
         self.ioram16(0x4a)
     }
 
-    pub fn update_dma(&self, dma: &mut DMA)
+    pub fn update_dma(&self, dma: &mut DMAChannel)
     {
         self.update_dmasad(dma);
         self.update_dmadad(dma);
         self.update_dmacnt(dma);
     }
 
-    pub fn update_dmasad(&self, dma: &mut DMA)
+    pub fn update_dmasad(&self, dma: &mut DMAChannel)
     {
         let mut addr = self.ioram32(0xb0 + dma.index * 0xc);
 
@@ -218,7 +218,7 @@ impl Memory
         dma.src = addr;
     }
 
-    pub fn update_dmadad(&self, dma: &mut DMA)
+    pub fn update_dmadad(&self, dma: &mut DMAChannel)
     {
         let mut addr = self.ioram32(0xb4 + dma.index * 0xc);
 
@@ -234,7 +234,7 @@ impl Memory
         dma.dst = addr;
     }
 
-    pub fn update_dmacnt(&self, dma: &mut DMA)
+    pub fn update_dmacnt(&self, dma: &mut DMAChannel)
     {
         let cnt_l = self.ioram16(0xb8 + dma.index * 0xc);
         let cnt_h = self.ioram16(0xba + dma.index * 0xc);

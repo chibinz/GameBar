@@ -30,7 +30,7 @@ impl Memory
             bios : vec![0; 0x00004000 - 0x00000000],
             ewram: vec![0; 0x02040000 - 0x02000000],
             iwram: vec![0; 0x03008000 - 0x03000000],
-            ioram: vec![0; 0x04000800 - 0x04000000],
+            ioram: vec![0; 0x04010000 - 0x04000000],
             param: vec![0; 0x05000400 - 0x05000000],
             vram : vec![0; 0x06018000 - 0x06000000],
             oam  : vec![0; 0x07000400 - 0x07000000],
@@ -130,6 +130,7 @@ impl Memory
         // Accesses are forced to halfword aligned
         let offset = mirror(address) & 0x00fffffe;
 
+        // println!("{:08x}", address);
         let sth = |mem: &mut [u8]| 
         {
             let a = value.to_le_bytes();
