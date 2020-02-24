@@ -2,7 +2,7 @@ use std::io::Read;
 use std::fs::File;
 use std::convert::TryInto;
 
-pub mod io;
+pub mod ioreg;
 pub mod vram;
 pub mod palette;
 pub mod oam;
