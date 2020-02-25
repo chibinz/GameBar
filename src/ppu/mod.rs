@@ -148,41 +148,25 @@ impl PPU
     {
         debug_assert!(self.dispcnt.bit(10));
 
-        self.background[2].draw_bitmap_3(memory);
+        self.background[2].draw_bitmap_3(&self.window, &mut self.layer[0], memory);
 
-        let line_n = self.vcount as usize;
-        for i in 0..240
-        {
-            self.buffer[line_n * 240 + i] = self.background[2].pixel[i];
-        }
     }
 
     pub fn draw_mode_4(&mut self, memory: &Memory)
     {
         debug_assert!(self.dispcnt.bit(10));
 
-        self.background[2].draw_bitmap_4(self.flip, memory);
-
-        let line_n = self.vcount as usize;
-        for i in 0..240
-        {
-            self.buffer[line_n * 240 + i] = self.background[2].pixel[i];
-        }
+        self.background[2].draw_bitmap_4(self.flip, &self.window, &mut self.layer[0], memory);
     }
 
     pub fn draw_mode_5(&mut self, memory: &Memory)
     {
         debug_assert!(self.dispcnt.bit(10));
 
-        self.background[2].draw_bitmap_5(self.flip, memory);
-
         let line_n = self.vcount as usize;
         if line_n > 127 {return}
 
-        for i in 0..160
-        {
-            self.buffer[line_n * 240 + i] = self.background[2].pixel[i];
-        }
+        self.background[2].draw_bitmap_5(self.flip, &self.window, &mut self.layer[0], memory);
     }
 
     pub fn draw_sprite(&mut self, memory: &Memory)

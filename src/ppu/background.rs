@@ -166,7 +166,7 @@ impl Background
         self.coord.1 += self.matrix.3;
     }
     
-    pub fn draw_bitmap_3(&mut self, memory: &Memory)
+    pub fn draw_bitmap_3(&mut self, window: &Window, layer: &mut Layer, memory: &Memory)
     {
         memory.update_affine_bg(self);
 
@@ -175,11 +175,11 @@ impl Background
         for x in 0..240
         {
             let pixel = memory.vram16((line_n * 240 + x) * 2);
-            self.pixel[x as usize] = RGB(pixel);
+            layer.paint(x, RGB(pixel), window, 2);
         }
     }
 
-    pub fn draw_bitmap_4(&mut self, flip: bool, memory: &Memory)
+    pub fn draw_bitmap_4(&mut self, flip: bool, window: &Window, layer: &mut Layer, memory: &Memory)
     {
         memory.update_affine_bg(self);
 
@@ -189,11 +189,11 @@ impl Background
         for x in 0..240
         {
             let palette_entry = memory.vram8(start + line_n * 240 + x);
-            self.pixel[x as usize] = memory.bg_palette(0, palette_entry as u32);
+            layer.paint(x, memory.bg_palette(0, palette_entry as u32), window, 2);
         }
     }
 
-    pub fn draw_bitmap_5(&mut self, flip: bool, memory: &Memory)
+    pub fn draw_bitmap_5(&mut self, flip: bool, window: &Window, layer: &mut Layer, memory: &Memory)
     {
         memory.update_affine_bg(self);
 
@@ -203,7 +203,7 @@ impl Background
         for x in 0..160
         {
             let pixel = memory.vram16(start + (line_n * 160 + x) * 2);
-            self.pixel[x as usize] = RGB(pixel);
+            layer.paint(x, RGB(pixel), window, 2);
         }
     }
 }
