@@ -102,6 +102,19 @@ impl CPU
         self.counter += 2;
     }
 
+    pub fn software_interrupt(&mut self)
+    {
+        let lr = self.r[15] - if self.in_thumb_mode() {2} else {4};
+        let spsr = self.get_cpsr();
+    
+        self.set_cpsr(register::PSRMode::Supervisor as u32, false);    
+        
+        self.set_spsr(spsr, false);
+        self.r[14] = lr;
+        self.r[15] = 0x08;
+        self.flush();
+    }
+
     #[inline]
     pub fn in_thumb_mode(&self) -> bool
     {

@@ -21,8 +21,6 @@ use crate::util::*;
 use crate::cpu::CPU;
 use crate::memory::Memory;
 
-use super::arm::software_interrupt;
-
 #[inline]
 pub fn step(cpu: &mut CPU, memory: &mut Memory)
 {
@@ -106,7 +104,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
             {
                 0b0000 ..=
                 0b1101 => conditional_branch::interpret(cpu, instruction),
-                0b1111 => software_interrupt::interpret(cpu),
+                0b1111 => cpu.software_interrupt(),
                 _      => unreachable!(),
             }
         },

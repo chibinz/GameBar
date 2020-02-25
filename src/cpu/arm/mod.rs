@@ -9,7 +9,6 @@ pub mod single_data_transfer;
 pub mod single_data_swap;
 pub mod halfword_data_transfer;
 pub mod block_data_transfer;
-pub mod software_interrupt;
 
 use crate::util::*;
 use crate::cpu::CPU;
@@ -117,7 +116,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
         0b011 => single_data_transfer::interpret(cpu, memory, instruction),
         0b100 => block_data_transfer::interpret(cpu, memory, instruction),
         0b101 => branch_long::interpret(cpu, instruction), 
-        0b111 => software_interrupt::interpret(cpu),
+        0b111 => cpu.software_interrupt(),
         _     => unimplemented!(),
     };
 }
