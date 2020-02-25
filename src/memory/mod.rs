@@ -1,11 +1,13 @@
-use std::io::Read;
-use std::fs::File;
-use std::convert::TryInto;
-
 pub mod ioreg;
 pub mod vram;
 pub mod palette;
 pub mod oam;
+
+use std::io::Read;
+use std::fs::File;
+use std::convert::TryInto;
+
+use super::console::Console;
 
 pub struct Memory
 {
@@ -18,6 +20,9 @@ pub struct Memory
     oam  : Vec<u8>,
     rom  : Vec<u8>,
     sram : Vec<u8>,
+    
+    /// Pointer to containing console struct
+    pub console: *mut Console, 
 }
 
 impl Memory
@@ -34,8 +39,10 @@ impl Memory
             param: vec![0; 0x05000400 - 0x05000000],
             vram : vec![0; 0x06018000 - 0x06000000],
             oam  : vec![0; 0x07000400 - 0x07000000],
-            rom  : vec![0; 0x0a000000 - 0x08000000], 
-            sram : vec![0; 0x0e010000 - 0x0e000000], 
+            rom  : vec![0; 0x0a000000 - 0x08000000],
+            sram : vec![0; 0x0e010000 - 0x0e000000],
+
+            console: 0 as *mut Console,
         }
     }
 
@@ -130,7 +137,6 @@ impl Memory
         // Accesses are forced to halfword aligned
         let offset = mirror(address) & 0x00fffffe;
 
-        // println!("{:08x}", address);
         let sth = |mem: &mut [u8]| 
         {
             let a = value.to_le_bytes();
@@ -142,7 +148,11 @@ impl Memory
         {
             0x02 => sth(&mut self.ewram),
             0x03 => sth(&mut self.iwram),
-            0x04 => sth(&mut self.ioram),
+            0x04 => 
+                {
+                    sth(&mut self.ioram);
+                    self.ioram_store16(address);
+                },
             0x05 => sth(&mut self.param),
             0x06 => sth(&mut self.vram),
             0x07 => sth(&mut self.oam),
@@ -169,7 +179,11 @@ impl Memory
         {
             0x02 => sth(&mut self.ewram),
             0x03 => sth(&mut self.iwram),
-            0x04 => sth(&mut self.ioram),
+            0x04 => 
+                {
+                    sth(&mut self.ioram);
+                    self.ioram_store32(address);
+                },
             0x05 => sth(&mut self.param),
             0x06 => sth(&mut self.vram),
             0x07 => sth(&mut self.oam),

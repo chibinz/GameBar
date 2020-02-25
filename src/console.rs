@@ -24,7 +24,7 @@ impl Console
     {
         let mut m = Memory::new();
 
-        Self
+        let mut c = Self
         {
             cpu   : CPU::new(),
             ppu   : PPU::new(),
@@ -44,7 +44,11 @@ impl Console
                     ..WindowOptions::default()
                 }
             ).unwrap(),
-        }
+        };
+
+        c.memory.console = &mut c as *mut Console;
+
+        c
     }
 
     /// Render a frame

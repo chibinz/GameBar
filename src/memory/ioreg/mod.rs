@@ -33,6 +33,49 @@ impl Memory
         self.ioram[offset + 1] = a[1];
     }
 
+    pub fn ioram_store16(&mut self, address: u32)
+    {
+        println!("{:x}", address & 0xffff);
+
+        let console = unsafe {&mut *self.console};
+        let dma = &mut console.dma;
+
+        match address & 0xffff
+        {
+            // DMA 0
+            0x0b0 => self.update_dmasad(&mut dma.channel[0]),
+            0x0b4 => self.update_dmadad(&mut dma.channel[0]),
+            0x0b8 => self.update_dmacnt_l(&mut dma.channel[0]),
+            0x0ba => self.update_dmacnt_h(&mut dma.channel[0]),
+            
+            // DMA 1
+            0x0bc => self.update_dmasad(&mut dma.channel[1]),
+            0x0c0 => self.update_dmadad(&mut dma.channel[1]),
+            0x0c4 => self.update_dmacnt_l(&mut dma.channel[1]),
+            0x0c6 => self.update_dmacnt_h(&mut dma.channel[1]),
+
+            // DMA 2
+            0x0c8 => self.update_dmasad(&mut dma.channel[2]),
+            0x0cc => self.update_dmadad(&mut dma.channel[2]),
+            0x0d0 => self.update_dmacnt_l(&mut dma.channel[2]),
+            0x0d2 => self.update_dmacnt_h(&mut dma.channel[2]),
+
+            // DMA 3
+            0x0d4 => self.update_dmasad(&mut dma.channel[3]),
+            0x0d8 => self.update_dmadad(&mut dma.channel[3]),
+            0x0dc => self.update_dmacnt_l(&mut dma.channel[3]),
+            0x0de => self.update_dmacnt_h(&mut dma.channel[3]),
+
+            _ => (),
+        }
+    }
+
+    pub fn ioram_store32(&mut self, address: u32)
+    {
+        self.ioram_store16(address);
+        self.ioram_store16(address + 2);
+    }
+
     pub fn get_keyinput(&self) -> u16
     {
         self.ioram16(0x130)
