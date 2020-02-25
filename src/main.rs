@@ -4,6 +4,7 @@ pub mod cpu;
 pub mod ppu;
 pub mod dma;
 pub mod timer;
+pub mod interrupt;
 pub mod memory;
 pub mod console;
 pub mod keyboard;

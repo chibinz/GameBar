@@ -78,6 +78,8 @@ impl DMAChannel
 
     pub fn transfer(&mut self, memory: &mut Memory)
     {
+        // TODO special start mode
+        if self.start == 3 {return}
         if !self.enable {return}
 
         self.read_ioreg(memory);

@@ -1,6 +1,7 @@
 pub mod ppu;
 pub mod dma;
 pub mod timer;
+pub mod interrupt;
 
 use super::Memory;
 use super::into16;
@@ -35,10 +36,11 @@ impl Memory
 
     pub fn ioram_store16(&mut self, address: u32)
     {
-        println!("{:x}", address & 0xffff);
+        // println!("{:x}", address & 0xffff);
 
         let console = unsafe {&mut *self.console};
-        let dma = &mut console.dma;
+        let dma     = &mut console.dma;
+        let irqcnt  = &mut console.irqcnt;
 
         match address & 0xffff
         {
@@ -66,6 +68,10 @@ impl Memory
             0x0dc => self.update_dmacnt_l(&mut dma.channel[3]),
             0x0de => self.update_dmacnt_h(&mut dma.channel[3]),
 
+            // Interrupt Controller
+            0x200 => self.update_ie(irqcnt),
+            0x202 => self.update_irf(irqcnt),
+            0x208 => self.update_ime(irqcnt),
             _ => (),
         }
     }

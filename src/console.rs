@@ -2,6 +2,8 @@ use crate::cpu::CPU;
 use crate::ppu::PPU;
 use crate::dma::DMA;
 use crate::timer::Timers;
+use crate::interrupt::IRQController;
+use crate::interrupt::Interrupt::*;
 use crate::memory::Memory;
 
 use minifb::Window;
@@ -13,6 +15,7 @@ pub struct Console
     pub ppu   : PPU,
     pub dma   : DMA,
     pub timers: Timers,
+    pub irqcnt: IRQController,
     pub memory: Memory,
 
     pub window: Window,
@@ -29,6 +32,7 @@ impl Console
             cpu   : CPU::new(),
             ppu   : PPU::new(),
             dma   : DMA::new(),
+            irqcnt: IRQController::new(),
             timers: Timers::new(&mut m),
             
             memory: m,
@@ -63,6 +67,7 @@ impl Console
             self.memory.set_hblank_flag(true);
     
             self.dma.request(&mut self.memory);
+            self.irqcnt.request(HBlank, &mut self.cpu, &mut self.memory);
 
             self.cpu.run(272, &mut self.memory);
             self.timers.update(272, &mut self.memory);
@@ -72,6 +77,7 @@ impl Console
         }
 
         self.memory.set_vblank_flag(true);
+        self.irqcnt.request(VBlank, &mut self.cpu, &mut self.memory);
 
         for _ in 0..68
         {

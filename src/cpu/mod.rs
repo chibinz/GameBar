@@ -115,6 +115,19 @@ impl CPU
         self.flush();
     }
 
+    pub fn hardware_interrupt(&mut self)
+    {
+        let lr = self.r[15] - if self.in_thumb_mode() {2} else {4};
+        let spsr = self.get_cpsr();
+    
+        self.set_cpsr(register::PSRMode::IRQ as u32, false);    
+        
+        self.set_spsr(spsr, false);
+        self.r[14] = lr;
+        self.r[15] = 0x18;
+        self.flush();
+    }
+
     #[inline]
     pub fn in_thumb_mode(&self) -> bool
     {
