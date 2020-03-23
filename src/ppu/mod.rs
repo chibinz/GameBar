@@ -61,11 +61,6 @@ impl PPU
             p.sprite[i].index = i;
         }
 
-        for i in 0..240
-        {
-            p.layer[4].pixel[i] = BACKDROP;
-        }
-
         p
     }
 
@@ -75,6 +70,12 @@ impl PPU
 
         if self.fblank {self.force_blank()}
         if self.vcount >= 160 {return} // Change to assertion
+
+        // Setup backdrop color
+        for pixel in self.layer[4].pixel.iter_mut()
+        {
+            *pixel = memory.bg_palette(0, 0);
+        }
 
         for i in 0..4
         {
@@ -98,7 +99,6 @@ impl PPU
 
         self.combine_layers();
     }
-
     
     pub fn combine_layers(&mut self)
     {

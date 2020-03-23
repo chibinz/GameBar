@@ -11,12 +11,7 @@ impl Memory
     {
         if index == 0 
         {
-            if palette_n == 0
-            {
-                // Color 0 of bg palette bank 0 is the backdrop color
-                return BACKDROP
-            }
-            else
+            if palette_n != 0
             {
                 return TRANSPARENT
             }

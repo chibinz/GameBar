@@ -19,6 +19,7 @@ pub struct Console
     pub memory: Memory,
 
     pub window: Window,
+    pub magic: u32,
 }
 
 impl Console
@@ -27,7 +28,7 @@ impl Console
     {
         let mut m = Memory::new();
 
-        let mut c = Self
+        Self
         {
             cpu   : CPU::new(),
             ppu   : PPU::new(),
@@ -48,11 +49,9 @@ impl Console
                     ..WindowOptions::default()
                 }
             ).unwrap(),
-        };
 
-        c.memory.console = &mut c as *mut Console;
-
-        c
+            magic: 0xdeadbeef,
+        }
     }
 
     /// Render a frame
@@ -60,6 +59,7 @@ impl Console
     {
         for _ in 0..160
         {
+            self.vmatch_irq();
             self.cpu.run(960, &mut self.memory);
             self.timers.update(960, &mut self.memory);
 
@@ -67,7 +67,7 @@ impl Console
             self.memory.set_hblank_flag(true);
     
             self.dma.request(&mut self.memory);
-            self.irqcnt.request(HBlank, &mut self.cpu, &mut self.memory);
+            self.irqcnt.request(HBlank, &mut self.cpu);
 
             self.cpu.run(272, &mut self.memory);
             self.timers.update(272, &mut self.memory);
@@ -77,10 +77,11 @@ impl Console
         }
 
         self.memory.set_vblank_flag(true);
-        self.irqcnt.request(VBlank, &mut self.cpu, &mut self.memory);
+        self.irqcnt.request(VBlank, &mut self.cpu);
 
         for _ in 0..68
         {
+            self.vmatch_irq();
             self.cpu.run(1232, &mut self.memory);
             self.timers.update(1232, &mut self.memory);
 
@@ -91,6 +92,17 @@ impl Console
         self.memory.set_vblank_flag(false);
         
         self.window.update_with_buffer(&self.ppu.buffer, 240, 160).unwrap();
+    }
+
+    pub fn vmatch_irq(&mut self)
+    {
+        let vmatch = self.memory.load16(0x04000004) >> 8;
+        let vcount = self.memory.get_vcount();
+
+        if vcount == vmatch
+        {
+            self.irqcnt.request(VCount, &mut self.cpu);
+        }
     }
 
     /// Single step CPU, for debugging purpose

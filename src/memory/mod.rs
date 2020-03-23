@@ -56,7 +56,11 @@ impl Memory
             0x00 => self.bios[offset],
             0x02 => self.ewram[offset],
             0x03 => self.iwram[offset],
-            0x04 => self.ioram[offset],
+            0x04 =>
+                {
+                    let value = self.ioram_load16(address);
+                    if address & 1 == 1 {(value >> 8) as u8} else {value as u8}
+                },
             0x05 => self.param[offset],
             0x06 => self.vram[offset],
             0x07 => self.oam[offset],
@@ -79,7 +83,7 @@ impl Memory
             0x00 => ldh(&self.bios),
             0x02 => ldh(&self.ewram),
             0x03 => ldh(&self.iwram),
-            0x04 => ldh(&self.ioram),
+            0x04 => self.ioram_load16(address),
             0x05 => ldh(&self.param),
             0x06 => ldh(&self.vram),
             0x07 => ldh(&self.oam),
@@ -102,7 +106,12 @@ impl Memory
             0x00 => ld(&self.bios),
             0x02 => ld(&self.ewram),
             0x03 => ld(&self.iwram),
-            0x04 => ld(&self.ioram),
+            0x04 => 
+                {
+                    let lo = self.ioram_load16(address) as u32;
+                    let hi = self.ioram_load16(address+2) as u32;
+                    lo | (hi << 16)
+                }
             0x05 => ld(&self.param),
             0x06 => ld(&self.vram),
             0x07 => ld(&self.oam),
@@ -125,7 +134,11 @@ impl Memory
         {
             0x02 => self.ewram[offset] = value,
             0x03 => self.iwram[offset] = value,
-            0x04 => self.ioram[offset] = value,
+            0x04 =>
+                {
+                    self.ioram[offset] = value;
+                    self.ioram_store16(address, value as u16);
+                },
             0x0e => self.sram[offset]  = value,
             _    => println!("Attempt to store byte at address 0x{:08x}", address),
         };
@@ -151,7 +164,7 @@ impl Memory
             0x04 => 
                 {
                     sth(&mut self.ioram);
-                    self.ioram_store16(address);
+                    self.ioram_store16(address, value);
                 },
             0x05 => sth(&mut self.param),
             0x06 => sth(&mut self.vram),
@@ -182,7 +195,7 @@ impl Memory
             0x04 => 
                 {
                     sth(&mut self.ioram);
-                    self.ioram_store32(address);
+                    self.ioram_store32(address, value);
                 },
             0x05 => sth(&mut self.param),
             0x06 => sth(&mut self.vram),

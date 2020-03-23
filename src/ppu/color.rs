@@ -1,7 +1,6 @@
 use crate::util::*;
 
 pub static TRANSPARENT: u32 = 0xff000000;
-pub static BACKDROP   : u32 = 0;
 
 #[inline]
 pub fn RGB(a: u16) -> u32

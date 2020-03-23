@@ -34,15 +34,34 @@ impl Memory
         self.ioram[offset + 1] = a[1];
     }
 
-    pub fn ioram_store16(&mut self, address: u32)
+    pub fn ioram_load16(&self, address: u32) -> u16
     {
-        // println!("{:x}", address & 0xffff);
+        let console = unsafe {& *self.console};
+        let irqcnt  = &console.irqcnt;
 
+        let ioreg = (address & 0xfffe) as usize;
+
+        match ioreg
+        {
+            0x200 => irqcnt.ie,
+            0x202 => irqcnt.irf,
+            0x208 => irqcnt.ime,
+            _     => into16(&self.ioram[ioreg..ioreg+2]),
+        }
+    }
+
+    pub fn ioram_store16(&mut self, address: u32, value: u16)
+    {
         let console = unsafe {&mut *self.console};
+        let cpu     = &mut console.cpu;
         let dma     = &mut console.dma;
         let irqcnt  = &mut console.irqcnt;
 
-        match address & 0xffff
+        assert_eq!(console.magic, 0xdeadbeef);
+
+        let ioreg = address & 0xffff;
+
+        match ioreg
         {
             // DMA 0
             0x0b0 => self.update_dmasad(&mut dma.channel[0]),
@@ -70,16 +89,18 @@ impl Memory
 
             // Interrupt Controller
             0x200 => self.update_ie(irqcnt),
-            0x202 => self.update_irf(irqcnt),
+            0x202 => irqcnt.acknowledge(value),
             0x208 => self.update_ime(irqcnt),
-            _ => (),
+            _     => println!("unhandled address {:x}", ioreg),
         }
+
+        if ioreg >= 0x200 && ioreg <= 0x208 {println!("{:#x} {:#x} {:?}", ioreg, value, &irqcnt); irqcnt.check(cpu);}
     }
 
-    pub fn ioram_store32(&mut self, address: u32)
+    pub fn ioram_store32(&mut self, address: u32, value: u32)
     {
-        self.ioram_store16(address);
-        self.ioram_store16(address + 2);
+        self.ioram_store16(address, value as u16);
+        self.ioram_store16(address + 2, (value >> 16) as u16);
     }
 
     pub fn get_keyinput(&self) -> u16

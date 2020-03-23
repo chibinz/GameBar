@@ -7,6 +7,7 @@ pub mod barrel_shifter;
 use register::PSRBit::*;
 use crate::memory::Memory;
 
+#[derive(Debug)]
 pub struct CPU
 {
     pub instruction: u32,   // Next instruction to execute
@@ -23,6 +24,7 @@ pub struct CPU
     // 21 - 23: R13_irq, R14_irq, SPSR_irq
     // 24 - 26: R13_und, R14_und, SPSR_und
 
+    pub booted: bool,
     pub counter: u64,       // Number of cycles elapsed
 }
 
@@ -42,6 +44,7 @@ impl CPU
             spsr: 0,
             bank: [0; 27],
 
+            booted: false,
             counter: 0
         };
 
@@ -70,7 +73,9 @@ impl CPU
 
     pub fn step(&mut self, memory: &mut Memory)
     {
-        // self.print(memory);
+        // if self.r[15] >= 0x08000000 {self.booted = true}
+        // if self.booted {self.print(memory)}
+        // if true {self.print(memory)}
 
         if self.in_thumb_mode()
         {
@@ -108,6 +113,8 @@ impl CPU
         let spsr = self.get_cpsr();
     
         self.set_cpsr(register::PSRMode::Supervisor as u32, false);    
+
+        self.set_cpsr_bit(I, true);
         
         self.set_spsr(spsr, false);
         self.r[14] = lr;
@@ -117,10 +124,17 @@ impl CPU
 
     pub fn hardware_interrupt(&mut self)
     {
-        let lr = self.r[15] - if self.in_thumb_mode() {2} else {4};
+        if self.get_cpsr_bit(I) {return}
+
+        println!("Hardware interrupt at R15 = {:#x}", self.r[15]);
+        
+        let lr = self.r[15] - if self.in_thumb_mode() {0} else {4};
         let spsr = self.get_cpsr();
     
         self.set_cpsr(register::PSRMode::IRQ as u32, false);    
+
+        // Disable interrupt
+        self.set_cpsr_bit(I, true);
         
         self.set_spsr(spsr, false);
         self.r[14] = lr;
