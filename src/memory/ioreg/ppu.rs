@@ -164,6 +164,4 @@ impl Memory
     {
         self.ioram16(0x4a)
     }
-
-
 }

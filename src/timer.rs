@@ -1,5 +1,3 @@
-use crate::memory::Memory;
-
 pub static PRESCALER: [u32; 4] =
 [
     1,
@@ -16,42 +14,34 @@ pub struct Timers
 #[derive(Clone, Debug)]
 pub struct Timer
 {
-    pub index    : usize,       // 0 - 3
-    pub counter  : u32,         // Accumulater counts, should be < prescaler
-
-    pub data     : *mut u16,    // Pointer to ioram timer data
-
-    pub prescaler: u32,         // 1, 64, 256, 1024
-    pub irq_f    : bool,        // Interrupt on overflow
-    pub cascade_f: bool,        // Cascade flag
-    pub enable   : bool,        // Enable flag
+    pub reload   : u16,     // Initial value on reload
+    pub counter  : u16,     // Timer data
+    pub modulo   : u32,     // Leftover (< prescaler)
+    pub prescaler: u32,     // 1, 64, 256, 1024
+    pub irq_f    : bool,    // Interrupt on overflow
+    pub cascade_f: bool,    // Cascade flag
+    pub enable   : bool,    // Enable flag
 }
 
 impl Timers
 {
-    pub fn new(memory: &mut Memory) -> Self
+    pub fn new() -> Self
     {
-        let mut t = Self
+        Self
         {
             timer: vec![Timer::new(); 4],
-        };
-
-        for i in 0..4
-        {
-            t.timer[i].index = i;
-            t.timer[i].data  = memory.get_timer_data(i);
         }
-
-        t
     }
 
-    pub fn update(&mut self, value: u32, memory: &mut Memory)
+    pub fn run(&mut self, value: u32)
     {
-        for i in 0..4
-        {
-            memory.update_tmcnt(&mut self.timer[i]);
+        let mut overflow = false;
 
-            self.timer[i].increment_counter(value);
+        for timer in self.timer.iter_mut()
+        {
+            let increment = if timer.cascade_f {overflow as u32} else {value};
+
+            overflow = timer.increment_counter(increment);
         }
     }
 }
@@ -62,38 +52,34 @@ impl Timer
     {
         Self
         {
-            index    : 0,
+            reload   : 0,
             counter  : 0,
-            data     : 0 as *mut u16,
             prescaler: 0,
+            modulo   : 0,
             irq_f    : false,
             cascade_f: false,
             enable   : false,
         }
     }
 
-    pub fn increment_counter(&mut self, ticks: u32)
+    pub fn increment_counter(&mut self, ticks: u32) -> bool
     {
         if self.enable
         {
-            // dbg!(&self);
-            // unsafe {println!("{}", *self.data);}
-            
-            self.counter += ticks;
+            self.modulo += ticks;
 
-            let value = self.counter / self.prescaler;
+            let increment = (self.modulo / self.prescaler) as u16;
+            let (value, overflow) = self.counter.overflowing_add(increment);
 
-            self.increment_data(value);
+            // Reload initial value on overflow
+            self.counter = if overflow {self.reload} else {value};
+            self.modulo %= self.prescaler;
 
-            self.counter = self.counter % self.prescaler;
+            overflow
         }
-    }
-
-    pub fn increment_data(&mut self, value: u32)
-    {
-        unsafe
+        else
         {
-            *self.data += value as u16;
+            false
         }
     }
 }

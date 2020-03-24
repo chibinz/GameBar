@@ -192,7 +192,6 @@ impl CPU
         str += "\n";
         str += &format!("Cycles: {}", self.counter);
 
-
         println!("{}", str)
     }
 }

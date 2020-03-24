@@ -67,7 +67,7 @@ impl Memory
             0x08..=
             0x0d => self.rom[offset],
             0x0e => self.sram[offset],
-            _    => panic!("Invalid memory address {:08x}", address),
+            _    => 0//println!("Invalid memory address {:08x}", address),
         }
     }
     
@@ -90,7 +90,7 @@ impl Memory
             0x08..=
             0x0d => ldh(&self.rom),
             0x0e => ldh(&self.sram),
-            _    => panic!("Invalid memory address {:08x}", address),
+            _    => 0//panic!("Invalid memory address {:08x}", address),
         }
     }
 
@@ -118,7 +118,7 @@ impl Memory
             0x08..=
             0x0d => ld(&self.rom),
             0x0e => ld(&self.sram),
-            _    => panic!("Invalid memory address {:08x}", address),
+            _    => 0//println!("Invalid memory address {:08x}", address),
         };
 
         let shift = (address & 0b11) * 8;

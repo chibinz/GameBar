@@ -2,22 +2,31 @@ use crate::util::*;
 use crate::timer::Timer;
 use crate::timer::PRESCALER;
 
-use super::Memory;
-
-impl Memory
+impl Timer
 {
-    pub fn update_tmcnt(&self, timer: &mut Timer)
+    #[inline]
+    pub fn get_counter(&self) -> u16
     {
-        let cnt = self.ioram16(0x102 + timer.index * 4);
-
-        timer.prescaler = PRESCALER[cnt.bits(1, 0) as usize];
-        timer.cascade_f = cnt.bit(2);
-        timer.irq_f     = cnt.bit(6);
-        timer.enable    = cnt.bit(7);
+        return self.counter;
     }
 
-    pub fn get_timer_data(&mut self, index: usize) -> *mut u16
+    #[inline]
+    pub fn set_reload(&mut self, value: u16)
     {
-        (&mut self.ioram[0x100 + index * 4]) as *mut u8 as *mut u16
+        dbg!(&self);
+        self.reload = value;
+    }
+
+    #[inline]
+    pub fn set_control(&mut self, value: u16)
+    {
+        dbg!(&self);
+        self.prescaler = PRESCALER[value.bits(1, 0) as usize];
+        self.cascade_f = value.bit(2);
+        self.irq_f     = value.bit(6);
+
+        // Reload on switching on timer
+        if !self.enable && value.bit(7) {self.counter = self.reload}
+        self.enable    = value.bit(7);
     }
 }
