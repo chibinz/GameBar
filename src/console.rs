@@ -64,6 +64,7 @@ impl Console
         for _ in 0..160
         {
             // self.vmatch_irq();
+            Self::vmatch_irq(irqcnt, cpu, memory);
             cpu.run(960, memory);
             timers.run(960);
 
@@ -86,6 +87,7 @@ impl Console
         for _ in 0..68
         {
             // self.vmatch_irq();
+            Self::vmatch_irq(irqcnt, cpu, memory);
             cpu.run(1232, memory);
             timers.run(1232);
 
@@ -98,14 +100,14 @@ impl Console
         self.window.update_with_buffer(&ppu.buffer, 240, 160).unwrap();
     }
 
-    pub fn vmatch_irq(&mut self)
+    pub fn vmatch_irq(irqcnt: &mut IRQController, cpu: &mut CPU, memory: &mut Memory)
     {
-        let vmatch = self.memory.load16(0x04000004) >> 8;
-        let vcount = self.memory.get_vcount();
+        let vmatch = memory.load16(0x04000004) >> 8;
+        let vcount = memory.get_vcount();
 
         if vcount == vmatch
         {
-            self.irqcnt.request(VCount, &mut self.cpu);
+            irqcnt.request(VCount, cpu);
         }
     }
 
@@ -113,17 +115,5 @@ impl Console
     pub fn step(&mut self)
     {
         self.cpu.step(&mut self.memory);
-
-        if self.memory.get_vcount() > 228
-        {
-            self.memory.clr_vcount();
-        }
-
-        if self.cpu.counter % 1232 == 0
-        {
-            self.ppu.render(&mut self.memory);
-            self.memory.inc_vcount();
-            self.window.update_with_buffer(&self.ppu.buffer, 240, 160).unwrap();
-        }
     }
 }

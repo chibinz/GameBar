@@ -57,10 +57,4 @@ impl IRQController
         
         self.check(cpu);
     }
-
-    pub fn acknowledge(&mut self, value: u16)
-    {
-        // Writing to irf actually clears respective bit
-        self.irf &= !value;
-    }
 }

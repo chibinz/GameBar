@@ -56,18 +56,14 @@ impl Memory
             0x00 => self.bios[offset],
             0x02 => self.ewram[offset],
             0x03 => self.iwram[offset],
-            0x04 =>
-                {
-                    let value = self.ioram_load16(address);
-                    if address & 1 == 1 {(value >> 8) as u8} else {value as u8}
-                },
+            0x04 => self.ioram_load8(address),
             0x05 => self.param[offset],
             0x06 => self.vram[offset],
             0x07 => self.oam[offset],
             0x08..=
             0x0d => self.rom[offset],
             0x0e => self.sram[offset],
-            _    => 0//println!("Invalid memory address {:08x}", address),
+            _    => {Self::unhandled(true, 4, address); 0},
         }
     }
     
@@ -90,7 +86,7 @@ impl Memory
             0x08..=
             0x0d => ldh(&self.rom),
             0x0e => ldh(&self.sram),
-            _    => 0//panic!("Invalid memory address {:08x}", address),
+            _    => {Self::unhandled(true, 2, address); 0},
         }
     }
 
@@ -106,19 +102,14 @@ impl Memory
             0x00 => ld(&self.bios),
             0x02 => ld(&self.ewram),
             0x03 => ld(&self.iwram),
-            0x04 => 
-                {
-                    let lo = self.ioram_load16(address) as u32;
-                    let hi = self.ioram_load16(address+2) as u32;
-                    lo | (hi << 16)
-                }
+            0x04 => self.ioram_load32(address),
             0x05 => ld(&self.param),
             0x06 => ld(&self.vram),
             0x07 => ld(&self.oam),
             0x08..=
             0x0d => ld(&self.rom),
             0x0e => ld(&self.sram),
-            _    => 0//println!("Invalid memory address {:08x}", address),
+            _    => {Self::unhandled(true, 4, address); 0},
         };
 
         let shift = (address & 0b11) * 8;
@@ -134,13 +125,9 @@ impl Memory
         {
             0x02 => self.ewram[offset] = value,
             0x03 => self.iwram[offset] = value,
-            0x04 =>
-                {
-                    self.ioram[offset] = value;
-                    self.ioram_store16(address, value as u16);
-                },
+            0x04 => self.ioram_store8(address, value),
             0x0e => self.sram[offset]  = value,
-            _    => println!("Attempt to store byte at address 0x{:08x}", address),
+            _    => Self::unhandled(false, 1, address),
         };
     }
 
@@ -161,15 +148,11 @@ impl Memory
         {
             0x02 => sth(&mut self.ewram),
             0x03 => sth(&mut self.iwram),
-            0x04 => 
-                {
-                    sth(&mut self.ioram);
-                    self.ioram_store16(address, value);
-                },
+            0x04 => self.ioram_store16(address, value),
             0x05 => sth(&mut self.param),
             0x06 => sth(&mut self.vram),
             0x07 => sth(&mut self.oam),
-            _    => println!("Attempt to store halfword at address 0x{:08x}", address),
+            _    => Self::unhandled(false, 2, address),
         };
     }
 
@@ -179,7 +162,7 @@ impl Memory
         // Accesses are forced to be word aligned
         let offset = mirror(address) & 0x00fffffc;
 
-        let sth = |mem: &mut [u8]|
+        let st = |mem: &mut [u8]|
         {
             let a = value.to_le_bytes();
             mem[offset]     = a[0];
@@ -190,17 +173,13 @@ impl Memory
 
         match address >> 24
         {
-            0x02 => sth(&mut self.ewram),
-            0x03 => sth(&mut self.iwram),
-            0x04 => 
-                {
-                    sth(&mut self.ioram);
-                    self.ioram_store32(address, value);
-                },
-            0x05 => sth(&mut self.param),
-            0x06 => sth(&mut self.vram),
-            0x07 => sth(&mut self.oam),
-            _    => println!("Attempt to store word at address 0x{:08x}", address),
+            0x02 => st(&mut self.ewram),
+            0x03 => st(&mut self.iwram),
+            0x04 => self.ioram_store32(address, value),
+            0x05 => st(&mut self.param),
+            0x06 => st(&mut self.vram),
+            0x07 => st(&mut self.oam),
+            _    => Self::unhandled(false, 4, address),
         };
     }
 
@@ -224,6 +203,14 @@ impl Memory
         file.read_to_end(&mut self.bios).unwrap();
 
         self.bios.len()
+    }
+
+    /// Print invalid memory access
+    fn unhandled(load: bool, size: u32, address: u32)
+    {
+        // let s = if load {"load"} else {"store"};
+
+        // println!("Unhandled {}-byte {} at {:#08x}", size, s, address);
     }
 }
 

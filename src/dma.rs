@@ -8,23 +8,11 @@ pub struct DMA
 #[derive(Clone, Debug)]
 pub struct DMAChannel
 {
-    pub index: usize,       // DMA index 0 - 3
-    pub src  : u32,         // Internal register of current source address
-    pub dst  : u32,         // Internal register of current destination address
-    pub count: u32,         // Number of word / halfword to be copied
-    
-    // 0b00 - increment
-    // 0b01 - decrement
-    // 0b10 - fixed
-    // 0b11 - increment / reload after transfer (Prohibited for srccnt)
-    pub srccnt  : u32,      // Source addrss control
-    pub dstcnt  : u32,      // Destination address control
-    pub repeat_f: bool,     // Repeat flag for HBlank / VBlank DMA
-    pub word_f  : bool,     // 0 - halfword, 1 - word
-    pub drq_f   : bool,     // Gamepak DRQ
-    pub start   : u32,      // Start time
-    pub irq_f   : bool,     // IRQ upon completion
-    pub enable  : bool,     // Enable flag
+    pub index  : usize,   // DMA index 0 - 3
+    pub src    : u32,     // Internal register of current source address
+    pub dst    : u32,     // Internal register of current destination address
+    pub count  : u16,     // Number of word / halfword to be copied
+    pub control: u16,     // DMA control bits
 }
 
 impl DMA
@@ -48,8 +36,6 @@ impl DMA
     {
         for i in 0..4
         {
-            memory.update_dma(&mut self.channel[i]);
-
             self.channel[i].transfer(memory);
         }
     }
@@ -65,26 +51,17 @@ impl DMAChannel
             src     : 0,
             dst     : 0,
             count   : 0,
-            dstcnt  : 0,
-            srccnt  : 0,
-            repeat_f: false,
-            word_f  : false,
-            drq_f   : false,
-            start   : 0,
-            irq_f   : false,
-            enable  : false,
+            control : 0,
         }
     }
 
     pub fn transfer(&mut self, memory: &mut Memory)
     {
         // TODO special start mode
-        if self.start == 3 {return}
-        if !self.enable {return}
+        if self.start() == 3 {return}
+        if !self.enable() {return}
 
-        self.read_ioreg(memory);
-
-        if self.word_f
+        if self.word_f()
         {
             self.transfer32(memory);
         }
@@ -93,60 +70,53 @@ impl DMAChannel
             self.transfer16(memory);
         }
 
-        self.write_ioreg(memory);
-
-        if !self.repeat_f
+        if !self.repeat_f()
         {
-            self.enable = false;
-            memory.clr_dma(self.index);
+            self.control &= !0x8000;
         }
     }
 
     pub fn transfer16(&mut self, memory: &mut Memory)
     {
-        let srcinc = Self::get_increment(self.word_f, self.srccnt);
-        let dstinc = Self::get_increment(self.word_f, self.dstcnt); 
+        // Copy into internal register
+        let mut src = self.src;
+        let mut dst = self.dst;
+
+        let srcinc = Self::get_increment(self.word_f(), self.srccnt());
+        let dstinc = Self::get_increment(self.word_f(), self.dstcnt()); 
         
         for _ in 0..self.count
         {
-            memory.store16(self.dst, memory.load16(self.src));
+            memory.store16(dst, memory.load16(src));
 
             // Incrment internal register
-            self.src = self.src.wrapping_add(srcinc);
-            self.dst = self.dst.wrapping_add(dstinc);
+            src = src.wrapping_add(srcinc);
+            dst = dst.wrapping_add(dstinc);
         }
+
+        // Write back
+        self.src = src;
+        if self.dstcnt() != 3 {self.dst = dst}
     }
 
     pub fn transfer32(&mut self, memory: &mut Memory)
     {
-        let srcinc = Self::get_increment(self.word_f, self.srccnt);
-        let dstinc = Self::get_increment(self.word_f, self.dstcnt); 
+        let mut src = self.src;
+        let mut dst = self.dst;
+
+        let srcinc = Self::get_increment(self.word_f(), self.srccnt());
+        let dstinc = Self::get_increment(self.word_f(), self.dstcnt()); 
         
         for _ in 0..self.count
         {
-            memory.store32(self.dst, memory.load32(self.src));
+            memory.store32(dst, memory.load32(src));
 
-            // Increment internal register
-            self.src = self.src.wrapping_add(srcinc);
-            self.dst = self.dst.wrapping_add(dstinc);
+            src = src.wrapping_add(srcinc);
+            dst = dst.wrapping_add(dstinc);
         }
-    }
 
-    /// Read internal register from ioram
-    pub fn read_ioreg(&mut self, memory: &Memory)
-    {
-        memory.update_dmadad(self);
-        memory.update_dmasad(self);
-    }
-
-    /// Write internal register into ioram
-    pub fn write_ioreg(&self, memory: &mut Memory)
-    {
-        let sad = 0x040000B0 + (self.index as u32 * 0xc);
-        let dad = 0x040000B4 + (self.index as u32 * 0xc);
-        
-        memory.store32(sad, self.src);
-        if self.dstcnt != 3 {memory.store32(dad, self.dst)}
+        self.src = src;
+        if self.dstcnt() != 3 {self.dst = dst}
     }
 
     pub fn get_increment(word_f: bool, cnt: u32) -> u32

@@ -24,8 +24,8 @@ pub struct CPU
     // 21 - 23: R13_irq, R14_irq, SPSR_irq
     // 24 - 26: R13_und, R14_und, SPSR_und
 
-    pub booted: bool,
-    pub counter: u64,       // Number of cycles elapsed
+    pub booted   : bool,
+    pub remaining: i32,     // Remaining ticks till run finish, 
 }
 
 impl CPU
@@ -45,7 +45,7 @@ impl CPU
             bank: [0; 27],
 
             booted: false,
-            counter: 0
+            remaining: 0,
         };
 
         cpu.r[15] = 0x00000004;
@@ -58,24 +58,20 @@ impl CPU
         cpu
     }
 
-    pub fn run(&mut self, cycles: u64, memory: &mut Memory) -> u64
+    pub fn run(&mut self, cycles: i32, memory: &mut Memory)
     {
-        let stop = self.counter + cycles;
+        self.remaining += cycles;
 
-        while self.counter < stop
+        while self.remaining > 0
         {
             self.step(memory)
         }
-
-        // Number of cycles that run 'over' specified
-        self.counter - stop
     }
 
     pub fn step(&mut self, memory: &mut Memory)
     {
         // if self.r[15] >= 0x08000000 {self.booted = true}
         // if self.booted {self.print(memory)}
-        // if true {self.print(memory)}
 
         if self.in_thumb_mode()
         {
@@ -87,7 +83,7 @@ impl CPU
         }
 
         // Normal execution takes 1S cycle
-        self.counter += 1;
+        self.remaining -= 1;
     }
 
     pub fn flush(&mut self)
@@ -104,7 +100,7 @@ impl CPU
         }        
         
         // A write to R15 or branch will add 1S + 1N cycles
-        self.counter += 2;
+        self.remaining -= 2;
     }
 
     pub fn software_interrupt(&mut self)
@@ -112,11 +108,11 @@ impl CPU
         let lr = self.r[15] - if self.in_thumb_mode() {2} else {4};
         let spsr = self.get_cpsr();
     
-        self.set_cpsr(register::PSRMode::Supervisor as u32, false);    
-
+        // Switch mode(register bank), disable interrupt, save CPSR
+        self.set_cpsr(register::PSRMode::Supervisor as u32, false);
         self.set_cpsr_bit(I, true);
-        
         self.set_spsr(spsr, false);
+
         self.r[14] = lr;
         self.r[15] = 0x08;
         self.flush();
@@ -125,18 +121,14 @@ impl CPU
     pub fn hardware_interrupt(&mut self)
     {
         if self.get_cpsr_bit(I) {return}
-
-        println!("Hardware interrupt at R15 = {:#x}", self.r[15]);
         
         let lr = self.r[15] - if self.in_thumb_mode() {0} else {4};
         let spsr = self.get_cpsr();
     
-        self.set_cpsr(register::PSRMode::IRQ as u32, false);    
-
-        // Disable interrupt
+        self.set_cpsr(register::PSRMode::IRQ as u32, false);
         self.set_cpsr_bit(I, true);
-        
         self.set_spsr(spsr, false);
+
         self.r[14] = lr;
         self.r[15] = 0x18;
         self.flush();
@@ -190,7 +182,6 @@ impl CPU
         }
 
         str += "\n";
-        str += &format!("Cycles: {}", self.counter);
 
         println!("{}", str)
     }

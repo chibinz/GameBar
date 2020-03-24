@@ -1,21 +1,45 @@
 use crate::interrupt::IRQController;
+use crate::cpu::CPU;
 
-use super::Memory;
-
-impl Memory
+impl IRQController
 {
-    pub fn update_ime(&mut self, irqcnt: &mut IRQController)
+    #[inline]
+    pub fn get_ime(&self) -> u16
     {
-        irqcnt.ime = self.ioram16(0x208);
+        self.ime
     }
 
-    pub fn update_ie(&mut self, irqcnt: &mut IRQController)
+    #[inline]
+    pub fn set_ime(&mut self, value: u16, cpu: &mut CPU)
     {
-        irqcnt.ie = self.ioram16(0x200);
+        self.ime = value;
+
+        self.check(cpu);
     }
 
-    pub fn update_irf(&mut self, irqcnt: &mut IRQController)
+    #[inline]
+    pub fn get_ie(&self) -> u16
     {
-        irqcnt.irf = self.ioram16(0x202);
+        self.ie
+    }
+
+    #[inline]
+    pub fn set_ie(&mut self, value: u16, cpu: &mut CPU)
+    {
+        self.ie = value;
+
+        self.check(cpu);
+    }
+
+    #[inline]
+    pub fn get_irf(&self) -> u16
+    {
+        self.irf
+    }
+
+    #[inline]
+    pub fn ack_irf(&mut self, value: u16)
+    {
+        self.irf &= !value;
     }
 }
