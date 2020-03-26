@@ -16,21 +16,21 @@ pub fn shift_register(cpu: &mut CPU, operand2: u32) -> u32
     // Register specified shift operates differently when shift amount
     // equals to zero, thus a flag is needed.
     let r = operand2.bit(4);
-    let amount = 
+    let amount =
     if r
     {
         let rs = operand2.bits(11, 8);
 
         debug_assert_ne!(rs, 15);
         debug_assert_eq!(operand2.bit(7), false);
-        
+
         cpu.r[rs as usize] & 0xff
-    } 
+    }
     else
     {
         operand2.bits(11, 7)
     };
-    
+
     shift(cpu, cpu.r[rm as usize], amount, stype, !r)
 }
 
@@ -51,9 +51,9 @@ pub fn rotate_immediate(cpu: &mut CPU, operand2: u32) -> u32
     {
         let carry = (immediate >> ((amount - 1) & 0b11111)) & 1 == 1;
         cpu.set_cpsr_bit(C, carry);
-        
+
         immediate.rotate_right(amount)
-    }    
+    }
 }
 
 /// Shift a value according to shift amount and type and return the shifted result.
@@ -132,7 +132,7 @@ pub fn logical_right(cpu: &mut CPU, operand: u32, amount: u32, i: bool) -> u32
         let carry = operand.bit(31);
         cpu.set_cpsr_bit(C, carry);
 
-        0 
+        0
     }
     else
     {
@@ -152,7 +152,7 @@ pub fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32, i: bool) -> u3
         {
             let carry = operand.bit(31);
             cpu.set_cpsr_bit(C, carry);
-            
+
             (operand as i32 >> 31) as u32
         }
         else
@@ -164,8 +164,8 @@ pub fn arithmetic_right(cpu: &mut CPU, operand: u32, amount: u32, i: bool) -> u3
     {
         let carry = operand.bit(31);
         cpu.set_cpsr_bit(C, carry);
-        
-        (operand as i32 >> 31) as u32 
+
+        (operand as i32 >> 31) as u32
     }
     else
     {
@@ -185,10 +185,10 @@ pub fn rotate_right(cpu: &mut CPU, operand: u32, amount: u32, i: bool) -> u32
         if i
         {
             let c = (cpu.get_cpsr_bit(C) as u32) << 31;
-            
+
             let carry = operand.bit(0);
             cpu.set_cpsr_bit(C, carry);
-            
+
             c | (operand >> 1)
         }
         else
@@ -288,7 +288,7 @@ mod tests
         cpu.set_cpsr_bit(C, true);
         assert_eq!(rotate_right(&mut cpu, 1, 0, true), 0x80000000);
         assert!(cpu.get_cpsr_bit(C));
-        
+
         cpu.set_cpsr_bit(C, false);
         assert_eq!(rotate_right(&mut cpu, 0xf0f0f0f0, 4, true), 0x0f0f0f0f);
         assert!(!cpu.get_cpsr_bit(C));

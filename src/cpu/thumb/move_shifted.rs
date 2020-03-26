@@ -34,7 +34,7 @@ mod tests
 {
     use super::*;
     use crate::cpu::register::PSRBit::*;
-    
+
     #[test]
     fn logical_left()
     {

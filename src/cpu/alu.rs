@@ -1,4 +1,4 @@
-//! The reason to separate ALU implementations is because many 
+//! The reason to separate ALU implementations is because many
 //! instructions uses it, in both arm and thumb mode.
 //! ALU operations may change CPSR flags but not GPR contents.
 //! The result of the operation is passed back as return values.

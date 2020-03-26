@@ -17,10 +17,10 @@ fn decode(instruction: u16) -> (u32, u32, u32)
 
     (op, rd, offset8)
 }
- 
+
 #[inline]
 fn execute(cpu: &mut CPU, (op, rd, offset8): (u32, u32, u32))
-{   
+{
     let op1 = cpu.r[rd as usize];
     let op2 = offset8;
 
@@ -44,7 +44,7 @@ mod tests
 {
     use super::*;
     use crate::cpu::register::PSRBit::*;
-    
+
     #[test]
     fn move_compare()
     {

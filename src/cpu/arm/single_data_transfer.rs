@@ -30,7 +30,7 @@ pub fn decode(instruction: u32) -> (bool, bool, bool, bool, u32, u32, u32, u32)
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, memory: &mut Memory, 
+pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     (i, p, u, w, lb, rn, rd, offset): (bool, bool, bool, bool, u32, u32, u32, u32))
 {
     // Shifts does not set CPSR C flag
@@ -41,12 +41,12 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     cpu.set_cpsr_bit(C, carry);
 
     let post = cpu.r[rn as usize];
-    let pre = if u {cpu.r[rn as usize].wrapping_add(noffset)} 
+    let pre = if u {cpu.r[rn as usize].wrapping_add(noffset)}
               else {cpu.r[rn as usize].wrapping_sub(noffset)};
 
     let address = if p {pre} else {post};
 
-    // When R15 is the source register, the stored value will be 
+    // When R15 is the source register, the stored value will be
     // address of the instruction plus 12
     let value = cpu.r[rd as usize] + if rd == 15 {4} else {0};
 
@@ -55,7 +55,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     {
         cpu.r[rn as usize] = pre;
     }
-    
+
     // Misaligned word access handled in `memory.rs`
     match lb
     {
@@ -98,7 +98,7 @@ mod tests
     {
         let mut cpu = CPU::new();
         let mut memory = Memory::new();
-        
+
         memory.store32(0x02000000, 0xdeadbeef);
         cpu.r[0] = 0x02000000;
 

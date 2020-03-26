@@ -61,7 +61,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
         match instruction.bits(24, 20)
         {
             0b10000 | 0b10100 | 0b10110  => psr_transfer::interpret(cpu, instruction),
-            0b10010           => if b74() == 0 
+            0b10010           => if b74() == 0
                                 {psr_transfer::interpret(cpu, instruction)} else
                                 {branch_exchange::interpret(cpu, instruction)},
             _                 => data_processing::interpret(cpu, instruction)
@@ -86,7 +86,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
             _                 => unreachable!(),
         };
     };
-    
+
     match instruction.bits(27, 25)
     {
         0b000 =>
@@ -115,7 +115,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
         0b010 |
         0b011 => single_data_transfer::interpret(cpu, memory, instruction),
         0b100 => block_data_transfer::interpret(cpu, memory, instruction),
-        0b101 => branch_long::interpret(cpu, instruction), 
+        0b101 => branch_long::interpret(cpu, instruction),
         0b111 => cpu.software_interrupt(),
         _     => unimplemented!(),
     };

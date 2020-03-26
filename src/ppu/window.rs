@@ -81,7 +81,7 @@ impl Window
         {
             if layer.pixel[i] != TRANSPARENT
             {
-                self.cnt[i] = objwin; 
+                self.cnt[i] = objwin;
             }
         }
     }

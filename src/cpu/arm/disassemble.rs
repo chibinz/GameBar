@@ -64,7 +64,7 @@ pub fn disassemble(opcode: u32) -> String
 
     // Data Processing / PSR Transfer / branch and exchange
     let data_process_psr_bx = || -> String
-    {    
+    {
 
         match b24_20()
         {
@@ -84,11 +84,11 @@ pub fn disassemble(opcode: u32) -> String
             0b11010 | 0b11011 => format!("MOV{}{} R{}, {}", cond(), s(), rd(), op2()),
             0b11100 | 0b11101 => format!("BIC{}{} R{}, R{}, {}", cond(), s(), rd(), rn(), op2()),
             0b11110 | 0b11111 => format!("MVN{}{} R{}, {}", cond(), s(), rd(), op2()),
-            
+
             0b10000           => format!("MRS{} R{}, CPSR", cond(), rd()),
             0b10100           => format!("MRS{} R{}, SPSR", cond(), rd()),
             0b10110           => format!("MSR{} SPSR, R{}", cond(), rm()),
-            0b10010           => if b74() == 0 
+            0b10010           => if b74() == 0
                                 {format!("MSR{} CPSR, R{}", cond(), rm())} else
                                 {format!("BX{} R{}", cond(), rm())},
 
@@ -98,7 +98,7 @@ pub fn disassemble(opcode: u32) -> String
 
     // Data Process With 8-bit Immediate offset / PSR transfer immediate
     let data_process_imm = || -> String
-    {   
+    {
         // actually (opcode >> 8 & 0b00001111) << 1, immediate value is rotated twice by this field
         let rotate = opcode >> 7 & 0b00011110;
         let immediate = opcode & 0b11111111;
@@ -122,7 +122,7 @@ pub fn disassemble(opcode: u32) -> String
             0b11010 | 0b11011 => format!("MOV{}{} R{}, #{:#x}", cond(), s(), rd(), op2),
             0b11100 | 0b11101 => format!("BIC{}{} R{}, R{}, #{:#x}", cond(), s(), rd(), rn(), op2),
             0b11110 | 0b11111 => format!("MVN{}{} R{}, #{:#x}", cond(), s(), rd(), op2),
-            
+
             0b10110           => format!("MSR{} SPSR, #{:#x}", cond(), op2),
             0b10010           => format!("MSR{} CPSR, #{:#x}", cond(), op2),
 
@@ -150,7 +150,7 @@ pub fn disassemble(opcode: u32) -> String
             _                 => format!("undefined"),
         }
     };
-    
+
     // Halfword and Signed Data Transfer
     let halfword_signed_data_transfer = || -> String
     {
@@ -207,7 +207,7 @@ pub fn disassemble(opcode: u32) -> String
                 format!("{}{}", sign, op2())
             }
         };
-        
+
         let mut w = "";
         let mut t = "";
         // write back
@@ -243,9 +243,9 @@ pub fn disassemble(opcode: u32) -> String
     let branch = ||
     {
         let l = if opcode >> 24 & 1 == 1 {"L"} else {""};
-        
+
         // sign extension is padding the most signficant bit
-        let offset = if (opcode >> 23 & 1) == 1 
+        let offset = if (opcode >> 23 & 1) == 1
                        {((opcode & 0x00ffffff) << 2 | 0xfc000000) as i32} else
                        {((opcode & 0x00ffffff) << 2) as i32};
 

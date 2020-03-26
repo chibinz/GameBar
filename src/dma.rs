@@ -83,8 +83,8 @@ impl DMAChannel
         let mut dst = self.dst;
 
         let srcinc = Self::get_increment(self.word_f(), self.srccnt());
-        let dstinc = Self::get_increment(self.word_f(), self.dstcnt()); 
-        
+        let dstinc = Self::get_increment(self.word_f(), self.dstcnt());
+
         for _ in 0..self.count
         {
             memory.store16(dst, memory.load16(src));
@@ -105,8 +105,8 @@ impl DMAChannel
         let mut dst = self.dst;
 
         let srcinc = Self::get_increment(self.word_f(), self.srccnt());
-        let dstinc = Self::get_increment(self.word_f(), self.dstcnt()); 
-        
+        let dstinc = Self::get_increment(self.word_f(), self.dstcnt());
+
         for _ in 0..self.count
         {
             memory.store32(dst, memory.load32(src));

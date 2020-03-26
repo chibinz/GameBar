@@ -58,7 +58,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
 
     match instruction.bits(15, 11)
     {
-        0b00000 ..= 
+        0b00000 ..=
         0b00010 => move_shifted::interpret(cpu, instruction),
         0b00011 => add_subtract::interpret(cpu, instruction),
         0b00100 ..=
@@ -71,7 +71,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
                 0b01111 => alu_operations::interpret(cpu, instruction),
 
                 0b10001 ..=
-                0b11101 => hi_operations_bx::interpret(cpu, instruction), 
+                0b11101 => hi_operations_bx::interpret(cpu, instruction),
                 _       => unreachable!(),
             }
         },
@@ -86,7 +86,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
         0b10011 => sp_relative_load::interpret(cpu, memory, instruction),
         0b10100 |
         0b10101 => load_address::interpret(cpu, instruction),
-        0b10110 | 0b10111 => 
+        0b10110 | 0b10111 =>
         {
             match instruction.bits(11, 8)
             {
@@ -98,7 +98,7 @@ pub fn dispatch(cpu: &mut CPU, memory: &mut Memory)
         },
         0b11000 |
         0b11001 => multiple_transfer::interpret(cpu, memory, instruction),
-        0b11010 | 0b11011 => 
+        0b11010 | 0b11011 =>
         {
             match instruction.bits(11, 8)
             {

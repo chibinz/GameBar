@@ -47,7 +47,7 @@ impl IRQController
     pub fn request(&mut self, irq: Interrupt)
     {
         self.irf |= irq as u16;
-        
+
         self.check();
     }
 

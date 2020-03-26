@@ -25,7 +25,7 @@ pub fn disassemble(opcode: u16) -> String
     let hd       = || (opcode & 0b00000111) + 8;
 
     // result of match statement is returned
-    match b15_11 
+    match b15_11
     {
         0b00000 => format!("LSL R{}, R{}, #{}", rd(), rs(), offset5()),
         0b00001 => format!("LSL R{}, R{}, #{}", rd(), rs(), offset5()),
@@ -65,22 +65,22 @@ pub fn disassemble(opcode: u16) -> String
                 0b01101 => format!("MUL R{}, R{}", rd(), rs()),
                 0b01110 => format!("BIC R{}, R{}", rd(), rs()),
                 0b01111 => format!("MVN R{}, R{}", rd(), rs()),
-                0b10001 => format!("ADD R{}, R{}", rd(), hs()), 
-                0b10010 => format!("ADD R{}, R{}", hd(), rs()), 
-                0b10011 => format!("ADD R{}, R{}", hd(), hs()), 
-                0b10101 => format!("CMP R{}, R{}", rd(), hs()), 
-                0b10110 => format!("CMP R{}, R{}", hd(), rs()), 
-                0b10111 => format!("CMP R{}, R{}", hd(), hs()), 
-                0b11001 => format!("MOV R{}, R{}", rd(), hs()), 
-                0b11010 => format!("MOV R{}, R{}", hd(), rs()), 
-                0b11011 => format!("MOV R{}, R{}", hd(), hs()), 
-                0b11100 => format!("BX R{}", rs()), 
-                0b11101 => format!("BX R{}", hs()), 
+                0b10001 => format!("ADD R{}, R{}", rd(), hs()),
+                0b10010 => format!("ADD R{}, R{}", hd(), rs()),
+                0b10011 => format!("ADD R{}, R{}", hd(), hs()),
+                0b10101 => format!("CMP R{}, R{}", rd(), hs()),
+                0b10110 => format!("CMP R{}, R{}", hd(), rs()),
+                0b10111 => format!("CMP R{}, R{}", hd(), hs()),
+                0b11001 => format!("MOV R{}, R{}", rd(), hs()),
+                0b11010 => format!("MOV R{}, R{}", hd(), rs()),
+                0b11011 => format!("MOV R{}, R{}", hd(), hs()),
+                0b11100 => format!("BX R{}", rs()),
+                0b11101 => format!("BX R{}", hs()),
                 _       => format!("undefined"),
             }
         },
         0b01001 => format!("LDR R{}, [PC, #{}]", rdb(), offset8() << 2),
-        0b01010 | 0b1011 => 
+        0b01010 | 0b1011 =>
         {
             match b11_9()
             {
@@ -105,7 +105,7 @@ pub fn disassemble(opcode: u16) -> String
         0b10011 => format!("LDR R{}, [SP, #{}]", rdb(), offset8() << 2),
         0b10100 => format!("ADD R{}, PC, #{}", rdb(), offset8() << 2),
         0b10101 => format!("ADD R{}, SP, #{}", rdb(), offset8() << 2),
-        0b10110 | 0b10111 => 
+        0b10110 | 0b10111 =>
         {
             match b11_8()
             {
@@ -120,7 +120,7 @@ pub fn disassemble(opcode: u16) -> String
         },
         0b11000 => format!("STMIA R{}!, {{{:08b}}}", rb(), rlist()),
         0b11001 => format!("LDMIA R{}!, {{{:08b}}}", rb(), rlist()),
-        0b11010 | 0b11011 => 
+        0b11010 | 0b11011 =>
         {
             // TODO offset needs to be shifted
             match cond()

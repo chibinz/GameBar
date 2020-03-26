@@ -25,7 +25,7 @@ pub struct CPU
     // 24 - 26: R13_und, R14_und, SPSR_und
 
     pub booted   : bool,
-    pub remaining: i32,     // Remaining ticks till run finish, 
+    pub remaining: i32,     // Remaining ticks till run finish,
 }
 
 impl CPU
@@ -40,7 +40,7 @@ impl CPU
 
             // On reset, CPSR is forced to supervisor mode
             // and I and F bits in CPSR is set.
-            cpsr: 0b11011111, 
+            cpsr: 0b11011111,
             spsr: 0,
             bank: [0; 27],
 
@@ -97,8 +97,8 @@ impl CPU
         {
             self.r[15] &= 0xfffffffc;
             self.r[15] += 4;
-        }        
-        
+        }
+
         // A write to R15 or branch will add 1S + 1N cycles
         self.remaining -= 2;
     }
@@ -107,7 +107,7 @@ impl CPU
     {
         let lr = self.r[15] - if self.in_thumb_mode() {2} else {4};
         let spsr = self.get_cpsr();
-    
+
         // Switch mode(register bank), disable interrupt, save CPSR
         self.set_cpsr(register::PSRMode::Supervisor as u32, false);
         self.set_cpsr_bit(I, true);
@@ -121,10 +121,10 @@ impl CPU
     pub fn hardware_interrupt(&mut self)
     {
         if self.get_cpsr_bit(I) {return}
-        
+
         let lr = self.r[15] - if self.in_thumb_mode() {0} else {4};
         let spsr = self.get_cpsr();
-    
+
         self.set_cpsr(register::PSRMode::IRQ as u32, false);
         self.set_cpsr_bit(I, true);
         self.set_spsr(spsr, false);

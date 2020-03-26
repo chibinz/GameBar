@@ -6,7 +6,7 @@ use super::Memory;
 use super::into16;
 
 impl Memory
-{   
+{
     /// Return a halfword from oam, offset is in bytes
     #[inline]
     pub fn oam16(&self, offset: u32) -> u16

@@ -30,7 +30,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
     let carry = cpu.get_cpsr_bit(C);
 
     let mut op1 = cpu.r[rn as usize];
-    let mut op2 = if i {rotate_immediate(cpu, operand2)} 
+    let mut op2 = if i {rotate_immediate(cpu, operand2)}
                   else {shift_register(cpu, operand2)};
 
     if !s {cpu.set_cpsr_bit(C, carry)}
@@ -63,9 +63,9 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         0b1101 => alu::mov(cpu, op1, op2, s),
         0b1110 => alu::bic(cpu, op1, op2, s),
         0b1111 => alu::mvn(cpu, op1, op2, s),
-        _      => unreachable!() 
+        _      => unreachable!()
     };
-    
+
     // Write result to register, if needed
     if opcode < 0b1000 || opcode > 0b1011
     {
@@ -74,7 +74,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         if rd == 15
         {
             // Direct manipulation of pc will result in a pipeline flush.
-            // The next instruction will be fetched from memory address 
+            // The next instruction will be fetched from memory address
             // at pc. pc is further incremented by 4 to maintain offset 8
             // from the currently executed instruction.
             cpu.flush();
@@ -91,7 +91,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
 mod tests
 {
     use super::*;
-    
+
     #[test]
     fn data_execute()
     {

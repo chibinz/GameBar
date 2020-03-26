@@ -22,11 +22,11 @@ fn decode(instruction: u16) -> (bool, bool, u32, u32, u32)
 
 #[inline]
 fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32))
-{   
+{
     let op1 = cpu.r[rs as usize];
     let op2 = if i {operand2} else {cpu.r[operand2 as usize]};
 
-    let result = if op {alu::sub(cpu, op1, op2, true)} 
+    let result = if op {alu::sub(cpu, op1, op2, true)}
                   else {alu::add(cpu, op1, op2, true)};
 
     cpu.r[rd as usize] = result;

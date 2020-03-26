@@ -16,10 +16,10 @@ fn decode(instruction: u16) -> (u32, u32)
 
     (rd, word8)
 }
- 
+
 #[inline]
 fn execute(cpu: &mut CPU, memory: &mut Memory, (rd, word8): (u32, u32))
-{   
+{
     // Bit 1 of PC is forced to 0 to ensure it is word aligned.
     let address = (cpu.r[15] & 0xfffffffc) + (word8 << 2);
 

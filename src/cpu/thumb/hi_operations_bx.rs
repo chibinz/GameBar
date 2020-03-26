@@ -21,32 +21,32 @@ fn decode(instruction: u16) -> (u32, u32, u32)
 
     (op, rs, rd)
 }
- 
+
 #[inline]
 fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32))
-{   
+{
     let op1 = cpu.r[rd as usize];
     let op2 = cpu.r[rs as usize];
 
     match op
     {
-        0b00 => 
+        0b00 =>
         {
             cpu.r[rd as usize] = alu::add(cpu, op1, op2, false);
 
             if rd == 15 {cpu.flush()}
         },
-        0b01 => 
+        0b01 =>
         {
             alu::cmp(cpu, op1, op2);
         },
-        0b10 => 
+        0b10 =>
         {
             cpu.r[rd as usize] = alu::mov(cpu, op1, op2, false);
-            
+
             if rd == 15 {cpu.flush()}
         },
-        0b11 => 
+        0b11 =>
         {
             cpu.set_cpsr_bit(T, cpu.r[rs as usize].bit(0));
 
@@ -63,7 +63,7 @@ mod tests
 {
     use super::*;
     use crate::cpu::register::PSRBit::*;
-    
+
     #[test]
     fn alu_operations()
     {
@@ -83,7 +83,7 @@ mod tests
         assert_eq!(cpu.r[9], 1);
         assert_eq!(cpu.get_cpsr_bit(Z), true);
 
-        // BX 
+        // BX
         cpu.r[14] = 0xfffffffb;
         execute(&mut cpu, (0b11, 14, 0));
         assert_eq!(cpu.r[15], 0xfffffffc);

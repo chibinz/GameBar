@@ -19,10 +19,10 @@ fn decode(instruction: u16) -> (bool, u32, u32)
 
     (l, rb, rlist)
 }
- 
+
 #[inline]
 fn execute(cpu: &mut CPU, memory: &mut Memory, (l, rb, rlist): (bool, u32, u32))
-{   
+{
     // P = 0, U = 1, S = 0, W = true, L = l
     block_data_transfer::execute(cpu, memory, (false, true, false, true, l, rb, rlist));
 }

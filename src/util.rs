@@ -17,7 +17,7 @@ impl<T: std::convert::Into<u32>> BitField for T
     {
         ((self.into() >> lo) & ((1 << (hi - lo + 1)) - 1)) as u32
     }
-    
+
     /// Test certains bit of a integer, return true if set
     /// ```
     /// assert_eq!(0b10.bit(1), true)

@@ -18,8 +18,8 @@ pub fn interpret(cpu: &mut CPU, instruction: u32)
         let f = !instruction.bit(16);
         let operand2 = instruction.bits(11, 0);
 
-        let op = 
-        if i 
+        let op =
+        if i
         {
             rotate_immediate(cpu, operand2)
         }
@@ -38,10 +38,10 @@ pub fn interpret(cpu: &mut CPU, instruction: u32)
     {
         debug_assert_eq!(instruction.bits(21, 16), 0b001111);
         debug_assert_eq!(instruction.bits(11, 0), 0);
-        
+
         let rd = instruction.bits(15, 12);
         let psr = if pd {cpu.get_spsr()} else {cpu.get_cpsr()};
-        
+
         cpu.r[rd as usize] = psr;
     }
 }

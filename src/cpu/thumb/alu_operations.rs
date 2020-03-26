@@ -17,10 +17,10 @@ fn decode(instruction: u16) -> (u32, u32, u32)
 
     (op, rs, rd)
 }
- 
+
 #[inline]
 fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32))
-{   
+{
     let op1 = cpu.r[rd as usize];
     let op2 = cpu.r[rs as usize];
 
@@ -56,7 +56,7 @@ mod tests
 {
     use super::*;
     use crate::cpu::register::PSRBit::*;
-    
+
     #[test]
     fn alu_operations()
     {

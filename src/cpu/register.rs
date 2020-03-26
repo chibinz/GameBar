@@ -44,20 +44,20 @@ impl CPU
     #[inline]
     pub fn set_cpsr(&mut self, r: u32, f: bool)
     {
-        if f 
+        if f
         {
             // Set condition code flags only
             let mask = 0xf0000000;
             self.cpsr &= !mask;
             self.cpsr |= r & mask;
-        } 
+        }
         else
         {
             // Save state and switch mode
             let mode = CPU::get_mode(r & 0b11111);
             self.save_state();
             self.switch_bank(mode);
-            
+
             // Change control bits
             self.cpsr = r;
         };
@@ -98,11 +98,11 @@ impl CPU
     pub fn set_spsr(&mut self, r: u32, f: bool)
     {
         let mask = if f {0xf0000000} else {0xf00000ff};
-        
+
         self.spsr &= !mask;
         self.spsr |= r & mask;
     }
-    
+
     #[inline]
     pub fn get_mode(mbits: u32) -> PSRMode
     {
@@ -114,7 +114,7 @@ impl CPU
             0b10011 => Supervisor,
             0b10111 => Abort,
             0b11011 => Undefined,
-            0b11111 => System, 
+            0b11111 => System,
             _       => panic!("Invalid PSR Mode\n")
         }
     }
@@ -125,46 +125,46 @@ impl CPU
 
         match mode
         {
-            User => 
+            User =>
             {
-                self.bank[5] = self.r[13]; 
+                self.bank[5] = self.r[13];
                 self.bank[6] = self.r[14]
             },
-            System => 
+            System =>
             {
-                self.bank[5] = self.r[13]; 
+                self.bank[5] = self.r[13];
                 self.bank[6] = self.r[14]
             },
-            FIQ  => 
+            FIQ  =>
             {
                 self.bank[12] = self.r[13];
                 self.bank[13] = self.r[14];
                 self.bank[14] = self.spsr
             },
-            Supervisor => 
+            Supervisor =>
             {
                 self.bank[15] = self.r[13];
                 self.bank[16] = self.r[14];
                 self.bank[17] = self.spsr
             },
-            Abort  => 
+            Abort  =>
             {
                 self.bank[18] = self.r[13];
                 self.bank[19] = self.r[14];
                 self.bank[20] = self.spsr
             },
-            IRQ  => 
+            IRQ  =>
             {
                 self.bank[21] = self.r[13];
                 self.bank[22] = self.r[14];
                 self.bank[23] = self.spsr
-            }, 
-            Undefined  => 
+            },
+            Undefined  =>
             {
                 self.bank[24] = self.r[13];
                 self.bank[25] = self.r[14];
                 self.bank[26] = self.spsr
-            },  
+            },
         };
 
         if let FIQ = mode
@@ -187,41 +187,41 @@ impl CPU
     {
         match mode
         {
-            User => 
+            User =>
             {
                 self.r[13] = self.bank[5];
                 self.r[14] = self.bank[6];
             },
-            System => 
+            System =>
             {
                 self.r[13] = self.bank[5];
                 self.r[14] = self.bank[6];
             },
-            FIQ  => 
+            FIQ  =>
             {
                 self.r[13] = self.bank[12];
                 self.r[14] = self.bank[13];
                 self.spsr  = self.bank[14];
             },
-            Supervisor => 
+            Supervisor =>
             {
                 self.r[13] = self.bank[15];
                 self.r[14] = self.bank[16];
                 self.spsr  = self.bank[17];
             },
-            Abort  => 
+            Abort  =>
             {
                 self.r[13] = self.bank[18];
                 self.r[14] = self.bank[19];
                 self.spsr  = self.bank[20];
             },
-            IRQ  => 
+            IRQ  =>
             {
                 self.r[13] = self.bank[21];
                 self.r[14] = self.bank[22];
                 self.spsr  = self.bank[23];
-            }, 
-            Undefined  => 
+            },
+            Undefined  =>
             {
                 self.r[13] = self.bank[24];
                 self.r[14] = self.bank[25];

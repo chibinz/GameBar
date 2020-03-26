@@ -13,7 +13,7 @@ impl Memory
 
         let x1 = winh.bits(15, 8);
         let x2 = winh.bits(7, 0);
-        
+
         (x1, x2)
     }
 
@@ -23,7 +23,7 @@ impl Memory
 
         let y1 = winv.bits(15, 8);
         let y2 = winv.bits(7, 0);
-        
+
         (y1, y2)
     }
 
@@ -31,7 +31,7 @@ impl Memory
     {
         let winin = self.ioram16(0x48);
 
-        if index == 0 
+        if index == 0
         {
             winin as u8
         }

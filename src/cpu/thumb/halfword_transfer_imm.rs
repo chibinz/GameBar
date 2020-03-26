@@ -20,10 +20,10 @@ fn decode(instruction: u16) -> (bool, u32, u32, u32)
 
     (l, offset5, rb, rd)
 }
- 
+
 #[inline]
 fn execute(cpu: &mut CPU, memory: &mut Memory, (l, offset5, rb, rd): (bool, u32, u32, u32))
-{   
+{
     let address = cpu.r[rb as usize] + (offset5 << 1);
 
     if l

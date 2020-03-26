@@ -53,7 +53,7 @@ pub fn execute(cpu: &mut CPU, (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, 
         // Operands are sign extended to 64 bits. `i32` is necessary for sign extension.
         let operand1 = cpu.r[rm as usize] as i32 as i64;
         let operand2 = cpu.r[rs as usize] as i32 as i64;
-        
+
         result = (operand1 * operand2) as u64;
     }
 

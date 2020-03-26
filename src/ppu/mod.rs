@@ -119,7 +119,7 @@ impl PPU
         if self.vcount > 227 {self.vcount = 0}
         if self.dispstat.bit(5) && self.vcount == self.dispstat >> 8 {irqcnt.request(VCount)}
     }
-    
+
     pub fn combine_layers(&mut self)
     {
         let n = self.vcount as usize * 240;
@@ -260,26 +260,26 @@ impl PPU
     {
         let bg = &mut self.background[i as usize];
 
-        if self.dispcnt.bit(8 + i) 
+        if self.dispcnt.bit(8 + i)
         {
             let priority = bg.priority as usize;
             let layer = &mut self.layer[priority as usize];
 
             bg.draw_text(self.vcount, &self.window, layer, memory);
-        } 
+        }
     }
 
     pub fn draw_affine_bg(&mut self, i: u32, memory: &Memory)
     {
         let bg = &mut self.background[i as usize];
-        
-        if self.dispcnt.bit(8 + i) 
+
+        if self.dispcnt.bit(8 + i)
         {
             let priority = bg.priority as usize;
             let layer = &mut self.layer[priority as usize];
 
             bg.draw_affine(self.vcount, &self.window, layer, memory);
-        } 
+        }
     }
 
     pub fn force_blank(&mut self)

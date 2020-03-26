@@ -50,7 +50,7 @@ pub struct Background
     pub internal : (i32, i32),
 
     // Line buffer
-    pub pixel    : Vec<u32>,  
+    pub pixel    : Vec<u32>,
 }
 
 impl Background
@@ -82,14 +82,14 @@ impl Background
             pixel    : vec![0; 1024],
         }
     }
-    
+
     pub fn draw_text(&mut self, vcount: u16, window: &Window, layer: &mut Layer, memory: &Memory)
     {
         // Vertical wrap around
         let line_n = (vcount + self.vscroll) as u32 % self.height;
-        
+
         for i in 0..self.width
-        {   
+        {
             let tile_x      = i / 8;
             let tile_y      = line_n / 8;
             let mut pixel_x = i % 8;
@@ -101,7 +101,7 @@ impl Background
             let hflip     = tile_entry.bit(10);
             let vflip     = tile_entry.bit(11);
             let palette_n = tile_entry.bits(15, 12);
-    
+
             if hflip {pixel_x = 7 - pixel_x};
             if vflip {pixel_y = 7 - pixel_y};
 
@@ -110,7 +110,7 @@ impl Background
             // Horizontal wrap around
             let x = i.wrapping_sub(self.hscroll as u32) % self.width;
             let color = memory.bg_palette(palette_n, palette_entry);
-            
+
             layer.paint(x, color, window, self.index as u32);
         }
     }
@@ -124,7 +124,7 @@ impl Background
             let mut text_x = (self.matrix.0 * i as i32 + self.internal.0) >> 8;
             let mut text_y = (self.matrix.2 * i as i32 + self.internal.1) >> 8;
 
-            // TODO: Refactor into macro 
+            // TODO: Refactor into macro
             if out_of_bound(text_x, self.width)
             {
                 if self.wrap_f
@@ -155,7 +155,7 @@ impl Background
             let tile_y  = text_y as u32 / 8;
             let pixel_x = text_x as u32 % 8;
             let pixel_y = text_y as u32 % 8;
-            
+
             let tile_n = memory.affine_tile_map(self.map_b, self.size_r, tile_x, tile_y) as u32;
             let palette_entry = memory.tile_data8(self.tile_b, tile_n, pixel_x, pixel_y);
 
@@ -167,7 +167,7 @@ impl Background
         self.internal.0 += self.matrix.1;
         self.internal.1 += self.matrix.3;
     }
-    
+
     pub fn draw_bitmap_3(&mut self, vcount: u16, window: &Window, layer: &mut Layer, memory: &Memory)
     {
         let line_n = vcount as u32;
@@ -183,7 +183,7 @@ impl Background
     {
         let start = if flip {0xa000} else {0};
         let line_n = vcount as u32;
-        
+
         for x in 0..240
         {
             let palette_entry = memory.vram8(start + line_n * 240 + x);
@@ -195,7 +195,7 @@ impl Background
     {
         let start = if flip {0xa000} else {0};
         let line_n = vcount as u32;
-        
+
         for x in 0..160
         {
             let pixel = memory.vram16(start + (line_n * 160 + x) * 2);

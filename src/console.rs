@@ -66,7 +66,7 @@ impl Console
             ppu.hdraw(irqcnt, memory);
             cpu.run(960, memory);
             timers.run(960);
-    
+
             dma.request(memory);
             irqcnt.request(HBlank);
 

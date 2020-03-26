@@ -31,7 +31,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
 {
     // Empty rlist not handled
     // debug_assert_ne!(rlist, 0);
-    
+
     // Misaligned address not handled
     let mut address = cpu.r[rn as usize];
     let original = address;
@@ -47,8 +47,8 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
         }
     }
 
-    // Whether or not the p bit is set, the final address after transfer 
-    // should be the same. 
+    // Whether or not the p bit is set, the final address after transfer
+    // should be the same.
     if w
     {
         if u
@@ -90,7 +90,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
                     memory.store32(address, cpu.r[15] + 4);
                 }
 
-                // The first register to be stored will store the 
+                // The first register to be stored will store the
                 // unchanged value.
                 if w && j == rn && rlist.trailing_zeros() == rn
                 {

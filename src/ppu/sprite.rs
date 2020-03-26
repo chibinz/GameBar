@@ -37,7 +37,7 @@ pub struct Sprite
     pub xcoord   : u32,      // X coordinate, top left for text sprites
     pub ycoord   : u32,      // Y coordinate, center for affine sprites
     pub width    : u32,      // Width in pixels
-    pub height   : u32,      // Height in pixels 
+    pub height   : u32,      // Height in pixels
     pub mode     : u32,      // 0 - normal, 1 - semi-transparent, 2 - window
     pub affine_f : bool,     // Rotational / scaling flag
     pub double_f : bool,     // Double size flag
@@ -51,7 +51,7 @@ pub struct Sprite
     pub palette_n: u32,      // Palette number (for 16 color sprites)
 
     // Transform matrix used for Rotation and scaling
-    pub matrix   : (i32, i32, i32, i32) 
+    pub matrix   : (i32, i32, i32, i32)
 }
 
 impl Sprite
@@ -60,23 +60,23 @@ impl Sprite
     {
         Self
         {
-            index    : 0,     
-            xcoord   : 0,     
-            ycoord   : 0,     
-            width    : 0,     
-            height   : 0,     
-            mode     : 0,     
-            affine_f : false, 
-            double_f : false, 
-            mosaic_f : false, 
-            palette_f: false, 
-            hflip    : false, 
-            vflip    : false, 
-            affine_i : 0,     
-            tile_n   : 0,     
+            index    : 0,
+            xcoord   : 0,
+            ycoord   : 0,
+            width    : 0,
+            height   : 0,
+            mode     : 0,
+            affine_f : false,
+            double_f : false,
+            mosaic_f : false,
+            palette_f: false,
+            hflip    : false,
+            vflip    : false,
+            affine_i : 0,
+            tile_n   : 0,
             priority : 0,
-            palette_n: 0,     
-            matrix   : (0, 0, 0, 0) 
+            palette_n: 0,
+            matrix   : (0, 0, 0, 0)
         }
     }
 
@@ -98,7 +98,7 @@ impl Sprite
     pub fn draw_text(&mut self, vcount: u32, sequential: bool, window: &Window, layer: &mut Layer, memory: &Memory)
     {
         // Vertical wrap around
-        let y = (vcount - self.ycoord) % 256; 
+        let y = (vcount - self.ycoord) % 256;
         let w = if sequential {self.width / 8} else {8};
 
         let mut tile_y  = y / 8;
@@ -186,7 +186,7 @@ impl Sprite
 
             let i = (xcenter + x) as u32;
             let color = memory.obj_palette(self.palette_n, palette_entry);
-            
+
             layer.paint(i, color, window, 4);
         }
     }
@@ -202,7 +202,7 @@ impl Sprite
         let y = sign_extend(self.ycoord, 7);
         let mut w = self.width as i32;
         let mut h = self.height as i32;
-        
+
         if self.double_f
         {
             w *= 2;

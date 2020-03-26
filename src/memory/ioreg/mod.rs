@@ -86,7 +86,7 @@ impl Memory
             0x104 => timers.timer[1].get_counter(),
             0x108 => timers.timer[2].get_counter(),
             0x10c => timers.timer[3].get_counter(),
-            
+
             0x200 => irqcnt.get_ie(),
             0x202 => irqcnt.get_irf(),
             0x208 => irqcnt.get_ime(),

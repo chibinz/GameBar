@@ -33,18 +33,18 @@ pub fn decode(instruction: u32) -> (bool, bool, bool, bool, u32, u32, u32 ,u32)
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, memory: &mut Memory, 
+pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     (p, u, i, w, lsh, rn, rd, offset): (bool, bool, bool, bool, u32, u32, u32 ,u32))
 {
     let noffset = if i {offset} else {cpu.r[offset as usize]};
 
     let post = cpu.r[rn as usize];
-    let pre = if u {cpu.r[rn as usize] + noffset} 
+    let pre = if u {cpu.r[rn as usize] + noffset}
               else {cpu.r[rn as usize] - noffset};
 
     let address = if p {pre} else {post};
 
-    // When R15 is the source register, the stored value will be 
+    // When R15 is the source register, the stored value will be
     // address of the instruction plus 12
     let value = cpu.r[rd as usize] + if rd == 15 {4} else {0};
 
@@ -59,9 +59,9 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
         0b001 => memory.store16(address, value as u16),
         0b010 => memory.store8(address, value as u8),
         0b011 => memory.store16(address, value as u16),
-        0b101 => cpu.r[rd as usize] = memory.load16(address) as u32 
+        0b101 => cpu.r[rd as usize] = memory.load16(address) as u32
                                     + if rd == 15 {4} else {0},
-        0b110 => cpu.r[rd as usize] = memory.load8(address) as i8 as i32 as u32 
+        0b110 => cpu.r[rd as usize] = memory.load8(address) as i8 as i32 as u32
                                     + if rd == 15 {4} else {0},
         0b111 => cpu.r[rd as usize] = memory.load16(address) as i16 as i32 as u32
                                     + if rd == 15 {4} else {0},

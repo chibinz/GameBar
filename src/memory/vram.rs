@@ -2,7 +2,7 @@ use super::Memory;
 use super::into16;
 
 impl Memory
-{   
+{
     /// Return a byte from vram, offset is in bytes
     #[inline]
     pub fn vram8(&self, offset: u32) -> u8
@@ -80,6 +80,6 @@ pub fn map_entry(size_r: u32, tile_y: u32, tile_x: u32) -> u32
     {
         n += 0x0400;
     }
-    
+
     n
 }

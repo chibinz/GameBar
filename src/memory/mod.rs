@@ -20,9 +20,9 @@ pub struct Memory
     oam  : Vec<u8>,
     rom  : Vec<u8>,
     sram : Vec<u8>,
-    
+
     /// Pointer to containing console struct
-    pub console: *mut Console, 
+    pub console: *mut Console,
 }
 
 impl Memory
@@ -66,7 +66,7 @@ impl Memory
             _    => {Self::unhandled(true, 4, address); 0},
         }
     }
-    
+
     /// Load a halfword from memory
     pub fn load16(&self, address: u32) -> u16
     {
@@ -137,7 +137,7 @@ impl Memory
         // Accesses are forced to halfword aligned
         let offset = mirror(address) & 0x00fffffe;
 
-        let sth = |mem: &mut [u8]| 
+        let sth = |mem: &mut [u8]|
         {
             let a = value.to_le_bytes();
             mem[offset]     = a[0];
@@ -224,7 +224,7 @@ fn mirror(address: u32) -> usize
         0x03 => address % 0x8000,
         0x04 => address % 0x10000,
         0x05 => address % 0x400,
-        0x06 => 
+        0x06 =>
             {
                 let b = address % 0x20000;
                 if b > 0x06017fff

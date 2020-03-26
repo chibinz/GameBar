@@ -28,7 +28,7 @@ impl<'a> Debugger<'a>
     pub fn run(&mut self)
     {
         loop
-        {   
+        {
             self.step();
         }
     }
@@ -38,6 +38,7 @@ impl<'a> Debugger<'a>
         self.prompt();
         self.dispatch();
     }
+
 
     pub fn prompt(&mut self)
     {
@@ -158,7 +159,7 @@ impl<'a> Debugger<'a>
                 ..WindowOptions::default()
             },
         ).unwrap();
-    
+
         window.limit_update_rate(Some(std::time::Duration::from_secs(1)));
 
         let mut buffer: Vec<u32> = vec![0; 32 * 16];

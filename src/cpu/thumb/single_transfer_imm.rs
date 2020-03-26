@@ -20,10 +20,10 @@ fn decode(instruction: u16) -> (u32, u32, u32, u32)
 
     (bl, offset5, rb, rd)
 }
- 
+
 #[inline]
 fn execute(cpu: &mut CPU, memory: &mut Memory, (bl, offset5, rb, rd): (u32, u32, u32, u32))
-{   
+{
     let base = cpu.r[rb as usize];
 
     match bl

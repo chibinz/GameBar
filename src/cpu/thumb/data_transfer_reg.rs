@@ -20,10 +20,10 @@ fn decode(instruction: u16) -> (u32, u32, u32, u32)
 
     (lbh, ro, rb, rd)
 }
- 
+
 #[inline]
 fn execute(cpu: &mut CPU, memory: &mut Memory, (lbh, ro, rb, rd): (u32, u32, u32, u32))
-{   
+{
     let address = cpu.r[rb as usize].wrapping_add(cpu.r[ro as usize]);
 
     // Misaligned halfword access is not handled

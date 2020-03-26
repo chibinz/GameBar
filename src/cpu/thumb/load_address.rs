@@ -16,10 +16,10 @@ fn decode(instruction: u16) -> (bool, u32, u32)
 
     (sp, rd, word8)
 }
- 
+
 #[inline]
 fn execute(cpu: &mut CPU, (sp, rd, word8): (bool, u32, u32))
-{   
+{
     if sp
     {
         cpu.r[rd as usize] = cpu.r[13] + (word8 << 2);
@@ -27,7 +27,7 @@ fn execute(cpu: &mut CPU, (sp, rd, word8): (bool, u32, u32))
     else
     {
         // Bit 1 of PC is forced to 0.
-        // The value of the PC will be 4 bytes greater than the address 
+        // The value of the PC will be 4 bytes greater than the address
         // of the instruction before bit 1 is forced to 0.
         cpu.r[rd as usize] = (cpu.r[15] & 0xfffffffc) + (word8 << 2);
     }
@@ -37,7 +37,7 @@ fn execute(cpu: &mut CPU, (sp, rd, word8): (bool, u32, u32))
 mod tests
 {
     use super::*;
-    
+
     #[test]
     fn load_address()
     {

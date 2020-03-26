@@ -15,10 +15,10 @@ fn decode(instruction: u16) -> (bool, u32)
 
     (s, sword7)
 }
- 
+
 #[inline]
 fn execute(cpu: &mut CPU, (s, sword7): (bool, u32))
-{   
+{
     if s
     {
         cpu.r[13] -= sword7 << 2;
