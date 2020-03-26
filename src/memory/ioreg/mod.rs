@@ -5,7 +5,6 @@ pub mod interrupt;
 
 use super::Memory;
 use super::into16;
-use super::into32;
 
 impl Memory
 {
@@ -15,14 +14,6 @@ impl Memory
     {
         let a = offset as usize;
         into16(&self.ioram[a..a+2])
-    }
-
-    /// Return a word from vram, offset is in bytes
-    #[inline]
-    pub fn ioram32(&self, offset: usize) -> u32
-    {
-        let a = offset as usize;
-        into32(&self.ioram[a..a+4])
     }
 
     /// Store a halfword in vram, offset is in bytes
@@ -44,6 +35,7 @@ impl Memory
     pub fn ioram_load16(&self, address: u32) -> u16
     {
         let console = unsafe {& *self.console};
+        let ppu     = &console.ppu;
         let dma     = &console.dma;
         let timers  = &console.timers;
         let irqcnt  = &console.irqcnt;
@@ -52,6 +44,16 @@ impl Memory
 
         match ioreg
         {
+            0x000 => ppu.get_dispcnt(),
+            0x004 => ppu.get_dispstat(),
+            0x006 => ppu.get_vcount(),
+
+            0x008 => ppu.background[0].get_control(),
+            0x00a => ppu.background[1].get_control(),
+            0x00c => ppu.background[2].get_control(),
+            0x00e => ppu.background[3].get_control(),
+            // Background offset & rotation registers are write only
+
             0x0b0 => dma.channel[0].get_src_l(),
             0x0b2 => dma.channel[0].get_src_h(),
             0x0b4 => dma.channel[0].get_dst_l(),
@@ -109,7 +111,7 @@ impl Memory
     pub fn ioram_store16(&mut self, address: u32, value: u16)
     {
         let console = unsafe {&mut *self.console};
-        let cpu     = &mut console.cpu;
+        let ppu     = &mut console.ppu;
         let memory  = &mut console.memory;
         let dma     = &mut console.dma;
         let timers  = &mut console.timers;
@@ -122,6 +124,42 @@ impl Memory
         // Seems like match pattern cannot be replaced with macros...
         match ioreg
         {
+            0x000 => ppu.set_dispcnt(value),
+            0x004 => ppu.set_dispstat(value),
+            // vcount is read only
+
+            // Background 0 - 3
+            0x008 => ppu.background[0].set_control(value),
+            0x00a => ppu.background[1].set_control(value),
+            0x00c => ppu.background[2].set_control(value),
+            0x00e => ppu.background[3].set_control(value),
+            0x010 => ppu.background[0].set_hofs(value),
+            0x012 => ppu.background[0].set_vofs(value),
+            0x014 => ppu.background[1].set_hofs(value),
+            0x016 => ppu.background[1].set_vofs(value),
+            0x018 => ppu.background[2].set_hofs(value),
+            0x01a => ppu.background[2].set_vofs(value),
+            0x01c => ppu.background[3].set_hofs(value),
+            0x01e => ppu.background[3].set_vofs(value),
+
+            0x020 => ppu.background[2].set_pa(value),
+            0x022 => ppu.background[2].set_pb(value),
+            0x024 => ppu.background[2].set_pc(value),
+            0x026 => ppu.background[2].set_pd(value),
+            0x028 => ppu.background[2].set_x_l(value),
+            0x02a => ppu.background[2].set_x_h(value),
+            0x02c => ppu.background[2].set_y_l(value),
+            0x02e => ppu.background[2].set_y_h(value),
+
+            0x030 => ppu.background[3].set_pa(value),
+            0x032 => ppu.background[3].set_pb(value),
+            0x034 => ppu.background[3].set_pc(value),
+            0x036 => ppu.background[3].set_pd(value),
+            0x038 => ppu.background[3].set_x_l(value),
+            0x03a => ppu.background[3].set_x_h(value),
+            0x03c => ppu.background[3].set_y_l(value),
+            0x03e => ppu.background[3].set_y_h(value),
+
             // DMA 0 - 3
             0x0b0 => dma.channel[0].set_src_l(value),
             0x0b2 => dma.channel[0].set_src_h(value),
@@ -162,9 +200,9 @@ impl Memory
             0x10e => timers.timer[3].set_control(value),
 
             // Interrupt Controller
-            0x200 => irqcnt.set_ie(value, cpu),
+            0x200 => irqcnt.set_ie(value),
             0x202 => irqcnt.ack_irf(value),
-            0x208 => irqcnt.set_ime(value, cpu),
+            0x208 => irqcnt.set_ime(value),
             _     => Self::unhandled(false, 2, address),
         }
 

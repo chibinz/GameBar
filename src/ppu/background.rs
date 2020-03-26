@@ -39,15 +39,15 @@ pub struct Background
     pub size_r   : u32,     // Raw bits 15 - 14 of bgcnt
     pub width    : u32,     // Width in pixels
     pub height   : u32,     // Height in pixels
-    pub vcount   : u32,     // Line number of current scanline
 
     // Text background registers
-    pub hscroll  : u32,
-    pub vscroll  : u32,
+    pub hscroll  : u16,
+    pub vscroll  : u16,
 
     // Affine background registers
     pub matrix   : (i32, i32, i32, i32),
     pub coord    : (i32, i32),
+    pub internal : (i32, i32),
 
     // Line buffer
     pub pixel    : Vec<u32>,  
@@ -71,11 +71,11 @@ impl Background
             size_r   : 0,
             width    : 0,
             height   : 0,
-            vcount   : 0,
             hscroll  : 0,
             vscroll  : 0,
             matrix   : (0, 0, 0, 0),
             coord    : (0, 0),
+            internal : (0, 0),
 
             // The largest width of a background is 1024 pixels.
             // Avoid reallocation when resizing background.
@@ -83,10 +83,10 @@ impl Background
         }
     }
     
-    pub fn draw_text(&mut self, window: &Window, layer: &mut Layer, memory: &Memory)
+    pub fn draw_text(&mut self, vcount: u16, window: &Window, layer: &mut Layer, memory: &Memory)
     {
         // Vertical wrap around
-        let line_n = (self.vcount + self.vscroll) % self.height;
+        let line_n = (vcount + self.vscroll) as u32 % self.height;
         
         for i in 0..self.width
         {   
@@ -108,19 +108,21 @@ impl Background
             let palette_entry = memory.tile_data(self.palette_f, self.tile_b, tile_n, pixel_x, pixel_y);
 
             // Horizontal wrap around
-            let x = (i.wrapping_sub(self.hscroll)) % self.width;
+            let x = i.wrapping_sub(self.hscroll as u32) % self.width;
             let color = memory.bg_palette(palette_n, palette_entry);
             
             layer.paint(x, color, window, self.index as u32);
         }
     }
 
-    pub fn draw_affine(&mut self, window: &Window, layer: &mut Layer, memory: &Memory)
+    pub fn draw_affine(&mut self, vcount: u16, window: &Window, layer: &mut Layer, memory: &Memory)
     {
+        if vcount == 0 {self.internal = self.coord}
+
         for i in 0..self.width
         {
-            let mut text_x = (self.matrix.0 * i as i32 + self.coord.0) >> 8;
-            let mut text_y = (self.matrix.2 * i as i32 + self.coord.1) >> 8;
+            let mut text_x = (self.matrix.0 * i as i32 + self.internal.0) >> 8;
+            let mut text_y = (self.matrix.2 * i as i32 + self.internal.1) >> 8;
 
             // TODO: Refactor into macro 
             if out_of_bound(text_x, self.width)
@@ -162,15 +164,13 @@ impl Background
             layer.paint(i, color, window, self.index as u32);
         }
 
-        self.coord.0 += self.matrix.1;
-        self.coord.1 += self.matrix.3;
+        self.internal.0 += self.matrix.1;
+        self.internal.1 += self.matrix.3;
     }
     
-    pub fn draw_bitmap_3(&mut self, window: &Window, layer: &mut Layer, memory: &Memory)
+    pub fn draw_bitmap_3(&mut self, vcount: u16, window: &Window, layer: &mut Layer, memory: &Memory)
     {
-        memory.update_affine_bg(self);
-
-        let line_n = self.vcount;
+        let line_n = vcount as u32;
 
         for x in 0..240
         {
@@ -179,12 +179,10 @@ impl Background
         }
     }
 
-    pub fn draw_bitmap_4(&mut self, flip: bool, window: &Window, layer: &mut Layer, memory: &Memory)
+    pub fn draw_bitmap_4(&mut self, vcount: u16, flip: bool, window: &Window, layer: &mut Layer, memory: &Memory)
     {
-        memory.update_affine_bg(self);
-
         let start = if flip {0xa000} else {0};
-        let line_n = self.vcount;
+        let line_n = vcount as u32;
         
         for x in 0..240
         {
@@ -193,12 +191,10 @@ impl Background
         }
     }
 
-    pub fn draw_bitmap_5(&mut self, flip: bool, window: &Window, layer: &mut Layer, memory: &Memory)
+    pub fn draw_bitmap_5(&mut self, vcount: u16, flip: bool, window: &Window, layer: &mut Layer, memory: &Memory)
     {
-        memory.update_affine_bg(self);
-
         let start = if flip {0xa000} else {0};
-        let line_n = self.vcount;
+        let line_n = vcount as u32;
         
         for x in 0..160
         {

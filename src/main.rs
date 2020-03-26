@@ -24,6 +24,7 @@ fn main()
 
     let mut console = console::Console::new();
     console.memory.console = &mut console as *mut console::Console;
+    console.irqcnt.cpu = &mut console.cpu as *mut cpu::CPU;
     
     console.memory.load_rom(&args[1]);
     console.memory.load_bios(&"rom/gba_bios.bin".to_string());

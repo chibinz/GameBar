@@ -1,5 +1,4 @@
 use crate::interrupt::IRQController;
-use crate::cpu::CPU;
 
 impl IRQController
 {
@@ -10,11 +9,11 @@ impl IRQController
     }
 
     #[inline]
-    pub fn set_ime(&mut self, value: u16, cpu: &mut CPU)
+    pub fn set_ime(&mut self, value: u16)
     {
         self.ime = value;
 
-        self.check(cpu);
+        self.check();
     }
 
     #[inline]
@@ -24,11 +23,11 @@ impl IRQController
     }
 
     #[inline]
-    pub fn set_ie(&mut self, value: u16, cpu: &mut CPU)
+    pub fn set_ie(&mut self, value: u16)
     {
         self.ie = value;
 
-        self.check(cpu);
+        self.check();
     }
 
     #[inline]

@@ -6,6 +6,8 @@ pub mod window;
 
 use crate::util::*;
 use crate::memory::Memory;
+use crate::interrupt::IRQController;
+use crate::interrupt::Interrupt::*;
 
 use color::*;
 use layer::Layer;
@@ -16,11 +18,13 @@ use window::Window;
 pub struct PPU
 {
     pub dispcnt   : u16,            // Raw display control register
+    pub dispstat  : u16,            // Raw display status
+    pub vcount    : u16,            // Line number of current scanline
+
     pub mode      : u32,            // Video mode
     pub flip      : bool,           // Determine page flipping in bitmap modes
     pub sequential: bool,           // Determine layout of sprites, 1 - 1d, 0 - 2d
     pub fblank    : bool,           // Force blanking
-    pub vcount    : u32,            // Line number of current scanline
 
     pub background: Vec<Background>,   // Background 0 - 3
     pub sprite    : Vec<Sprite>,       // Sprite 0 - 127
@@ -37,18 +41,19 @@ impl PPU
         let mut p = Self
         {
             dispcnt   : 0,
+            dispstat  : 0,
             mode      : 0,
             flip      : false,
             sequential: false,
             fblank    : false,
-            vcount    : 0,
+            vcount    : 227, // VCount is incremented at beginning of each newline
 
-            background  : vec![Background::new(); 4],
-            sprite      : vec![Sprite::new(); 128],
-            window      : Window::new(),
+            background: vec![Background::new(); 4],
+            sprite    : vec![Sprite::new(); 128],
+            window    : Window::new(),
 
-            layer       : vec![Layer::new(); 5],
-            buffer      : vec![0; 240 * 160],
+            layer     : vec![Layer::new(); 5],
+            buffer    : vec![0; 240 * 160],
         };
 
         for i in 0..4
@@ -64,12 +69,13 @@ impl PPU
         p
     }
 
-    pub fn render(&mut self, memory: &Memory)
+    pub fn hdraw(&mut self, irqcnt: &mut IRQController, memory: &Memory)
     {
-        memory.update_ppu(self);
+        self.increment_vcount(irqcnt);
+        self.dispstat &= !0b11;
 
         if self.fblank {self.force_blank()}
-        if self.vcount >= 160 {return} // Change to assertion
+        assert!(self.vcount < 160);
 
         // Setup backdrop color
         for pixel in self.layer[4].pixel.iter_mut()
@@ -84,20 +90,34 @@ impl PPU
 
         self.draw_window(memory);
 
-        match self.mode
-        {
-            0 => self.draw_mode_0(memory),
-            1 => self.draw_mode_1(memory),
-            2 => self.draw_mode_2(memory),
-            3 => self.draw_mode_3(memory),
-            4 => self.draw_mode_4(memory),
-            5 => self.draw_mode_5(memory),
-            _ => unreachable!(),
-        }
+        self.draw_background(memory);
 
         self.draw_sprite(memory);
 
         self.combine_layers();
+    }
+
+    pub fn hblank(&mut self, irqcnt: &mut IRQController)
+    {
+        self.dispstat |= 0b10;
+
+        if self.dispstat.bit(4) {irqcnt.request(HBlank)}
+    }
+
+    pub fn vblank(&mut self, irqcnt: &mut IRQController)
+    {
+        self.increment_vcount(irqcnt);
+        self.dispstat |= 0b01;
+
+        if self.dispstat.bit(3) && self.vcount == 160 {irqcnt.request(VBlank)}
+    }
+
+    pub fn increment_vcount(&mut self, irqcnt: &mut IRQController)
+    {
+        self.vcount += 1;
+
+        if self.vcount > 227 {self.vcount = 0}
+        if self.dispstat.bit(5) && self.vcount == self.dispstat >> 8 {irqcnt.request(VCount)}
     }
     
     pub fn combine_layers(&mut self)
@@ -118,6 +138,73 @@ impl PPU
                     break
                 }
             }
+        }
+    }
+
+    pub fn draw_background(&mut self, memory: &Memory)
+    {
+        match self.mode
+        {
+            0 => self.draw_mode_0(memory),
+            1 => self.draw_mode_1(memory),
+            2 => self.draw_mode_2(memory),
+            3 => self.draw_mode_3(memory),
+            4 => self.draw_mode_4(memory),
+            5 => self.draw_mode_5(memory),
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn draw_sprite(&mut self, memory: &Memory)
+    {
+        for sprite in self.sprite.iter_mut().rev()
+        {
+            memory.update_sprite(sprite);
+
+            let priority = sprite.priority as usize;
+            let layer = &mut self.layer[priority];
+
+            sprite.draw(self.vcount as u32, self.sequential, &self.window, layer, memory);
+        }
+    }
+
+    pub fn draw_window(&mut self, memory: &Memory)
+    {
+        let window = &mut self.window;
+        window.clear();
+
+        if self.dispcnt.bits(15, 13) > 0
+        {
+            window.draw_winout(memory);
+        }
+
+        if self.dispcnt.bit(15)
+        {
+            let mut layer = Layer::new();
+            let mut dummy = Window::new(); // Dummy window to let all sprite be drawn
+            dummy.clear();
+
+            for sprite in self.sprite.iter_mut().rev()
+            {
+                memory.update_sprite(sprite);
+
+                if sprite.mode == 0b10 // Window mode
+                {
+                    sprite.draw(self.vcount as u32, self.sequential, &dummy, &mut layer, memory);
+                }
+            }
+
+            window.draw_objwin(&layer, memory)
+        }
+
+        if self.dispcnt.bit(14)
+        {
+            window.draw_winin(self.vcount as u32, 1, memory);
+        }
+
+        if self.dispcnt.bit(13)
+        {
+            window.draw_winin(self.vcount as u32, 0, memory);
         }
     }
 
@@ -148,7 +235,7 @@ impl PPU
     {
         debug_assert!(self.dispcnt.bit(10));
 
-        self.background[2].draw_bitmap_3(&self.window, &mut self.layer[0], memory);
+        self.background[2].draw_bitmap_3(self.vcount, &self.window, &mut self.layer[0], memory);
 
     }
 
@@ -156,7 +243,7 @@ impl PPU
     {
         debug_assert!(self.dispcnt.bit(10));
 
-        self.background[2].draw_bitmap_4(self.flip, &self.window, &mut self.layer[0], memory);
+        self.background[2].draw_bitmap_4(self.vcount, self.flip, &self.window, &mut self.layer[0], memory);
     }
 
     pub fn draw_mode_5(&mut self, memory: &Memory)
@@ -166,60 +253,7 @@ impl PPU
         let line_n = self.vcount as usize;
         if line_n > 127 {return}
 
-        self.background[2].draw_bitmap_5(self.flip, &self.window, &mut self.layer[0], memory);
-    }
-
-    pub fn draw_sprite(&mut self, memory: &Memory)
-    {
-        for sprite in self.sprite.iter_mut().rev()
-        {
-            memory.update_sprite(sprite);
-
-            let priority = sprite.priority as usize;
-            let layer = &mut self.layer[priority];
-
-            sprite.draw(self.vcount, self.sequential, &self.window, layer, memory);
-        }
-    }
-
-    pub fn draw_window(&mut self, memory: &Memory)
-    {
-        let window = &mut self.window;
-        window.clear();
-
-        if self.dispcnt.bits(15, 13) > 0
-        {
-            window.draw_winout(memory);
-        }
-
-        if self.dispcnt.bit(15)
-        {
-            let mut layer = Layer::new();
-            let mut dummy = Window::new(); // Dummy window to let all sprite be drawn
-            dummy.clear();
-
-            for sprite in self.sprite.iter_mut().rev()
-            {
-                memory.update_sprite(sprite);
-
-                if sprite.mode == 0b10 // Window mode
-                {
-                    sprite.draw(self.vcount, self.sequential, &dummy, &mut layer, memory);
-                }
-            }
-
-            window.draw_objwin(&layer, memory)
-        }
-
-        if self.dispcnt.bit(14)
-        {
-            window.draw_winin(self.vcount, 1, memory);
-        }
-
-        if self.dispcnt.bit(13)
-        {
-            window.draw_winin(self.vcount, 0, memory);
-        }
+        self.background[2].draw_bitmap_5(self.vcount, self.flip, &self.window, &mut self.layer[0], memory);
     }
 
     pub fn draw_text_bg(&mut self, i: u32, memory: &Memory)
@@ -228,12 +262,10 @@ impl PPU
 
         if self.dispcnt.bit(8 + i) 
         {
-            memory.update_text_bg(bg);
-
             let priority = bg.priority as usize;
             let layer = &mut self.layer[priority as usize];
 
-            bg.draw_text(&self.window, layer, memory);
+            bg.draw_text(self.vcount, &self.window, layer, memory);
         } 
     }
 
@@ -243,12 +275,10 @@ impl PPU
         
         if self.dispcnt.bit(8 + i) 
         {
-            memory.update_affine_bg(bg);
-
             let priority = bg.priority as usize;
             let layer = &mut self.layer[priority as usize];
 
-            bg.draw_affine(&self.window, layer, memory);
+            bg.draw_affine(self.vcount, &self.window, layer, memory);
         } 
     }
 

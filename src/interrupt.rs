@@ -26,6 +26,8 @@ pub struct IRQController
     pub ime: u16,   // Interrupt master enable flag
     pub ie : u16,   // Interrupt enable flag
     pub irf: u16,   // Interrupt request flag
+
+    pub cpu: *mut CPU,  // Mutable pointer to cpu
 }
 
 impl IRQController
@@ -37,24 +39,26 @@ impl IRQController
             ime: 0,
             ie : 0,
             irf: 0,
+
+            cpu: 0 as *mut CPU,
         }
     }
 
-    pub fn check(&mut self, cpu: &mut CPU)
+    pub fn request(&mut self, irq: Interrupt)
+    {
+        self.irf |= irq as u16;
+        
+        self.check();
+    }
+
+    pub fn check(&mut self)
     {
         if self.ime.bit(0)
         {
             if self.ie & self.irf != 0
             {
-                cpu.hardware_interrupt();
+                unsafe {(*self.cpu).hardware_interrupt()}
             }
         }
-    }
-
-    pub fn request(&mut self, irq: Interrupt, cpu: &mut CPU)
-    {
-        self.irf |= irq as u16;
-        
-        self.check(cpu);
     }
 }

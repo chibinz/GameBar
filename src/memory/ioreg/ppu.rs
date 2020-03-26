@@ -7,125 +7,6 @@ use super::Memory;
 
 impl Memory
 {
-    /// Update fields in struct `PPU`
-    pub fn update_ppu(&self, ppu: &mut PPU)
-    {
-        self.update_dispcnt(ppu);
-        ppu.vcount = self.get_vcount() as u32;
-    }
-
-    /// Update fields in struct `Background` (h/vscroll)
-    pub fn update_text_bg(&self, bg: &mut Background)
-    {
-        self.update_bgcnt(bg);
-        self.update_bgofs(bg);
-        bg.vcount = self.get_vcount() as u32;
-    }
-
-    /// Update fields in struct `Background` (pa/b/c/d, x/y)
-    pub fn update_affine_bg(&self, bg: &mut Background)
-    {
-        self.update_bgcnt(bg);
-        self.update_bgpxy(bg);
-        bg.vcount = self.get_vcount() as u32;
-    }
-    
-    pub fn update_dispcnt(&self, ppu: &mut PPU)
-    {
-        let dispcnt = self.ioram16(0x00);
-
-        ppu.dispcnt    = dispcnt;
-        ppu.mode       = dispcnt.bits(2, 0);
-        ppu.flip       = dispcnt.bit(4);
-        ppu.sequential = dispcnt.bit(6);
-        ppu.fblank     = dispcnt.bit(7);
-    }
-
-    pub fn set_vblank_flag(&mut self, value: bool)
-    {
-        let mut dispstat = self.ioram16(0x04);
-
-        dispstat &= !0b01;
-        dispstat |= value as u16;
-
-        self.ioram16_s(0x04, dispstat);
-    }
-
-    pub fn set_hblank_flag(&mut self, value: bool)
-    {
-        let mut dispstat = self.ioram16(0x04);
-
-        dispstat &= !0b10;
-        dispstat |= (value as u16) << 1;
-
-        self.ioram16_s(0x04, dispstat);
-    }
-
-    pub fn get_vcount(&self) -> u16
-    {
-        self.ioram16(0x06)
-    }
-
-    pub fn inc_vcount(&mut self)
-    {
-        let vcount = self.get_vcount();
-        self.ioram16_s(0x06, (vcount + 1) as u16);
-    }
-
-    pub fn clr_vcount(&mut self)
-    {
-        self.ioram16_s(0x06, 0);
-    }
-
-    pub fn update_vcount(&self, ppu: &mut PPU)
-    {
-        ppu.vcount = self.ioram16(0x06) as u32;
-    }
-
-    pub fn get_bgcnt(&self, index: usize) -> u16
-    {
-        self.ioram16(0x08 + index * 2)
-    }
-
-    pub fn update_bgcnt(&self, bg: &mut Background)
-    {
-        let bgcnt = self.ioram16(0x08 + bg.index * 2);
-
-        bg.bgcnt     = bgcnt;
-        bg.priority  = bgcnt.bits(1, 0);
-        bg.tile_b    = bgcnt.bits(3, 2);
-        bg.mosaic_f  = bgcnt.bit(6);
-        bg.palette_f = bgcnt.bit(7);
-        bg.map_b     = bgcnt.bits(12, 8);
-        bg.wrap_f    = bgcnt.bit(13);
-        bg.size_r    = bgcnt.bits(15, 14);
-
-        bg.width  = DIMENSION[bg.affine_f as usize][bg.size_r as usize].0;
-        bg.height = DIMENSION[bg.affine_f as usize][bg.size_r as usize].1;
-    }
-
-    pub fn update_bgofs(&self, bg: &mut Background)
-    {
-        let hofs = self.ioram16(0x10 + bg.index * 4) as u32;
-        let vofs = self.ioram16(0x12 + bg.index * 4) as u32;
-
-        bg.hscroll = hofs;
-        bg.vscroll = vofs;
-    }
-
-    pub fn update_bgpxy(&self, bg: &mut Background)
-    {
-        let pa = self.ioram16(0x20 + (bg.index - 2) * 16) as i16 as i32;
-        let pb = self.ioram16(0x22 + (bg.index - 2) * 16) as i16 as i32;
-        let pc = self.ioram16(0x24 + (bg.index - 2) * 16) as i16 as i32;
-        let pd = self.ioram16(0x26 + (bg.index - 2) * 16) as i16 as i32;
-        let x  = self.ioram32(0x28 + (bg.index - 2) * 16) as i32;
-        let y  = self.ioram32(0x2c + (bg.index - 2) * 16) as i32;
-
-        bg.matrix = (pa, pb, pc, pd);
-        if bg.vcount == 0 {bg.coord  = (x, y)};
-    }
-
     pub fn get_winh(&self, index: usize) -> (u32, u32)
     {
         let winh = self.ioram16(0x40 + index * 2);
@@ -163,5 +44,112 @@ impl Memory
     pub fn get_winout(&self) -> u16
     {
         self.ioram16(0x4a)
+    }
+}
+
+impl PPU
+{
+    pub fn get_dispcnt(&self) -> u16
+    {
+        self.dispcnt
+    }
+
+    pub fn set_dispcnt(&mut self, value: u16)
+    {
+        self.dispcnt    = value;
+        self.mode       = value.bits(2, 0);
+        self.flip       = value.bit(4);
+        self.sequential = value.bit(6);
+        self.fblank     = value.bit(7);
+    }
+
+    pub fn get_dispstat(&self) -> u16
+    {
+        self.dispstat
+    }
+
+    pub fn set_dispstat(&mut self, value: u16)
+    {
+        self.dispstat = value;
+    }
+
+    pub fn get_vcount(&self) -> u16
+    {
+        self.vcount
+    }
+}
+
+impl Background
+{
+    pub fn get_control(&self) -> u16
+    {
+        self.bgcnt
+    }
+
+    pub fn set_control(&mut self, value: u16)
+    {
+        self.bgcnt     = value;
+        self.priority  = value.bits(1, 0);
+        self.tile_b    = value.bits(3, 2);
+        self.mosaic_f  = value.bit(6);
+        self.palette_f = value.bit(7);
+        self.map_b     = value.bits(12, 8);
+        self.wrap_f    = value.bit(13);
+        self.size_r    = value.bits(15, 14);
+
+        self.width  = DIMENSION[self.affine_f as usize][self.size_r as usize].0;
+        self.height = DIMENSION[self.affine_f as usize][self.size_r as usize].1;
+    }
+
+    pub fn set_hofs(&mut self, value: u16)
+    {
+        self.hscroll = value;
+    }
+
+    pub fn set_vofs(&mut self, value: u16)
+    {
+        self.vscroll = value;
+    }
+
+    pub fn set_pa(&mut self, value: u16)
+    {
+        self.matrix.0 = value as i16 as i32;
+    }
+
+    pub fn set_pb(&mut self, value: u16)
+    {
+        self.matrix.1 = value as i16 as i32;
+    }
+
+    pub fn set_pc(&mut self, value: u16)
+    {
+        self.matrix.2 = value as i16 as i32;
+    }
+
+    pub fn set_pd(&mut self, value: u16)
+    {
+        self.matrix.3 = value as i16 as i32;
+    }
+
+    pub fn set_x_l(&mut self, value: u16)
+    {
+        self.coord.0 = ((self.coord.0 as u32) & 0xffff0000) as i32;
+        self.coord.0 |= value as i32;
+    }
+
+    pub fn set_x_h(&mut self, value: u16)
+    {
+        self.coord.0 &= 0x0000ffff;
+        self.coord.0 |= ((value as u32) << 16) as i32;
+    }
+    pub fn set_y_l(&mut self, value: u16)
+    {
+        self.coord.1 = ((self.coord.0 as u32) & 0xffff0000) as i32;
+        self.coord.1 |= value as i32;
+    }
+    pub fn set_y_h(&mut self, value: u16)
+    {
+        self.coord.1 &= 0x0000ffff;
+        self.coord.1 |= ((value as u32) << 16) as i32;
     }
 }

@@ -63,52 +63,26 @@ impl Console
 
         for _ in 0..160
         {
-            // self.vmatch_irq();
-            Self::vmatch_irq(irqcnt, cpu, memory);
+            ppu.hdraw(irqcnt, memory);
             cpu.run(960, memory);
             timers.run(960);
-
-            ppu.render(&memory);
-            memory.set_hblank_flag(true);
     
             dma.request(memory);
-            irqcnt.request(HBlank, cpu);
+            irqcnt.request(HBlank);
 
+            ppu.hblank(irqcnt);
             cpu.run(272, memory);
             timers.run(272);
-    
-            memory.inc_vcount();
-            memory.set_hblank_flag(false); 
         }
-
-        memory.set_vblank_flag(true);
-        irqcnt.request(VBlank, cpu);
 
         for _ in 0..68
         {
-            // self.vmatch_irq();
-            Self::vmatch_irq(irqcnt, cpu, memory);
+            ppu.vblank(irqcnt);
             cpu.run(1232, memory);
             timers.run(1232);
-
-            memory.inc_vcount();
         }
 
-        memory.clr_vcount();
-        memory.set_vblank_flag(false);
-        
         self.window.update_with_buffer(&ppu.buffer, 240, 160).unwrap();
-    }
-
-    pub fn vmatch_irq(irqcnt: &mut IRQController, cpu: &mut CPU, memory: &mut Memory)
-    {
-        let vmatch = memory.load16(0x04000004) >> 8;
-        let vcount = memory.get_vcount();
-
-        if vcount == vmatch
-        {
-            irqcnt.request(VCount, cpu);
-        }
     }
 
     /// Single step CPU, for debugging purpose
