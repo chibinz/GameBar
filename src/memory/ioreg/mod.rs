@@ -2,6 +2,7 @@ pub mod ppu;
 pub mod dma;
 pub mod timer;
 pub mod interrupt;
+pub mod keypad;
 
 use super::Memory;
 use super::into16;
@@ -14,15 +15,6 @@ impl Memory
     {
         let a = offset as usize;
         into16(&self.ioram[a..a+2])
-    }
-
-    /// Store a halfword in vram, offset is in bytes
-    #[inline]
-    pub fn ioram16_s(&mut self, offset: usize, value: u16)
-    {
-        let a = value.to_le_bytes();
-        self.ioram[offset]     = a[0];
-        self.ioram[offset + 1] = a[1];
     }
 
     #[inline]
@@ -39,6 +31,7 @@ impl Memory
         let dma     = &console.dma;
         let timers  = &console.timers;
         let irqcnt  = &console.irqcnt;
+        let keypad  = &console.keypad;
 
         let ioreg = (address & 0xfffe) as usize;
 
@@ -87,6 +80,9 @@ impl Memory
             0x108 => timers.timer[2].get_counter(),
             0x10c => timers.timer[3].get_counter(),
 
+            0x130 => keypad.get_input(),
+            0x132 => keypad.get_control(),
+
             0x200 => irqcnt.get_ie(),
             0x202 => irqcnt.get_irf(),
             0x208 => irqcnt.get_ime(),
@@ -116,6 +112,7 @@ impl Memory
         let dma     = &mut console.dma;
         let timers  = &mut console.timers;
         let irqcnt  = &mut console.irqcnt;
+        let keypad  = &mut console.keypad;
 
         assert_eq!(console.magic, 0xdeadbeef);
 
@@ -199,6 +196,9 @@ impl Memory
             0x10c => timers.timer[3].set_reload(value),
             0x10e => timers.timer[3].set_control(value),
 
+            // Keypad input is read only
+            0x132 => keypad.set_control(value),
+
             // Interrupt Controller
             0x200 => irqcnt.set_ie(value),
             0x202 => irqcnt.ack_irf(value),
@@ -216,15 +216,5 @@ impl Memory
     {
         self.ioram_store16(address, value as u16);
         self.ioram_store16(address + 2, (value >> 16) as u16);
-    }
-
-    pub fn get_keyinput(&self) -> u16
-    {
-        self.ioram16(0x130)
-    }
-
-    pub fn set_keyinput(&mut self, input: u16)
-    {
-        self.ioram16_s(0x130, input);
     }
 }

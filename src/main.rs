@@ -34,7 +34,7 @@ fn main()
     while console.window.is_open()
     {
         let input = keyboard::input(&console.window);
-        console.memory.set_keyinput(input);
+        console.keypad.set_input(input, &mut console.irqcnt);
         console.step_frame();
 
         // debugger.step();

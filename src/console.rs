@@ -4,7 +4,9 @@ use crate::dma::DMA;
 use crate::timer::Timers;
 use crate::interrupt::IRQController;
 use crate::interrupt::Interrupt::*;
+use crate::keyboard::Keypad;
 use crate::memory::Memory;
+
 
 use minifb::Window;
 use minifb::WindowOptions;
@@ -16,6 +18,7 @@ pub struct Console
     pub dma   : DMA,
     pub timers: Timers,
     pub irqcnt: IRQController,
+    pub keypad: Keypad,
     pub memory: Memory,
 
     pub window: Window,
@@ -33,6 +36,7 @@ impl Console
             dma   : DMA::new(),
             irqcnt: IRQController::new(),
             timers: Timers::new(),
+            keypad: Keypad::new(),
             memory: Memory::new(),
 
             window: Window::new
