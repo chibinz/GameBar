@@ -1,9 +1,21 @@
+use crate::interrupt::IRQController;
+use crate::interrupt::Interrupt;
+use crate::interrupt::Interrupt::*;
+
 pub static PRESCALER: [u32; 4] =
 [
     1,
     64,
     256,
     1024,
+];
+
+pub static IRQ: [Interrupt; 4] =
+[
+    Timer0,
+    Timer1,
+    Timer2,
+    Timer3,
 ];
 
 pub struct Timers
@@ -33,15 +45,17 @@ impl Timers
         }
     }
 
-    pub fn run(&mut self, value: u32)
+    pub fn run(&mut self, value: u32, irqcnt: &mut IRQController)
     {
         let mut overflow = false;
 
-        for timer in self.timer.iter_mut()
+        for (i, timer) in self.timer.iter_mut().enumerate()
         {
             let increment = if timer.cascade_f {overflow as u32} else {value};
 
             overflow = timer.increment_counter(increment);
+
+            if overflow && timer.irq_f {irqcnt.request(IRQ[i])}
         }
     }
 }

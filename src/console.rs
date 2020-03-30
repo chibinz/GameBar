@@ -3,7 +3,6 @@ use crate::ppu::PPU;
 use crate::dma::DMA;
 use crate::timer::Timers;
 use crate::interrupt::IRQController;
-use crate::interrupt::Interrupt::*;
 use crate::keyboard::Keypad;
 use crate::memory::Memory;
 
@@ -69,21 +68,22 @@ impl Console
         {
             ppu.hdraw(irqcnt, memory);
             cpu.run(960, memory);
-            timers.run(960);
+            timers.run(960, irqcnt);
 
             dma.request(memory);
-            irqcnt.request(HBlank);
 
             ppu.hblank(irqcnt);
             cpu.run(272, memory);
-            timers.run(272);
+            timers.run(272, irqcnt);
         }
+
+        dma.request(memory);
 
         for _ in 0..68
         {
             ppu.vblank(irqcnt);
             cpu.run(1232, memory);
-            timers.run(1232);
+            timers.run(1232, irqcnt);
         }
 
         self.window.update_with_buffer(&ppu.buffer, 240, 160).unwrap();
