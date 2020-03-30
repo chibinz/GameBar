@@ -86,7 +86,8 @@ impl Background
     pub fn draw_text(&mut self, vcount: u16, window: &Window, layer: &mut Layer, memory: &Memory)
     {
         // Vertical wrap around
-        let line_n = (vcount + self.vscroll) as u32 % self.height;
+        // dbg!(vcount, self.vscroll);
+        let line_n = (vcount.wrapping_add(self.vscroll)) as u32 % self.height;
 
         for i in 0..self.width
         {
