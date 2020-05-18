@@ -44,6 +44,7 @@ impl Keypad
         }
     }
 }
+
 pub fn input(w: &Window) -> u16
 {
     let mut input = 0x3ff;
