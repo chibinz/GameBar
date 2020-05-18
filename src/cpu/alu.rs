@@ -280,19 +280,6 @@ pub fn mul(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
     result
 }
 
-pub fn mla(cpu: &mut CPU, op1: u32, op2: u32, op3: u32, s: bool) -> u32
-{
-    let result = op2.wrapping_mul(op1).wrapping_add(op3);
-
-    if s
-    {
-        cpu.set_cpsr_bit(N, negative(result));
-        cpu.set_cpsr_bit(Z, zero(result));
-    }
-
-    result
-}
-
 // Shift operations (for thumb)
 
 #[inline]

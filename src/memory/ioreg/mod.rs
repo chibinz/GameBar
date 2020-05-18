@@ -1,8 +1,8 @@
-pub mod ppu;
-pub mod dma;
-pub mod timer;
-pub mod interrupt;
-pub mod keypad;
+mod ppu;
+mod dma;
+mod timer;
+mod interrupt;
+mod keypad;
 
 use super::Memory;
 use super::into16;

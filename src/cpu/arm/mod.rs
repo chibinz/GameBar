@@ -1,14 +1,15 @@
 pub mod disassemble;
-pub mod data_processing;
-pub mod psr_transfer;
-pub mod branch_long;
-pub mod branch_exchange;
-pub mod multiply_accumulate;
-pub mod multiply_long_accumulate;
-pub mod single_data_transfer;
-pub mod single_data_swap;
-pub mod halfword_data_transfer;
 pub mod block_data_transfer;
+
+mod data_processing;
+mod psr_transfer;
+mod branch_long;
+mod branch_exchange;
+mod multiply_accumulate;
+mod multiply_long_accumulate;
+mod single_data_transfer;
+mod single_data_swap;
+mod halfword_data_transfer;
 
 use crate::util::*;
 use crate::cpu::CPU;

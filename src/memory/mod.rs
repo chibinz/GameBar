@@ -1,7 +1,7 @@
-pub mod ioreg;
-pub mod vram;
-pub mod palette;
-pub mod oam;
+mod ioreg;
+mod vram;
+mod palette;
+mod oam;
 
 use std::io::Read;
 use std::fs::File;

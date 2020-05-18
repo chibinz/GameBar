@@ -6,6 +6,7 @@ use minifb::Window;
 use minifb::WindowOptions;
 use crate::console::Console;
 
+#[allow(dead_code)]
 pub struct Debugger<'a>
 {
     pub console   : &'a mut Console,
@@ -13,6 +14,7 @@ pub struct Debugger<'a>
     command   : Vec<String>,
 }
 
+#[allow(dead_code)]
 impl<'a> Debugger<'a>
 {
     pub fn new(c: &'a mut Console) -> Self

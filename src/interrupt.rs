@@ -1,6 +1,7 @@
 use crate::util::*;
 use crate::cpu::CPU;
 
+#[allow(dead_code)]
 #[derive(Clone, Copy)]
 pub enum Interrupt
 {

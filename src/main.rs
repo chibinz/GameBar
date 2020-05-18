@@ -1,15 +1,15 @@
 #![allow(non_snake_case)]
 
-pub mod cpu;
-pub mod ppu;
-pub mod dma;
-pub mod timer;
-pub mod interrupt;
-pub mod memory;
-pub mod console;
-pub mod keyboard;
-pub mod util;
-pub mod debug;
+mod cpu;
+mod ppu;
+mod dma;
+mod timer;
+mod interrupt;
+mod memory;
+mod console;
+mod keyboard;
+mod util;
+mod debug;
 
 use std::env;
 

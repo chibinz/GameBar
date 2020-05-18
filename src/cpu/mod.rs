@@ -1,8 +1,9 @@
-pub mod register;
 pub mod arm;
 pub mod thumb;
-pub mod alu;
-pub mod barrel_shifter;
+
+mod register;
+mod alu;
+mod barrel_shifter;
 
 use register::PSRBit::*;
 use crate::memory::Memory;
@@ -140,6 +141,7 @@ impl CPU
         self.get_cpsr_bit(T)
     }
 
+    #[allow(dead_code)]
     pub fn print(&self, memory: &Memory)
     {
         let mut str = String::new();

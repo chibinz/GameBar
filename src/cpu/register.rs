@@ -4,6 +4,7 @@ use PSRBit::*;
 use PSRMode::*;
 
 /// Bits 31 - 28, 7 - 5 of Current Program Status Register
+#[allow(dead_code)]
 pub enum PSRBit
 {
     N = 31,     // Sign Flag
