@@ -1,8 +1,6 @@
 use crate::util::*;
 use crate::dma::DMAChannel;
 
-use super::Memory;
-
 impl DMAChannel
 {
     #[inline]
@@ -76,15 +74,12 @@ impl DMAChannel
     }
 
     #[inline]
-    pub fn set_control(&mut self, value: u16, memory: &mut Memory)
+    pub fn set_control(&mut self, value: u16)
     {
         self.control = value;
 
         // Initiate a DMA if start mode is immediate
-        if self.enable() && self.start() == 0
-        {
-            self.transfer(memory);
-        }
+        self.active = self.enable() && self.start() == 0;
     }
 
     #[inline]

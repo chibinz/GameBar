@@ -7,6 +7,7 @@ mod barrel_shifter;
 
 use register::PSRBit::*;
 use crate::memory::Memory;
+use crate::dma::DMA;
 
 #[derive(Debug)]
 pub struct CPU
@@ -27,6 +28,11 @@ pub struct CPU
 
     pub booted   : bool,
     pub remaining: i32,     // Remaining ticks till run finish,
+
+    // The CPU halts when DMA is active.
+    // An unfortunate fact that I have to use an unsafe pointer
+    // to poll the current status of the DMA
+    pub dma: *mut DMA,
 }
 
 impl CPU
@@ -45,8 +51,10 @@ impl CPU
             spsr: 0,
             bank: [0; 27],
 
-            booted: false,
+            booted   : false,
             remaining: 0,
+
+            dma: 0 as *mut DMA,
         };
 
         cpu.r[15] = 0x00000004;
@@ -71,7 +79,14 @@ impl CPU
 
     pub fn step(&mut self, memory: &mut Memory)
     {
+        let dma = unsafe {&mut *self.dma};
+        if dma.is_active()
+        {
+            dma.run(&mut self.remaining, memory);
+        }
+
         // if self.r[15] >= 0x08000000 {self.booted = true}
+        self.booted = self.booted || (self.r[15] >= 0x08000000);
         // if self.booted {self.print(memory)}
 
         if self.in_thumb_mode()

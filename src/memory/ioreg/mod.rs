@@ -108,7 +108,6 @@ impl Memory
     {
         let console = unsafe {&mut *self.console};
         let ppu     = &mut console.ppu;
-        let memory  = &mut console.memory;
         let dma     = &mut console.dma;
         let timers  = &mut console.timers;
         let irqcnt  = &mut console.irqcnt;
@@ -163,28 +162,28 @@ impl Memory
             0x0b4 => dma.channel[0].set_dst_l(value),
             0x0b6 => dma.channel[0].set_dst_h(value),
             0x0b8 => dma.channel[0].set_count(value),
-            0x0ba => dma.channel[0].set_control(value, memory),
+            0x0ba => dma.channel[0].set_control(value),
 
             0x0bc => dma.channel[1].set_src_l(value),
             0x0be => dma.channel[1].set_src_h(value),
             0x0c0 => dma.channel[1].set_dst_l(value),
             0x0c2 => dma.channel[1].set_dst_h(value),
             0x0c4 => dma.channel[1].set_count(value),
-            0x0c6 => dma.channel[1].set_control(value, memory),
+            0x0c6 => dma.channel[1].set_control(value),
 
             0x0c8 => dma.channel[2].set_src_l(value),
             0x0ca => dma.channel[2].set_src_h(value),
             0x0cc => dma.channel[2].set_dst_l(value),
             0x0ce => dma.channel[2].set_dst_h(value),
             0x0d0 => dma.channel[2].set_count(value),
-            0x0d2 => dma.channel[2].set_control(value, memory),
+            0x0d2 => dma.channel[2].set_control(value),
 
             0x0d4 => dma.channel[3].set_src_l(value),
             0x0d6 => dma.channel[3].set_src_h(value),
             0x0d8 => dma.channel[3].set_dst_l(value),
             0x0da => dma.channel[3].set_dst_h(value),
             0x0dc => dma.channel[3].set_count(value),
-            0x0de => dma.channel[3].set_control(value, memory),
+            0x0de => dma.channel[3].set_control(value),
 
             // Timer 0 - 3
             0x100 => timers.timer[0].set_reload(value),

@@ -13,6 +13,8 @@ pub struct DMAChannel
     pub dst    : u32,     // Internal register of current destination address
     pub count  : u16,     // Number of word / halfword to be copied
     pub control: u16,     // DMA control bits
+
+    pub active : bool,
 }
 
 impl DMA
@@ -32,12 +34,35 @@ impl DMA
         d
     }
 
+    pub fn run(&mut self, cycles: &mut i32, memory: &mut Memory)
+    {
+        for c in self.channel.iter_mut()
+        {
+            c.transfer(cycles, memory);
+        }
+    }
+
     pub fn request(&mut self, memory: &mut Memory)
     {
-        for i in 0..4
+        let mut n = 100000;
+        for c in self.channel.iter_mut()
         {
-            self.channel[i].transfer(memory);
+            c.transfer(&mut n, memory);
         }
+    }
+
+    /// Check if any dma channel is ready but being held
+    pub fn is_active(&self) -> bool
+    {
+        for c in self.channel.iter()
+        {
+            if c.active
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
@@ -52,10 +77,13 @@ impl DMAChannel
             dst     : 0,
             count   : 0,
             control : 0,
+
+            active  : false,
         }
     }
 
-    pub fn transfer(&mut self, memory: &mut Memory)
+    /// Transfer data and return the number of cycles used
+    pub fn transfer(&mut self, cycles: &mut i32, memory: &mut Memory)
     {
         // TODO special start mode
         if self.start() == 3 {return}
@@ -63,20 +91,25 @@ impl DMAChannel
 
         if self.word_f()
         {
-            self.transfer32(memory);
+            self.transfer32(cycles, memory);
         }
         else
         {
-            self.transfer16(memory);
-        }
+            self.transfer16(cycles, memory);
+        };
+
+        // Premature exit
+        if *cycles <= 0 {return}
 
         if !self.repeat_f()
         {
             self.control &= !0x8000;
         }
+
+        self.active = false;
     }
 
-    pub fn transfer16(&mut self, memory: &mut Memory)
+    pub fn transfer16(&mut self, cycles: &mut i32, memory: &mut Memory)
     {
         // Copy into internal register
         let mut src = self.src;
@@ -87,11 +120,18 @@ impl DMAChannel
 
         for _ in 0..self.count
         {
+            // If allocated time is used up, return early.
+            // dma registers will not be written back
+            if *cycles <= 0 {return}
+
             memory.store16(dst, memory.load16(src));
 
             // Incrment internal register
             src = src.wrapping_add(srcinc);
             dst = dst.wrapping_add(dstinc);
+
+            // TODO improve timing accuracy
+            *cycles -= 2;
         }
 
         // Write back
@@ -99,7 +139,7 @@ impl DMAChannel
         if self.dstcnt() != 3 {self.dst = dst}
     }
 
-    pub fn transfer32(&mut self, memory: &mut Memory)
+    pub fn transfer32(&mut self, cycles: &mut i32, memory: &mut Memory)
     {
         let mut src = self.src;
         let mut dst = self.dst;
@@ -109,10 +149,14 @@ impl DMAChannel
 
         for _ in 0..self.count
         {
+            if *cycles <= 0 {return}
+
             memory.store32(dst, memory.load32(src));
 
             src = src.wrapping_add(srcinc);
             dst = dst.wrapping_add(dstinc);
+
+            *cycles -= 2;
         }
 
         self.src = src;
