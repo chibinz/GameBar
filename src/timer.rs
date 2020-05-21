@@ -51,7 +51,9 @@ impl Timers
 
         for (i, timer) in self.timer.iter_mut().enumerate()
         {
-            let increment = if timer.cascade_f {overflow as u32} else {value};
+            // If timer is set to cascade mode, it always increment by one
+            // regardless of the prescaler value.
+            let increment = if timer.cascade_f {(overflow as u32) * timer.prescaler} else {value};
 
             overflow = timer.increment_counter(increment);
 

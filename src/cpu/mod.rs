@@ -79,13 +79,13 @@ impl CPU
 
     pub fn step(&mut self, memory: &mut Memory)
     {
+        // Poll dma
         let dma = unsafe {&mut *self.dma};
         if dma.is_active()
         {
             dma.run(&mut self.remaining, memory);
         }
 
-        // if self.r[15] >= 0x08000000 {self.booted = true}
         self.booted = self.booted || (self.r[15] >= 0x08000000);
         // if self.booted {self.print(memory)}
 
