@@ -16,7 +16,7 @@ pub struct Memory
     iwram: Vec<u8>,
     ioram: Vec<u8>,
     param: Vec<u8>,
-    vram : Vec<u8>,
+    pub vram : Vec<u8>,
     oam  : Vec<u8>,
     rom  : Vec<u8>,
     sram : Vec<u8>,
@@ -226,15 +226,11 @@ fn mirror(address: u32) -> usize
         0x05 => address % 0x400,
         0x06 =>
             {
+                // vram is mirrored every 0x20000 and
+                // 0x6010000 - 0x6017fff is in turn mirrored from
+                // 0x6018000 - 0x601ffff
                 let b = address % 0x20000;
-                if b > 0x06017fff
-                {
-                    b - 0x8000
-                }
-                else
-                {
-                    b
-                }
+                if b > 0x17fff {b - 0x8000} else {b}
             },
         0x07 => address % 0x400,
         0x08..=

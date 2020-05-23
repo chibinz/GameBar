@@ -1,4 +1,3 @@
-use crate::util::*;
 use crate::memory::Memory;
 
 use super::layer::Layer;
@@ -99,7 +98,7 @@ impl Sprite
     {
         // Vertical wrap around
         let y = (vcount - self.ycoord) % 256;
-        let w = if sequential {self.width / 8} else {8};
+        let w = if sequential {self.width / 8} else {32};
 
         let mut tile_y  = y / 8;
         let mut pixel_y = y % 8;
@@ -156,7 +155,7 @@ impl Sprite
         ycenter %= 256;
 
         let y = vcount as i32 - ycenter;
-        let w = if sequential {self.width / 8} else {8};
+        let w = if sequential {self.width / 8} else {32};
 
         for x in -half_width..half_width
         {
@@ -198,10 +197,15 @@ impl Sprite
 
     pub fn visible(&self, vcount: u32) -> bool
     {
-        let x = sign_extend(self.xcoord, 8);
-        let y = sign_extend(self.ycoord, 7);
+        let v = vcount as i32;
+        let mut x = self.xcoord as i32;
+        let mut y = self.ycoord as i32;
         let mut w = self.width as i32;
         let mut h = self.height as i32;
+
+        // Horizontal and vertical wrap around
+        if x + w > 512 {x -= 512};
+        if y + h > 256 {y -= 256};
 
         if self.double_f
         {
@@ -211,7 +215,7 @@ impl Sprite
 
            x < 240
         && x + w >= 0
-        && y <= vcount as i32
-        && y + h > vcount as i32
+        && y <= v as i32
+        && y + h > v as i32
     }
 }

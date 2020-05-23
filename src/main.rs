@@ -30,7 +30,8 @@ fn main()
     console.memory.load_rom(&args[1]);
     console.memory.load_bios(&"rom/gba_bios.bin".to_string());
 
-    // let mut debugger = debug::Debugger::new(&mut console);
+    // let mut debugger = debug::Debugger::new();
+    // debugger.console = &mut console as *mut console::Console;
 
     while console.window.is_open()
     {

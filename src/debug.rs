@@ -6,25 +6,55 @@ use minifb::Window;
 use minifb::WindowOptions;
 use crate::console::Console;
 
+static WIDTH: usize = 8;
+static HEIGHT: usize = 8;
+
 #[allow(dead_code)]
-pub struct Debugger<'a>
+pub struct Debugger
 {
-    pub console   : &'a mut Console,
     breakpoint: HashSet<u32>,
     command   : Vec<String>,
+    buffer    : Vec<u32>,
+    window    : Window,
+
+    pub counter   : i32,
+    pub console   : *mut Console,
 }
 
 #[allow(dead_code)]
-impl<'a> Debugger<'a>
+impl Debugger
 {
-    pub fn new(c: &'a mut Console) -> Self
+    pub fn new() -> Self
     {
         Self
         {
-            console   : c,
             breakpoint: HashSet::new(),
             command   : vec![String::from("s")],
+            buffer    : vec![0; WIDTH * HEIGHT],
+            window    : Window::new
+            (
+                "Close to continue",
+                WIDTH,
+                HEIGHT,
+                WindowOptions
+                {
+                    scale: minifb::Scale::X32,
+                    ..WindowOptions::default()
+                },
+            ).unwrap(),
+
+            counter   : 0,
+            console   : 0 as *mut Console,
         }
+    }
+
+    #[inline]
+    pub fn c(&self) -> &mut Console
+    {
+        let c = unsafe {&mut *self.console};
+        assert_eq!(c.magic, 0xdeadbeef);
+
+        c
     }
 
     pub fn run(&mut self)
@@ -37,10 +67,16 @@ impl<'a> Debugger<'a>
 
     pub fn step(&mut self)
     {
-        self.prompt();
-        self.dispatch();
-    }
+        // self.prompt();
+        // self.dispatch();
+        if self.counter == 60
+        {
+            self.display_tile(0x331);
+            self.counter = 0;
+        }
 
+        self.counter += 1;
+    }
 
     pub fn prompt(&mut self)
     {
@@ -65,8 +101,8 @@ impl<'a> Debugger<'a>
     {
         match self.command[0].as_str()
         {
-            "s" => self.console.step(),
-            // "p" => self.console.print(),
+            "s" => self.c().step(),
+            // "p" => self.c().print(),
             "c" => self.continue_run(),
             "b" => self.insert_breakpoint(),
             "d" => self.delete_breakpoint(),
@@ -82,7 +118,7 @@ impl<'a> Debugger<'a>
     {
         while !self.breakpoint_hit()
         {
-            self.console.step()
+            self.c().step()
         }
     }
 
@@ -128,7 +164,7 @@ impl<'a> Debugger<'a>
 
     fn breakpoint_hit(&mut self) -> bool
     {
-        self.breakpoint.contains(&(self.console.cpu.r[15]))
+        self.breakpoint.contains(&(self.c().cpu.r[15]))
     }
 
     fn examine_memory(&mut self)
@@ -140,7 +176,7 @@ impl<'a> Debugger<'a>
             print!("{:08x}:   ", address + i * 16);
             for j in 0..16
             {
-                let value = self.console.memory.load8(address + i * 16 + j);
+                let value = self.c().memory.load8(address + i * 16 + j);
 
                 print!("{:02x} ", value);
             }
@@ -148,39 +184,40 @@ impl<'a> Debugger<'a>
         }
     }
 
-    fn display_palette(&self)
+    pub fn display_palette(&mut self)
     {
-        let mut window = Window::new
-        (
-            "Close to continue",
-            32,
-            16,
-            WindowOptions
-            {
-                scale: minifb::Scale::X16,
-                ..WindowOptions::default()
-            },
-        ).unwrap();
-
-        window.limit_update_rate(Some(std::time::Duration::from_secs(1)));
-
-        let mut buffer: Vec<u32> = vec![0; 32 * 16];
-
         for i in 0..0x100
         {
-            buffer[i] = self.console.memory.bg_palette(0, i as u32);
+            self.buffer[i] = self.c().memory.bg_palette(0, i as u32);
         }
 
         for i in 0..0x100
         {
-            buffer[i + 0x100] = self.console.memory.obj_palette(0, i as u32);
+            self.buffer[i + 0x100] = self.c().memory.obj_palette(0, i as u32);
         }
 
-        while window.is_open()
+        while self.window.is_open()
         {
-            window.update_with_buffer(&buffer, 32, 16).unwrap();
+            self.window.update_with_buffer(&self.buffer, 32, 16).unwrap();
+        }
+    }
+
+    pub fn display_tile(&mut self, index: usize)
+    {
+        let palette_num = 0;
+
+        for p in 0..(8*8)
+        {
+            // 32 bytes per tile
+            let index = index * 32 + p / 2 + 0x10000;
+            let byte = self.c().memory.vram[index];
+            let nibble = if p & 1 == 1 {byte >> 4} else {byte & 0x0f};
+
+            let color = self.c().memory.obj_palette(palette_num, nibble as u32);
+
+            self.buffer[p] = color;
         }
 
-        println!("");
+        self.window.update_with_buffer(&self.buffer, WIDTH, HEIGHT).unwrap();
     }
 }
