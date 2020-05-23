@@ -4,6 +4,7 @@ use std::collections::HashSet;
 
 use minifb::Window;
 use minifb::WindowOptions;
+use crate::util::*;
 use crate::console::Console;
 
 static WIDTH: usize = 8;
@@ -188,12 +189,12 @@ impl Debugger
     {
         for i in 0..0x100
         {
-            self.buffer[i] = self.c().memory.bg_palette(0, i as u32);
+            self.buffer[i] = self.c().memory.bg_palette(0, i as u32).to_rgb24();
         }
 
         for i in 0..0x100
         {
-            self.buffer[i + 0x100] = self.c().memory.obj_palette(0, i as u32);
+            self.buffer[i + 0x100] = self.c().memory.obj_palette(0, i as u32).to_rgb24();
         }
 
         while self.window.is_open()
@@ -215,7 +216,7 @@ impl Debugger
 
             let color = self.c().memory.obj_palette(palette_num, nibble as u32);
 
-            self.buffer[p] = color;
+            self.buffer[p] = color.to_rgb24();
         }
 
         self.window.update_with_buffer(&self.buffer, WIDTH, HEIGHT).unwrap();

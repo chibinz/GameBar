@@ -1,7 +1,7 @@
 use crate::util::*;
 use crate::memory::Memory;
 
-use super::color::*;
+use super::TRANSPARENT;
 use super::layer::Layer;
 use super::window::Window;
 
@@ -50,7 +50,7 @@ pub struct Background
     pub internal : (i32, i32),
 
     // Line buffer
-    pub pixel    : Vec<u32>,
+    pub pixel    : Vec<u16>,
 }
 
 impl Background
@@ -176,7 +176,7 @@ impl Background
         for x in 0..240
         {
             let pixel = memory.vram16((line_n * 240 + x) * 2);
-            layer.paint(x, RGB(pixel), window, 2);
+            layer.paint(x, pixel, window, 2);
         }
     }
 
@@ -200,7 +200,7 @@ impl Background
         for x in 0..160
         {
             let pixel = memory.vram16(start + (line_n * 160 + x) * 2);
-            layer.paint(x, RGB(pixel), window, 2);
+            layer.paint(x, pixel, window, 2);
         }
     }
 }

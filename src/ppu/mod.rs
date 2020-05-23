@@ -1,4 +1,3 @@
-pub mod color;
 pub mod layer;
 pub mod background;
 pub mod sprite;
@@ -9,11 +8,12 @@ use crate::memory::Memory;
 use crate::interrupt::IRQController;
 use crate::interrupt::Interrupt::*;
 
-use color::*;
 use layer::Layer;
 use background::Background;
 use sprite::Sprite;
 use window::Window;
+
+pub static TRANSPARENT: u16 = 0x8000;
 
 pub struct PPU
 {
@@ -78,7 +78,7 @@ impl PPU
         assert!(self.vcount < 160);
 
         // Setup backdrop color
-        for p in self.layer[4].pixel.iter_mut() {*p = memory.backdrop();}
+        for p in self.layer[4].pixel.iter_mut() {*p = memory.backdrop()}
 
         for i in 0..4
         {
@@ -131,7 +131,7 @@ impl PPU
                 // Render the topmost opaque color
                 if pixel != TRANSPARENT
                 {
-                    line[i] = pixel;
+                    line[i] = pixel.to_rgb24();
                     break
                 }
             }

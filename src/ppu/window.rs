@@ -1,6 +1,6 @@
 use crate::util::*;
 use crate::memory::Memory;
-use crate::ppu::color::*;
+use crate::ppu::TRANSPARENT;
 use crate::ppu::layer::Layer;
 
 pub struct Window

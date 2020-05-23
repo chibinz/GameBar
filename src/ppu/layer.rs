@@ -1,10 +1,10 @@
-use super::color::*;
+use super::TRANSPARENT;
 use super::window::Window;
 
 #[derive(Clone)]
 pub struct Layer
 {
-    pub pixel: Vec<u32>,
+    pub pixel: Vec<u16>,
 }
 
 impl Layer
@@ -17,12 +17,9 @@ impl Layer
         }
     }
 
-    pub fn paint(&mut self, x: u32, color: u32, window: &Window, index: u32)
+    pub fn paint(&mut self, x: u32, color: u16, window: &Window, index: u32)
     {
-        if color == TRANSPARENT || x >= 240
-        {
-            return
-        }
+        if color == TRANSPARENT || x >= 240 {return}
 
         if window.get_display_flag(x, index)
         {

@@ -29,6 +29,24 @@ impl<T: std::convert::Into<u32>> BitField for T
     }
 }
 
+pub trait Color
+{
+    fn to_rgb24(self) -> u32;
+}
+
+impl Color for u16
+{
+    /// RGB15 -> RGB24 conversion
+    fn to_rgb24(self) -> u32
+    {
+        let r = self.bits(4, 0) << 19;
+        let g = self.bits(9, 5) << 11;
+        let b = self.bits(14, 10) << 3;
+
+        r | g | b
+    }
+}
+
 /// Sign extend a word.
 /// `s` is the place of the most significant bit.
 #[inline]
