@@ -78,10 +78,7 @@ impl PPU
         assert!(self.vcount < 160);
 
         // Setup backdrop color
-        for pixel in self.layer[4].pixel.iter_mut()
-        {
-            *pixel = memory.bg_palette(0, 0);
-        }
+        for p in self.layer[4].pixel.iter_mut() {*p = memory.backdrop();}
 
         for i in 0..4
         {
