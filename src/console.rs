@@ -6,7 +6,6 @@ use crate::interrupt::IRQController;
 use crate::keyboard::Keypad;
 use crate::memory::Memory;
 
-
 use minifb::Window;
 use minifb::WindowOptions;
 

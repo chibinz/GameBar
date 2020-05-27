@@ -12,14 +12,18 @@ mod util;
 mod debug;
 
 use std::env;
+use std::marker::Send;
+
+unsafe impl Send for debug::Debugger {}
 
 fn main()
 {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() == 1
+    if args.len() != 2
     {
-        panic!("usage: gba <rom>");
+        usage();
+        return;
     }
 
     let mut console = console::Console::new();
@@ -30,15 +34,25 @@ fn main()
     console.memory.load_rom(&args[1]);
     console.memory.load_bios(&"rom/gba_bios.bin".to_string());
 
-    // let mut debugger = debug::Debugger::new();
-    // debugger.console = &mut console as *mut console::Console;
+    let mut debugger = debug::Debugger::new();
+    debugger.console = &mut console as *mut console::Console;
+
+    std::thread::spawn(move || debug(debugger));
 
     while console.window.is_open()
     {
         let input = keyboard::input(&console.window);
         console.keypad.set_input(input, &mut console.irqcnt);
         console.step_frame();
-
-        // debugger.step();
     }
+}
+
+fn usage()
+{
+    println!("usage: GameBar <rom>");
+}
+
+fn debug(mut debugger: debug::Debugger)
+{
+    debugger.run();
 }

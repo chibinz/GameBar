@@ -70,13 +70,9 @@ impl Debugger
     {
         // self.prompt();
         // self.dispatch();
-        if self.counter == 60
-        {
-            self.display_tile(0x331);
-            self.counter = 0;
-        }
 
-        self.counter += 1;
+        self.c().cpu.print(&self.c().memory);
+        // self.display_tile(36);
     }
 
     pub fn prompt(&mut self)

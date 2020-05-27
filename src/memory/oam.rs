@@ -47,7 +47,7 @@ impl Memory
         sprite.xcoord   = attr1.bits(8, 0);
         sprite.hflip    = !attr0.bit(8) && attr1.bit(12);
         sprite.vflip    = !attr0.bit(8) && attr1.bit(13);
-        sprite.affine_i = attr1.bits(11, 10);
+        sprite.affine_i = attr1.bits(13, 9);
         sprite.width    = DIMENSION[shape][size].0;
         sprite.height   = DIMENSION[shape][size].1;
     }
