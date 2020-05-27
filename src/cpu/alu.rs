@@ -165,7 +165,7 @@ pub fn add(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 #[inline]
 pub fn adc(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 {
-    let carry = if cpu.get_cpsr_bit(C) {1} else {0};
+    let carry = cpu.get_cpsr_bit(C) as u32;
     let result = op1.wrapping_add(op2.wrapping_add(carry));
 
     if s
@@ -214,7 +214,7 @@ pub fn rsb(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 #[inline]
 pub fn sbc(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 {
-    let carry: u32 = if cpu.get_cpsr_bit(C) {1} else {0};
+    let carry: u32 = cpu.get_cpsr_bit(C) as u32;
     let opc = op2.wrapping_sub(carry).wrapping_add(1);
     let result = op1.wrapping_sub(opc);
 
@@ -232,7 +232,7 @@ pub fn sbc(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 #[inline]
 pub fn rsc(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32
 {
-    let carry: u32 = if cpu.get_cpsr_bit(C) {1} else {0};
+    let carry: u32 = cpu.get_cpsr_bit(C) as u32;
     let opc = op1.wrapping_sub(carry).wrapping_add(1);
     let result = op2.wrapping_sub(opc);
 

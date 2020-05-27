@@ -29,6 +29,7 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
 pub fn fetch(cpu: &mut CPU, memory: &mut Memory)
 {
     cpu.instruction = memory.load32(cpu.r[15] - 4);
+    cpu.prefetched = memory.load32(cpu.r[15]);
 }
 
 #[inline]

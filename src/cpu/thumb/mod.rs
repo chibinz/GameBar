@@ -35,6 +35,7 @@ pub fn step(cpu: &mut CPU, memory: &mut Memory)
 pub fn fetch(cpu: &mut CPU, memory: &mut Memory)
 {
     cpu.instruction = memory.load16(cpu.r[15] - 2) as u32;
+    cpu.prefetched = memory.load16(cpu.r[15]) as u32;
 }
 
 #[inline]

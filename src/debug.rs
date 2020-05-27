@@ -3,7 +3,7 @@ use std::process::exit;
 use std::collections::HashSet;
 
 use minifb::Window;
-use minifb::WindowOptions;
+// use minifb::WindowOptions;
 use crate::util::*;
 use crate::console::Console;
 
@@ -16,7 +16,6 @@ pub struct Debugger
     breakpoint: HashSet<u32>,
     command   : Vec<String>,
     buffer    : Vec<u32>,
-    window    : Window,
 
     pub counter   : i32,
     pub console   : *mut Console,
@@ -32,17 +31,6 @@ impl Debugger
             breakpoint: HashSet::new(),
             command   : vec![String::from("s")],
             buffer    : vec![0; WIDTH * HEIGHT],
-            window    : Window::new
-            (
-                "Close to continue",
-                WIDTH,
-                HEIGHT,
-                WindowOptions
-                {
-                    scale: minifb::Scale::X32,
-                    ..WindowOptions::default()
-                },
-            ).unwrap(),
 
             counter   : 0,
             console   : 0 as *mut Console,
@@ -68,10 +56,8 @@ impl Debugger
 
     pub fn step(&mut self)
     {
-        // self.prompt();
-        // self.dispatch();
+        self.c().cpu.print();
 
-        self.c().cpu.print(&self.c().memory);
         // self.display_tile(36);
     }
 
@@ -105,7 +91,7 @@ impl Debugger
             "d" => self.delete_breakpoint(),
             "l" => self.list_breakpoint(),
             "x" => self.examine_memory(),
-            "dp" => self.display_palette(),
+            // "dp" => self.display_palette(),
             "q" => exit(0),
             _   => println!("Invalid input"),
         }
@@ -181,7 +167,7 @@ impl Debugger
         }
     }
 
-    pub fn display_palette(&mut self)
+    pub fn display_palette(&mut self, window: &mut Window)
     {
         for i in 0..0x100
         {
@@ -193,13 +179,10 @@ impl Debugger
             self.buffer[i + 0x100] = self.c().memory.obj_palette(0, i as u32).to_rgb24();
         }
 
-        while self.window.is_open()
-        {
-            self.window.update_with_buffer(&self.buffer, 32, 16).unwrap();
-        }
+        window.update_with_buffer(&self.buffer, 32, 16).unwrap();
     }
 
-    pub fn display_tile(&mut self, index: usize)
+    pub fn display_tile(&mut self, index: usize, window: &mut Window)
     {
         let palette_num = 0;
 
@@ -215,6 +198,6 @@ impl Debugger
             self.buffer[p] = color.to_rgb24();
         }
 
-        self.window.update_with_buffer(&self.buffer, WIDTH, HEIGHT).unwrap();
+        window.update_with_buffer(&self.buffer, WIDTH, HEIGHT).unwrap();
     }
 }

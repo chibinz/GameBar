@@ -92,5 +92,6 @@ impl Console
     pub fn step(&mut self)
     {
         self.cpu.step(&mut self.memory);
+        self.cpu.print();
     }
 }

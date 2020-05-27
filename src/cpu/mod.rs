@@ -13,6 +13,7 @@ use crate::dma::DMA;
 pub struct CPU
 {
     pub instruction: u32,   // Next instruction to execute
+    pub prefetched: u32,    // Prefetched instruction
     pub r: [u32; 16],       // General purpose registers
 
     cpsr : u32,             // Current Program Status Register
@@ -43,6 +44,7 @@ impl CPU
         Self
         {
             instruction: 0,
+            prefetched: 0,
             r   : [0; 16],
 
             // On reset, CPSR is forced to supervisor mode
@@ -157,7 +159,7 @@ impl CPU
     }
 
     #[allow(dead_code)]
-    pub fn print(&self, memory: &Memory)
+    pub fn print(&self)
     {
         let mut str = String::new();
 
@@ -183,17 +185,17 @@ impl CPU
         str += "]";
         str += "\n";
 
+        let instruction = self.prefetched;
+
         if self.in_thumb_mode()
         {
             let address = self.r[15] - 2;
-            let instruction = memory.load16(address);
             str += &format!("{:08x}: {:04x} ", address, instruction);
-            str += &format!("{}", thumb::disassemble::disassemble(instruction));
+            str += &format!("{}", thumb::disassemble::disassemble(instruction as u16));
         }
         else
         {
             let address = self.r[15] - 4;
-            let instruction = memory.load32(address);
             str += &format!("{:08x}: {:08x} ", address, instruction);
             str += &format!("{}", arm::disassemble::disassemble(instruction));
         }
