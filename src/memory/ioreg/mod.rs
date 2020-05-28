@@ -12,7 +12,7 @@ impl Memory
     pub fn ioram_load8(&self, address: u32) -> u8
     {
         let value = self.ioram_load16(address);
-        if address & 1 == 1 {(value >> 8) as u8} else {value as u8}
+        value.to_le_bytes()[address as usize & 1]
     }
 
     pub fn ioram_load16(&self, address: u32) -> u16
@@ -100,7 +100,12 @@ impl Memory
     #[inline]
     pub fn ioram_store8(&mut self, address: u32, value: u8)
     {
-        self.ioram_store16(address, value as u16);
+        let mut old = self.load16(address).to_le_bytes();
+        old[address as usize & 1] = value;
+        let new = u16::from_le_bytes(old);
+
+        // Beware of side effects
+        self.store16(address, new);
     }
 
     pub fn ioram_store16(&mut self, address: u32, value: u16)

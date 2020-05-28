@@ -26,6 +26,10 @@ pub struct PPU
     pub sequential: bool,           // Determine layout of sprites, 1 - 1d, 0 - 2d
     pub fblank    : bool,           // Force blanking
 
+    pub palette   : Vec<u16>,       // 16 bit colors
+    pub vram      : Vec<u8>,        // Tile mapping
+    pub obj_param : Vec<u16>,       // Affine sprite rotation / scaling parameter
+
     pub background: Vec<Background>,   // Background 0 - 3
     pub sprite    : Vec<Sprite>,       // Sprite 0 - 127
     pub window    : Window,
@@ -47,6 +51,10 @@ impl PPU
             sequential: false,
             fblank    : false,
             vcount    : 227, // VCount is incremented at beginning of each newline
+
+            palette   : vec![0; 0x200],
+            vram      : vec![0; 0x18000],
+            obj_param : vec![0; 0x100],
 
             background: vec![Background::new(); 4],
             sprite    : vec![Sprite::new(); 128],
@@ -156,8 +164,6 @@ impl PPU
     {
         for sprite in self.sprite.iter_mut().rev()
         {
-            memory.update_sprite(sprite);
-
             let priority = sprite.priority as usize;
             let layer = &mut self.layer[priority];
 

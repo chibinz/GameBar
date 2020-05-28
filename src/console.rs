@@ -78,6 +78,8 @@ impl Console
 
         dma.request(memory);
 
+        dbg!(&ppu.sprite[0]);
+
         for _ in 0..68
         {
             ppu.vblank(irqcnt);
