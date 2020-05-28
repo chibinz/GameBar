@@ -85,7 +85,7 @@ impl PPU
             self.layer[i].clear();
         }
 
-        self.draw_window(memory);
+        self.draw_window();
 
         self.draw_background(memory);
 
@@ -165,43 +165,43 @@ impl PPU
         }
     }
 
-    pub fn draw_window(&mut self, memory: &Memory)
+    pub fn draw_window(&mut self)
     {
         let window = &mut self.window;
         window.clear();
 
         if self.dispcnt.bits(15, 13) > 0
         {
-            window.draw_winout(memory);
+            window.draw_winout();
         }
 
-        if self.dispcnt.bit(15)
-        {
-            let mut layer = Layer::new();
-            let mut dummy = Window::new(); // Dummy window to let all sprite be drawn
-            dummy.clear();
+        // if self.dispcnt.bit(15)
+        // {
+        //     let mut layer = Layer::new();
+        //     let mut dummy = Window::new(); // Dummy window to let all sprite be drawn
+        //     dummy.clear();
 
-            for sprite in self.sprite.iter_mut().rev()
-            {
-                memory.update_sprite(sprite);
+        //     for sprite in self.sprite.iter_mut().rev()
+        //     {
+        //         memory.update_sprite(sprite);
 
-                if sprite.mode == 0b10 // Window mode
-                {
-                    sprite.draw(self.vcount as u32, self.sequential, &dummy, &mut layer, memory);
-                }
-            }
+        //         if sprite.mode == 0b10 // Window mode
+        //         {
+        //             sprite.draw(self.vcount as u32, self.sequential, &dummy, &mut layer, memory);
+        //         }
+        //     }
 
-            window.draw_objwin(&layer, memory)
-        }
+        //     window.draw_objwin(&layer)
+        // }
 
         if self.dispcnt.bit(14)
         {
-            window.draw_winin(self.vcount as u32, 1, memory);
+            window.draw_winin(self.vcount as u32, 1);
         }
 
         if self.dispcnt.bit(13)
         {
-            window.draw_winin(self.vcount as u32, 0, memory);
+            window.draw_winin(self.vcount as u32, 0);
         }
     }
 

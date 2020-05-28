@@ -5,18 +5,9 @@ mod interrupt;
 mod keypad;
 
 use super::Memory;
-use super::into16;
 
 impl Memory
 {
-    /// Return a halfword from ioram, offset is in bytes
-    #[inline]
-    pub fn ioram16(&self, offset: usize) -> u16
-    {
-        let a = offset as usize;
-        into16(&self.ioram[a..a+2])
-    }
-
     #[inline]
     pub fn ioram_load8(&self, address: u32) -> u8
     {
@@ -46,6 +37,14 @@ impl Memory
             0x00c => ppu.background[2].get_control(),
             0x00e => ppu.background[3].get_control(),
             // Background offset & rotation registers are write only
+
+            0x040 => ppu.window.get_win0h(),
+            0x042 => ppu.window.get_win1h(),
+            0x044 => ppu.window.get_win0v(),
+            0x046 => ppu.window.get_win1v(),
+            0x048 => ppu.window.get_winin(),
+            0x04a => ppu.window.get_winout(),
+            // Window boundary register are write only
 
             0x0b0 => dma.channel[0].get_src_l(),
             0x0b2 => dma.channel[0].get_src_h(),
@@ -86,7 +85,7 @@ impl Memory
             0x200 => irqcnt.get_ie(),
             0x202 => irqcnt.get_irf(),
             0x208 => irqcnt.get_ime(),
-            _     => into16(&self.ioram[ioreg..ioreg+2]),
+            _     => {Self::unhandled(true, 2, address); 0},
         }
     }
 
@@ -156,6 +155,13 @@ impl Memory
             0x03c => ppu.background[3].set_y_l(value),
             0x03e => ppu.background[3].set_y_h(value),
 
+            0x040 => ppu.window.set_win0h(value),
+            0x042 => ppu.window.set_win1h(value),
+            0x044 => ppu.window.set_win0v(value),
+            0x046 => ppu.window.set_win1v(value),
+            0x048 => ppu.window.set_winin(value),
+            0x04a => ppu.window.set_winout(value),
+
             // DMA 0 - 3
             0x0b0 => dma.channel[0].set_src_l(value),
             0x0b2 => dma.channel[0].set_src_h(value),
@@ -204,10 +210,6 @@ impl Memory
             0x208 => irqcnt.set_ime(value),
             _     => Self::unhandled(false, 2, address),
         }
-
-        let a = value.to_le_bytes();
-        self.ioram[ioreg]     = a[0];
-        self.ioram[ioreg + 1] = a[1];
     }
 
     #[inline]
