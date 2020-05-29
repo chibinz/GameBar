@@ -1,9 +1,8 @@
 use crate::util::*;
 use crate::memory::Memory;
 
+use super::PPU;
 use super::TRANSPARENT;
-use super::layer::Layer;
-use super::window::Window;
 
 /// Background dimension in pixels
 pub static DIMENSION: [[(u32, u32); 4]; 2] =
@@ -82,21 +81,27 @@ impl Background
             pixel    : vec![0; 1024],
         }
     }
+}
 
-    pub fn draw_text(&mut self, vcount: u16, window: &Window, layer: &mut Layer, memory: &Memory)
+impl PPU
+{
+    pub fn draw_text_background(&mut self, index: usize, memory: &Memory)
     {
-        // Vertical wrap around
-        // dbg!(vcount, self.vscroll);
-        let line_n = (vcount.wrapping_add(self.vscroll)) as u32 % self.height;
+        let bg = &self.background[index];
+        let vcount = self.vcount;
+        let window = &self.window;
 
-        for i in 0..self.width
+        // Vertical wrap around
+        let line_n = (vcount.wrapping_add(bg.vscroll)) as u32 % bg.height;
+
+        for i in 0..bg.width
         {
             let tile_x      = i / 8;
             let tile_y      = line_n / 8;
             let mut pixel_x = i % 8;
             let mut pixel_y = line_n % 8;
 
-            let tile_entry = memory.text_tile_map(self.map_b, self.size_r, tile_x, tile_y);
+            let tile_entry = memory.text_tile_map(bg.map_b, bg.size_r, tile_x, tile_y);
 
             let tile_n    = tile_entry.bits(9, 0);
             let hflip     = tile_entry.bit(10);
@@ -106,48 +111,53 @@ impl Background
             if hflip {pixel_x = 7 - pixel_x};
             if vflip {pixel_y = 7 - pixel_y};
 
-            let palette_entry = memory.tile_data(self.palette_f, self.tile_b, tile_n, pixel_x, pixel_y);
+            let palette_entry = memory.tile_data(bg.palette_f, bg.tile_b, tile_n, pixel_x, pixel_y);
 
             // Horizontal wrap around
-            let x = i.wrapping_sub(self.hscroll as u32) % self.width;
-            let color = memory.bg_palette(palette_n, palette_entry);
+            let x = i.wrapping_sub(bg.hscroll as u32) % bg.width;
+            let color = self.bg_palette(palette_n, palette_entry);
 
-            layer.paint(x, color, window, self.index as u32);
+            let layer = &mut self.layer[bg.priority as usize];
+            layer.paint(x, color, window, bg.index as u32);
         }
     }
 
-    pub fn draw_affine(&mut self, vcount: u16, window: &Window, layer: &mut Layer, memory: &Memory)
+    pub fn draw_affine_background(&mut self, index: usize, memory: &Memory)
     {
-        if vcount == 0 {self.internal = self.coord}
+        let bg = &mut self.background[index];
+        let vcount = self.vcount;
+        let window = &self.window;
 
-        for i in 0..self.width
+        if vcount == 0 {bg.internal = bg.coord}
+
+        for i in 0..bg.width
         {
-            let mut text_x = (self.matrix.0 * i as i32 + self.internal.0) >> 8;
-            let mut text_y = (self.matrix.2 * i as i32 + self.internal.1) >> 8;
+            let mut text_x = (bg.matrix.0 * i as i32 + bg.internal.0) >> 8;
+            let mut text_y = (bg.matrix.2 * i as i32 + bg.internal.1) >> 8;
 
             // TODO: Refactor into macro
-            if out_of_bound(text_x, self.width)
+            if out_of_bound(text_x, bg.width)
             {
-                if self.wrap_f
+                if bg.wrap_f
                 {
-                    text_x = wrap_around(text_x, self.width)
+                    text_x = wrap_around(text_x, bg.width)
                 }
                 else
                 {
-                    self.pixel[i as usize] = TRANSPARENT;
+                    bg.pixel[i as usize] = TRANSPARENT;
                     continue
                 }
             }
 
-            if out_of_bound(text_y, self.height)
+            if out_of_bound(text_y, bg.height)
             {
-                if self.wrap_f
+                if bg.wrap_f
                 {
-                    text_y = wrap_around(text_y, self.height)
+                    text_y = wrap_around(text_y, bg.height)
                 }
                 else
                 {
-                    self.pixel[i as usize] = TRANSPARENT;
+                    bg.pixel[i as usize] = TRANSPARENT;
                     continue
                 }
             }
@@ -157,21 +167,24 @@ impl Background
             let pixel_x = text_x as u32 % 8;
             let pixel_y = text_y as u32 % 8;
 
-            let tile_n = memory.affine_tile_map(self.map_b, self.size_r, tile_x, tile_y) as u32;
-            let palette_entry = memory.tile_data8(self.tile_b, tile_n, pixel_x, pixel_y);
+            let tile_n = memory.affine_tile_map(bg.map_b, bg.size_r, tile_x, tile_y) as u32;
+            let palette_entry = memory.tile_data8(bg.tile_b, tile_n, pixel_x, pixel_y);
 
-            let color = memory.bg_palette(0, palette_entry);
+            let color = self.palette[palette_entry as usize];
 
-            layer.paint(i, color, window, self.index as u32);
+            let layer = &mut self.layer[bg.priority as usize];
+            layer.paint(i, color, window, bg.index as u32);
         }
 
-        self.internal.0 += self.matrix.1;
-        self.internal.1 += self.matrix.3;
+        bg.internal.0 += bg.matrix.1;
+        bg.internal.1 += bg.matrix.3;
     }
 
-    pub fn draw_bitmap_3(&mut self, vcount: u16, window: &Window, layer: &mut Layer, memory: &Memory)
+    pub fn draw_bitmap_3(&mut self, memory: &Memory)
     {
-        let line_n = vcount as u32;
+        let line_n = self.vcount as u32;
+        let layer = &mut self.layer[0];
+        let window = &self.window;
 
         for x in 0..240
         {
@@ -180,22 +193,26 @@ impl Background
         }
     }
 
-    pub fn draw_bitmap_4(&mut self, vcount: u16, flip: bool, window: &Window, layer: &mut Layer, memory: &Memory)
+    pub fn draw_bitmap_4(&mut self, memory: &Memory)
     {
-        let start = if flip {0xa000} else {0};
-        let line_n = vcount as u32;
+        let start = if self.flip {0xa000} else {0};
+        let line_n = self.vcount as u32;
 
         for x in 0..240
         {
             let palette_entry = memory.vram8(start + line_n * 240 + x);
-            layer.paint(x, memory.bg_palette(0, palette_entry as u32), window, 2);
+            let color = self.bg_palette(0, palette_entry as u32);
+            self.layer[0].paint(x, color, &self.window, 2);
         }
     }
 
-    pub fn draw_bitmap_5(&mut self, vcount: u16, flip: bool, window: &Window, layer: &mut Layer, memory: &Memory)
+    pub fn draw_bitmap_5(&mut self, memory: &Memory)
     {
-        let start = if flip {0xa000} else {0};
-        let line_n = vcount as u32;
+        let start = if self.flip {0xa000} else {0};
+        let line_n = self.vcount as u32;
+        let layer = &mut self.layer[0];
+        let window = &self.window;
+        if line_n > 127 {return}
 
         for x in 0..160
         {

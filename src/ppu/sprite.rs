@@ -1,7 +1,6 @@
 use crate::memory::Memory;
 
-use super::layer::Layer;
-use super::window::Window;
+use super::PPU;
 
 /// Sprite dimension in pixels
 pub static DIMENSION: [[(u32, u32); 4]; 3] =
@@ -85,62 +84,7 @@ impl Sprite
         DIMENSION[self.shape as usize][self.size as usize]
     }
 
-    pub fn draw(&mut self, vcount: u32, sequential: bool, window: &Window,
-                layer: &mut Layer, memory: &Memory, mat: &mut Vec<u16>)
-    {
-        if !self.disabled() && self.visible(vcount)
-        {
-            if self.affine_f
-            {
-                self.draw_affine(vcount, sequential, window, layer, memory, mat)
-            }
-            else
-            {
-                self.draw_text(vcount, sequential, window, layer, memory)
-            }
-        }
-    }
-
-    pub fn draw_text(&mut self, vcount: u32, sequential: bool, window: &Window, layer: &mut Layer, memory: &Memory)
-    {
-        let (width, height) = self.get_dimension();
-
-        // Vertical wrap around
-        let y = (vcount - self.ycoord) % 256;
-        let w = if sequential {width / 8} else {32};
-
-        let mut tile_y  = y / 8;
-        let mut pixel_y = y % 8;
-        if self.vflip
-        {
-            tile_y  = height / 8 - tile_y - 1;
-            pixel_y = 7 - pixel_y;
-        }
-
-        for i in 0..width
-        {
-            let mut tile_x  = i / 8;
-            let mut pixel_x = i % 8;
-            if self.hflip
-            {
-                tile_x  = width / 8 - tile_x - 1;
-                pixel_x = 7 - pixel_x;
-            }
-
-            // Sprite tile data starts at 4 * 0x4000 = 0x10000
-            let tile_b = 4;
-            let tile_n = self.tile_n + tile_y * w + tile_x;
-
-            let palette_entry = memory.tile_data(self.palette_f, tile_b, tile_n, pixel_x, pixel_y);
-
-            // Horizontal wrap around
-            let x = (self.xcoord + i) % 512;
-            let color = memory.obj_palette(self.palette_n, palette_entry);
-
-            layer.paint(x, color, window, 4);
-        }
-    }
-
+    #[inline]
     pub fn get_affine_matrix(&self, mat: &mut Vec<u16>) -> (i32, i32, i32, i32)
     {
         let index = self.affine_i as usize * 4;
@@ -153,73 +97,13 @@ impl Sprite
         (pa, pb, pc, pd)
     }
 
-    #[allow(unused_assignments)]
-    pub fn draw_affine(&mut self, vcount: u32, sequential: bool, window: &Window, layer: &mut Layer, memory: &Memory, mat: &mut Vec<u16>)
-    {
-        let (width, height) = self.get_dimension();
-
-        let mut half_width = width as i32/ 2;
-        let mut half_height = height as i32 / 2;
-
-        let mut xcenter = self.xcoord as i32 + half_width;
-        let mut ycenter = self.ycoord as i32 + half_height;
-
-        // Double flag only doubles the viewport size, not the sprite size
-        if self.double_f
-        {
-            xcenter     += half_width;
-            ycenter     += half_height;
-            half_width  *= 2;
-            half_height *= 2;
-        }
-
-        // Wrap around
-        xcenter %= 512;
-        ycenter %= 256;
-
-        let y = vcount as i32 - ycenter;
-        let w = if sequential {width / 8} else {32};
-
-        let (pa, pb, pc, pd) = self.get_affine_matrix(mat);
-
-        for x in -half_width..half_width
-        {
-            // Due to the linearity of the transform matrix, the origin is preserved.
-            // That is, the screen origin overlaps the texture origin.
-            // The transform matrix takes relative ONSCREEN distance to the origin as input
-            // and transforms it into relative TEXTURE distance to origin.
-            let text_x = ((pa * x + pb * y) >> 8) + width as i32 / 2;
-            let text_y = ((pc * x + pd * y) >> 8) + height as i32 / 2;
-
-            // Avoid replication
-            if text_x < 0 || text_x >= width as i32
-            || text_y < 0 || text_y >= height as i32
-            {
-                continue;
-            }
-
-            let tile_x = text_x as u32 / 8;
-            let tile_y = text_y as u32 / 8;
-            let pixel_x = text_x as u32 % 8;
-            let pixel_y = text_y as u32 % 8;
-
-            let tile_b = 4;
-            let tile_n = self.tile_n + tile_y * w + tile_x;
-
-            let palette_entry = memory.tile_data(self.palette_f, tile_b, tile_n, pixel_x, pixel_y);
-
-            let i = (xcenter + x) as u32;
-            let color = memory.obj_palette(self.palette_n, palette_entry);
-
-            layer.paint(i, color, window, 4);
-        }
-    }
-
+    #[inline]
     pub fn disabled(&self) -> bool
     {
         !self.affine_f && self.double_f
     }
 
+    #[inline]
     pub fn visible(&self, vcount: u32) -> bool
     {
         let (width, height) = self.get_dimension();
@@ -244,5 +128,138 @@ impl Sprite
         && x + w >= 0
         && y <= v as i32
         && y + h > v as i32
+    }
+}
+
+impl PPU
+{
+    pub fn draw_sprite(&mut self, index: usize, memory: &Memory)
+    {
+        let sprite = &self.sprite[index];
+        let vcount = self.vcount as u32;
+
+        if !sprite.disabled() && sprite.visible(vcount)
+        {
+            if sprite.affine_f
+            {
+                self.draw_affine_sprite(index, memory)
+            }
+            else
+            {
+                self.draw_text_sprite(index, memory)
+            }
+        }
+    }
+
+    pub fn draw_text_sprite(&mut self, index: usize, memory: &Memory)
+    {
+        let sprite = &self.sprite[index];
+        let vcount = self.vcount as u32;
+        let sequential = self.sequential;
+        let window = &self.window;
+        let (width, height) = sprite.get_dimension();
+
+        // Vertical wrap around
+        let y = (vcount - sprite.ycoord) % 256;
+        let w = if sequential {width / 8} else {32};
+
+        let mut tile_y  = y / 8;
+        let mut pixel_y = y % 8;
+        if sprite.vflip
+        {
+            tile_y  = height / 8 - tile_y - 1;
+            pixel_y = 7 - pixel_y;
+        }
+
+        for i in 0..width
+        {
+            let mut tile_x  = i / 8;
+            let mut pixel_x = i % 8;
+            if sprite.hflip
+            {
+                tile_x  = width / 8 - tile_x - 1;
+                pixel_x = 7 - pixel_x;
+            }
+
+            // Sprite tile data starts at 4 * 0x4000 = 0x10000
+            let tile_b = 4;
+            let tile_n = sprite.tile_n + tile_y * w + tile_x;
+
+            let palette_entry = memory.tile_data(sprite.palette_f, tile_b, tile_n, pixel_x, pixel_y);
+
+            // Horizontal wrap around
+            let x = (sprite.xcoord + i) % 512;
+            let color = self.obj_palette(sprite.palette_n, palette_entry);
+
+            let layer = &mut self.layer[sprite.priority as usize];
+            layer.paint(x, color, window, 4);
+        }
+    }
+
+    #[allow(unused_assignments)]
+    pub fn draw_affine_sprite(&mut self, index: usize, memory: &Memory)
+    {
+        let sprite = &self.sprite[index];
+        let vcount = self.vcount as u32;
+        let sequential = self.sequential;
+        let window = &self.window;
+        let (width, height) = sprite.get_dimension();
+
+        let mut half_width = width as i32/ 2;
+        let mut half_height = height as i32 / 2;
+
+        let mut xcenter = sprite.xcoord as i32 + half_width;
+        let mut ycenter = sprite.ycoord as i32 + half_height;
+
+        // Double flag only doubles the viewport size, not the sprite size
+        if sprite.double_f
+        {
+            xcenter     += half_width;
+            ycenter     += half_height;
+            half_width  *= 2;
+            half_height *= 2;
+        }
+
+        // Wrap around
+        xcenter %= 512;
+        ycenter %= 256;
+
+        let y = vcount as i32 - ycenter;
+        let w = if sequential {width / 8} else {32};
+
+        let (pa, pb, pc, pd) = sprite.get_affine_matrix(&mut self.obj_param);
+
+        for x in -half_width..half_width
+        {
+            // Due to the linearity of the transform matrix, the origin is preserved.
+            // That is, the screen origin overlaps the texture origin.
+            // The transform matrix takes relative ONSCREEN distance to the origin as input
+            // and transforms it into relative TEXTURE distance to origin.
+            let text_x = ((pa * x + pb * y) >> 8) + width as i32 / 2;
+            let text_y = ((pc * x + pd * y) >> 8) + height as i32 / 2;
+
+            // Avoid replication
+            if text_x < 0 || text_x >= width as i32
+            || text_y < 0 || text_y >= height as i32
+            {
+                continue;
+            }
+
+            let tile_x = text_x as u32 / 8;
+            let tile_y = text_y as u32 / 8;
+            let pixel_x = text_x as u32 % 8;
+            let pixel_y = text_y as u32 % 8;
+
+            let tile_b = 4;
+            let tile_n = sprite.tile_n + tile_y * w + tile_x;
+
+            let palette_entry = memory.tile_data(sprite.palette_f, tile_b, tile_n, pixel_x, pixel_y);
+
+            let i = (xcenter + x) as u32;
+            let color = self.obj_palette(sprite.palette_n, palette_entry);
+
+            let layer = &mut self.layer[sprite.priority as usize];
+            layer.paint(i, color, window, 4);
+        }
     }
 }

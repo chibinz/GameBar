@@ -86,7 +86,8 @@ impl PPU
         assert!(self.vcount < 160);
 
         // Setup backdrop color
-        for p in self.layer[4].pixel.iter_mut() {*p = memory.backdrop()}
+        let bd = self.backdrop();
+        for p in self.layer[4].pixel.iter_mut() {*p = bd}
 
         for i in 0..4
         {
@@ -97,7 +98,7 @@ impl PPU
 
         self.draw_background(memory);
 
-        self.draw_sprite(memory);
+        self.draw_sprites(memory);
 
         self.combine_layers();
     }
@@ -153,22 +154,18 @@ impl PPU
             0 => self.draw_mode_0(memory),
             1 => self.draw_mode_1(memory),
             2 => self.draw_mode_2(memory),
-            3 => self.draw_mode_3(memory),
-            4 => self.draw_mode_4(memory),
-            5 => self.draw_mode_5(memory),
+            3 => self.draw_bitmap_3(memory),
+            4 => self.draw_bitmap_4(memory),
+            5 => self.draw_bitmap_5(memory),
             _ => unreachable!(),
         }
     }
 
-    pub fn draw_sprite(&mut self, memory: &Memory)
+    pub fn draw_sprites(&mut self, memory: &Memory)
     {
-        for sprite in self.sprite.iter_mut().rev()
+        for i in (0..self.sprite.len()).rev()
         {
-            let priority = sprite.priority as usize;
-            let layer = &mut self.layer[priority];
-
-            sprite.draw(self.vcount as u32, self.sequential, &self.window,
-                        layer, memory, &mut self.obj_param);
+            self.draw_sprite(i, memory);
         }
     }
 
@@ -216,74 +213,23 @@ impl PPU
     {
         // Background is drawn in reverse order to give
         // precedence to ones with lower index.
-        self.draw_text_bg(3, memory);
-        self.draw_text_bg(2, memory);
-        self.draw_text_bg(1, memory);
-        self.draw_text_bg(0, memory);
+        if self.dispcnt.bit(11) {self.draw_text_background(3, memory)}
+        if self.dispcnt.bit(10) {self.draw_text_background(2, memory)}
+        if self.dispcnt.bit(9) {self.draw_text_background(1, memory)}
+        if self.dispcnt.bit(8) {self.draw_text_background(0, memory)}
     }
 
     pub fn draw_mode_1(&mut self, memory: &Memory)
     {
-        self.draw_affine_bg(2, memory);
-        self.draw_text_bg(1, memory);
-        self.draw_text_bg(0, memory);
+        if self.dispcnt.bit(10) {self.draw_affine_background(2, memory)}
+        if self.dispcnt.bit(9) {self.draw_text_background(1, memory)}
+        if self.dispcnt.bit(8) {self.draw_text_background(0, memory)}
     }
 
     pub fn draw_mode_2(&mut self, memory: &Memory)
     {
-        self.draw_affine_bg(3, memory);
-        self.draw_affine_bg(2, memory);
-    }
-
-    pub fn draw_mode_3(&mut self, memory: &Memory)
-    {
-        debug_assert!(self.dispcnt.bit(10));
-
-        self.background[2].draw_bitmap_3(self.vcount, &self.window, &mut self.layer[0], memory);
-
-    }
-
-    pub fn draw_mode_4(&mut self, memory: &Memory)
-    {
-        debug_assert!(self.dispcnt.bit(10));
-
-        self.background[2].draw_bitmap_4(self.vcount, self.flip, &self.window, &mut self.layer[0], memory);
-    }
-
-    pub fn draw_mode_5(&mut self, memory: &Memory)
-    {
-        debug_assert!(self.dispcnt.bit(10));
-
-        let line_n = self.vcount as usize;
-        if line_n > 127 {return}
-
-        self.background[2].draw_bitmap_5(self.vcount, self.flip, &self.window, &mut self.layer[0], memory);
-    }
-
-    pub fn draw_text_bg(&mut self, i: u32, memory: &Memory)
-    {
-        let bg = &mut self.background[i as usize];
-
-        if self.dispcnt.bit(8 + i)
-        {
-            let priority = bg.priority as usize;
-            let layer = &mut self.layer[priority as usize];
-
-            bg.draw_text(self.vcount, &self.window, layer, memory);
-        }
-    }
-
-    pub fn draw_affine_bg(&mut self, i: u32, memory: &Memory)
-    {
-        let bg = &mut self.background[i as usize];
-
-        if self.dispcnt.bit(8 + i)
-        {
-            let priority = bg.priority as usize;
-            let layer = &mut self.layer[priority as usize];
-
-            bg.draw_affine(self.vcount, &self.window, layer, memory);
-        }
+        if self.dispcnt.bit(11) {self.draw_affine_background(3, memory)}
+        if self.dispcnt.bit(10) {self.draw_affine_background(2, memory)}
     }
 
     pub fn force_blank(&mut self)

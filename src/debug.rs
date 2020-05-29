@@ -183,12 +183,12 @@ impl Debugger
     {
         for i in 0..0x100
         {
-            self.buffer[i] = self.c().memory.bg_palette(0, i as u32).to_rgb24();
+            self.buffer[i] = self.c().ppu.bg_palette(0, i as u32).to_rgb24();
         }
 
         for i in 0..0x100
         {
-            self.buffer[i + 0x100] = self.c().memory.obj_palette(0, i as u32).to_rgb24();
+            self.buffer[i + 0x100] = self.c().ppu.obj_palette(0, i as u32).to_rgb24();
         }
 
         window.update_with_buffer(&self.buffer, 32, 16).unwrap();
@@ -205,7 +205,7 @@ impl Debugger
             let byte = self.c().memory.vram[index];
             let nibble = if p & 1 == 1 {byte >> 4} else {byte & 0x0f};
 
-            let color = self.c().memory.obj_palette(palette_num, nibble as u32);
+            let color = self.c().ppu.obj_palette(palette_num, nibble as u32);
 
             self.buffer[p] = color.to_rgb24();
         }
