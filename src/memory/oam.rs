@@ -1,75 +1,107 @@
 use crate::util::*;
+use crate::ppu::PPU;
 use crate::ppu::sprite::Sprite;
-use crate::ppu::sprite::DIMENSION;
 
 use super::Memory;
-use super::into16;
 
 impl Memory
 {
-    /// Return a halfword from oam, offset is in bytes
     #[inline]
-    pub fn oam16(&self, offset: u32) -> u16
+    pub fn oam_load8(&self, offset: usize) -> u8
     {
-        let a = offset as usize;
-        into16(&self.oam[a..a+2])
+        let value = self.oam_load16(offset);
+        value.to_le_bytes()[offset as usize & 1]
+    }
+
+    pub fn oam_load16(&self, offset: usize) -> u16
+    {
+        self.c().ppu.oam_load16(offset)
     }
 
     #[inline]
-    pub fn update_sprite(&self, sprite: &mut Sprite)
+    pub fn oam_load32(&self, offset: usize) -> u32
     {
-        self.update_attr0(sprite);
-        self.update_attr1(sprite);
-        self.update_attr2(sprite);
-        self.update_matrix(sprite);
+        let lo = self.oam_load16(offset) as u32;
+        let hi = self.oam_load16(offset + 2) as u32;
+        (hi << 16) | lo
+    }
+
+    pub fn oam_store16(&self, offset: usize, value: u16)
+    {
+        self.c().ppu.oam_store16(offset, value);
     }
 
     #[inline]
-    pub fn update_attr0(&self, sprite: &mut Sprite)
+    pub fn oam_store32(&mut self, offset: usize, value: u32)
     {
-        let attr0 = self.oam16(sprite.index as u32 * 8);
+        self.oam_store16(offset, value as u16);
+        self.oam_store16(offset + 2, (value >> 16) as u16);
+    }
+}
+impl Sprite
+{
+    #[inline]
+    pub fn set_attr0(&mut self, value: u16)
+    {
+        self.attr[0]  = value;
 
-        sprite.ycoord   = attr0.bits(7, 0);
-        sprite.affine_f = attr0.bit(8);
-        sprite.double_f = attr0.bit(9);
-        sprite.mode     = attr0.bits(11, 10);
-        sprite.mosaic_f = attr0.bit(12);
+        self.ycoord   = value.bits(7, 0);
+        self.affine_f = value.bit(8);
+        self.double_f = value.bit(9);
+        self.mode     = value.bits(11, 10);
+        self.mosaic_f = value.bit(12);
+        self.shape    = value.bits(15, 14);
     }
 
     #[inline]
-    pub fn update_attr1(&self, sprite: &mut Sprite)
+    pub fn set_attr1(&mut self, value: u16)
     {
-        let attr0 = self.oam16(sprite.index as u32 * 8);
-        let attr1 = self.oam16(0x02 + sprite.index as u32 * 8);
-        let shape = attr0.bits(15, 14) as usize;
-        let size  = attr1.bits(15, 14) as usize;
+        self.attr[1]  = value;
 
-        sprite.xcoord   = attr1.bits(8, 0);
-        sprite.hflip    = !attr0.bit(8) && attr1.bit(12);
-        sprite.vflip    = !attr0.bit(8) && attr1.bit(13);
-        sprite.affine_i = attr1.bits(13, 9);
-        sprite.width    = DIMENSION[shape][size].0;
-        sprite.height   = DIMENSION[shape][size].1;
+        self.xcoord   = value.bits(8, 0);
+        self.hflip    = value.bit(12);
+        self.vflip    = value.bit(13);
+        self.affine_i = value.bits(13, 9);
+        self.size     = value.bits(15, 14);
     }
 
     #[inline]
-    pub fn update_attr2(&self, sprite: &mut Sprite)
+    pub fn set_attr2(&mut self, value: u16)
     {
-        let attr2 = self.oam16(0x04 + sprite.index as u32 * 8);
+        self.attr[2]   = value;
 
-        sprite.tile_n    = attr2.bits(9, 0);
-        sprite.priority  = attr2.bits(11, 10);
-        sprite.palette_n = attr2.bits(15, 12);
+        self.tile_n    = value.bits(9, 0);
+        self.priority  = value.bits(11, 10);
+        self.palette_n = value.bits(15, 12);
+    }
+}
+
+impl PPU
+{
+    pub fn oam_store16(&mut self, offset: usize, value: u16)
+    {
+        let obj_index  = offset / 8;
+        let attr_index = offset % 8;
+
+        match attr_index
+        {
+            0 => self.sprite[obj_index].set_attr0(value),
+            1 => self.sprite[obj_index].set_attr1(value),
+            2 => self.sprite[obj_index].set_attr2(value),
+            _ => self.obj_param[obj_index] = value,
+        }
     }
 
-    #[inline]
-    pub fn update_matrix(&self, sprite: &mut Sprite)
+    pub fn oam_load16(&self, offset: usize) -> u16
     {
-        let pa = self.oam16(0x06 + sprite.affine_i * 0x20) as i16 as i32;
-        let pb = self.oam16(0x0e + sprite.affine_i * 0x20) as i16 as i32;
-        let pc = self.oam16(0x16 + sprite.affine_i * 0x20) as i16 as i32;
-        let pd = self.oam16(0x1e + sprite.affine_i * 0x20) as i16 as i32;
+        let obj_index  = offset / 8;
+        let attr_index = offset % 8;
 
-        sprite.matrix = (pa, pb, pc, pd);
+        match attr_index
+        {
+            0..=
+            2 => self.sprite[obj_index].attr[attr_index],
+            _ => self.obj_param[obj_index],
+        }
     }
 }

@@ -2,50 +2,7 @@ use crate::util::*;
 use crate::ppu::PPU;
 use crate::ppu::background::Background;
 use crate::ppu::background::DIMENSION;
-
-use super::Memory;
-
-impl Memory
-{
-    pub fn get_winh(&self, index: usize) -> (u32, u32)
-    {
-        let winh = self.ioram16(0x40 + index * 2);
-
-        let x1 = winh.bits(15, 8);
-        let x2 = winh.bits(7, 0);
-
-        (x1, x2)
-    }
-
-    pub fn get_winv(&self, index: usize) -> (u32, u32)
-    {
-        let winv = self.ioram16(0x44 + index * 2);
-
-        let y1 = winv.bits(15, 8);
-        let y2 = winv.bits(7, 0);
-
-        (y1, y2)
-    }
-
-    pub fn get_winin(&self, index: usize) -> u8
-    {
-        let winin = self.ioram16(0x48);
-
-        if index == 0
-        {
-            winin as u8
-        }
-        else
-        {
-            (winin >> 8) as u8
-        }
-    }
-
-    pub fn get_winout(&self) -> u16
-    {
-        self.ioram16(0x4a)
-    }
-}
+use crate::ppu::window::Window;
 
 impl PPU
 {
@@ -151,5 +108,68 @@ impl Background
     {
         self.coord.1 &= 0x0000ffff;
         self.coord.1 |= ((value as u32) << 16) as i32;
+    }
+}
+
+impl Window
+{
+    pub fn get_win0h(&self) -> u16
+    {
+        self.winh[0]
+    }
+
+    pub fn get_win1h(&self) -> u16
+    {
+        self.winh[1]
+    }
+
+    pub fn get_win0v(&self) -> u16
+    {
+        self.winv[0]
+    }
+
+    pub fn get_win1v(&self) -> u16
+    {
+        self.winv[1]
+    }
+
+    pub fn get_winin(&self) -> u16
+    {
+        self.winin
+    }
+
+    pub fn get_winout(&self) -> u16
+    {
+        self.winout
+    }
+
+    pub fn set_win0h(&mut self, value: u16)
+    {
+        self.winh[0] = value;
+    }
+
+    pub fn set_win1h(&mut self, value: u16)
+    {
+        self.winh[1] = value;
+    }
+
+    pub fn set_win0v(&mut self, value: u16)
+    {
+        self.winv[0] = value;
+    }
+
+    pub fn set_win1v(&mut self, value: u16)
+    {
+        self.winv[1] = value;
+    }
+
+    pub fn set_winin(&mut self, value: u16)
+    {
+        self.winin = value;
+    }
+
+    pub fn set_winout(&mut self, value: u16)
+    {
+        self.winout = value;
     }
 }

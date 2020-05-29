@@ -29,25 +29,27 @@ pub static DIMENSION: [[(u32, u32); 4]; 3] =
     ],
 ];
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Sprite
 {
-    pub index    : usize,    // Index of sprite, 0 - 127
-    pub xcoord   : u32,      // X coordinate, top left for text sprites
-    pub ycoord   : u32,      // Y coordinate, center for affine sprites
-    pub width    : u32,      // Width in pixels
-    pub height   : u32,      // Height in pixels
-    pub mode     : u32,      // 0 - normal, 1 - semi-transparent, 2 - window
-    pub affine_f : bool,     // Rotational / scaling flag
-    pub double_f : bool,     // Double size flag
-    pub mosaic_f : bool,     // Mosaic flag
-    pub palette_f: bool,     // Palette type, 1 - 256, 2 - 16
-    pub hflip    : bool,     // Horizontal flip bit
-    pub vflip    : bool,     // Vertical flip bit
-    pub affine_i : u32,      // Rotation / scaling data index
-    pub tile_n   : u32,      // Tile number
+    pub index    : usize,      // Index of sprite, 0 - 127
+    pub attr     : [u16; 4],   // Raw object attributes, Used for fast oam read
+
+    pub xcoord   : u32,        // X coordinate, top left for text sprites
+    pub ycoord   : u32,        // Y coordinate, center for affine sprites
+    pub shape    : u32,        // 0 - square, 1 - horizontal, 2 - vertical
+    pub size     : u32,        // 0 - 8, 1 - 16, 2 - 32, 3 - 64 pixels
+    pub mode     : u32,        // 0 - normal, 1 - semi-transparent, 2 - window
+    pub affine_f : bool,       // Rotational / scaling flag
+    pub double_f : bool,       // Double size flag
+    pub mosaic_f : bool,       // Mosaic flag
+    pub palette_f: bool,       // Palette type, 1 - 256, 2 - 16
+    pub hflip    : bool,       // Horizontal flip bit
+    pub vflip    : bool,       // Vertical flip bit
+    pub affine_i : u32,        // Rotation / scaling data index
+    pub tile_n   : u32,        // Tile number
     pub priority : u32,
-    pub palette_n: u32,      // Palette number (for 16 color sprites)
+    pub palette_n: u32,        // Palette number (for 16 color sprites)
 
     // Transform matrix used for Rotation and scaling
     pub matrix   : (i32, i32, i32, i32)
@@ -60,10 +62,12 @@ impl Sprite
         Self
         {
             index    : 0,
+            attr     : [0; 4],
+
             xcoord   : 0,
             ycoord   : 0,
-            width    : 0,
-            height   : 0,
+            shape    : 0,
+            size     : 0,
             mode     : 0,
             affine_f : false,
             double_f : false,
@@ -77,6 +81,12 @@ impl Sprite
             palette_n: 0,
             matrix   : (0, 0, 0, 0)
         }
+    }
+
+    #[inline]
+    pub fn get_dimension(&self) -> (u32, u32)
+    {
+        DIMENSION[self.shape as usize][self.size as usize]
     }
 
     pub fn draw(&mut self, vcount: u32, sequential: bool, window: &Window, layer: &mut Layer, memory: &Memory)
@@ -96,25 +106,27 @@ impl Sprite
 
     pub fn draw_text(&mut self, vcount: u32, sequential: bool, window: &Window, layer: &mut Layer, memory: &Memory)
     {
+        let (width, height) = self.get_dimension();
+
         // Vertical wrap around
         let y = (vcount - self.ycoord) % 256;
-        let w = if sequential {self.width / 8} else {32};
+        let w = if sequential {width / 8} else {32};
 
         let mut tile_y  = y / 8;
         let mut pixel_y = y % 8;
         if self.vflip
         {
-            tile_y  = self.height / 8 - tile_y - 1;
+            tile_y  = height / 8 - tile_y - 1;
             pixel_y = 7 - pixel_y;
         }
 
-        for i in 0..self.width
+        for i in 0..width
         {
             let mut tile_x  = i / 8;
             let mut pixel_x = i % 8;
             if self.hflip
             {
-                tile_x  = self.width / 8 - tile_x - 1;
+                tile_x  = width / 8 - tile_x - 1;
                 pixel_x = 7 - pixel_x;
             }
 
@@ -135,8 +147,10 @@ impl Sprite
     #[allow(unused_assignments)]
     pub fn draw_affine(&mut self, vcount: u32, sequential: bool, window: &Window, layer: &mut Layer, memory: &Memory)
     {
-        let mut half_width = self.width as i32/ 2;
-        let mut half_height = self.height as i32 / 2;
+        let (width, height) = self.get_dimension();
+
+        let mut half_width = width as i32/ 2;
+        let mut half_height = height as i32 / 2;
 
         let mut xcenter = self.xcoord as i32 + half_width;
         let mut ycenter = self.ycoord as i32 + half_height;
@@ -155,7 +169,7 @@ impl Sprite
         ycenter %= 256;
 
         let y = vcount as i32 - ycenter;
-        let w = if sequential {self.width / 8} else {32};
+        let w = if sequential {width / 8} else {32};
 
         for x in -half_width..half_width
         {
@@ -163,12 +177,12 @@ impl Sprite
             // That is, the screen origin overlaps the texture origin.
             // The transform matrix takes relative ONSCREEN distance to the origin as input
             // and transforms it into relative TEXTURE distance to origin.
-            let text_x = ((self.matrix.0 * x + self.matrix.1 * y) >> 8) + self.width as i32 / 2;
-            let text_y = ((self.matrix.2 * x + self.matrix.3 * y) >> 8) + self.height as i32 / 2;
+            let text_x = ((self.matrix.0 * x + self.matrix.1 * y) >> 8) + width as i32 / 2;
+            let text_y = ((self.matrix.2 * x + self.matrix.3 * y) >> 8) + height as i32 / 2;
 
             // Avoid replication
-            if text_x < 0 || text_x >= self.width as i32
-            || text_y < 0 || text_y >= self.height as i32
+            if text_x < 0 || text_x >= width as i32
+            || text_y < 0 || text_y >= height as i32
             {
                 continue;
             }
@@ -197,11 +211,13 @@ impl Sprite
 
     pub fn visible(&self, vcount: u32) -> bool
     {
+        let (width, height) = self.get_dimension();
+
         let v = vcount as i32;
         let mut x = self.xcoord as i32;
         let mut y = self.ycoord as i32;
-        let mut w = self.width as i32;
-        let mut h = self.height as i32;
+        let mut w = width as i32;
+        let mut h = height as i32;
 
         // Horizontal and vertical wrap around
         if x + w > 512 {x -= 512};

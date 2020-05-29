@@ -1,11 +1,16 @@
 use crate::util::*;
-use crate::memory::Memory;
 use crate::ppu::TRANSPARENT;
 use crate::ppu::layer::Layer;
+use std::marker::Copy;
 
+#[derive(Clone, Copy)]
 pub struct Window
 {
-    pub cnt: Vec<u8>,
+    pub winh  : [u16; 2],
+    pub winv  : [u16; 2],
+    pub winin : u16,
+    pub winout: u16,
+    pub cnt   : [u8; 256],
 }
 
 impl Window
@@ -14,15 +19,22 @@ impl Window
     {
         Self
         {
-            cnt: vec![0; 256],
+            winh  : [0; 2],
+            winv  : [0; 2],
+            winin : 0,
+            winout: 0,
+            cnt   : [0; 256],
         }
     }
 
-    pub fn draw_winin(&mut self, vcount: u32, index: usize, memory: &Memory)
+    pub fn draw_winin(&mut self, vcount: u32, index: usize)
     {
-        let (x1, x2) = memory.get_winh(index);
-        let (y1, y2) = memory.get_winv(index);
-        let winin = memory.get_winin(index);
+        let x1 = self.winh[index].bits(15, 8);
+        let x2 = self.winh[index].bits(7, 0);
+        let y1 = self.winv[index].bits(15, 8);
+        let y2 = self.winv[index].bits(7, 0);
+
+        let winin = self.winin.to_le_bytes()[index];
 
         let mut draw_x = ||
         {
@@ -63,25 +75,22 @@ impl Window
         }
     }
 
-    pub fn draw_winout(&mut self, memory: &Memory)
+    pub fn draw_winout(&mut self)
     {
-        let winout = memory.get_winout() as u8;
-
-        for i in 0..self.cnt.len()
+        for cnt in self.cnt.iter_mut()
         {
-            self.cnt[i] = winout;
+            *cnt = self.winout as u8;
         }
     }
 
-    pub fn draw_objwin(&mut self, layer: &Layer, memory: &Memory)
+    #[allow(dead_code)]
+    pub fn draw_objwin(&mut self, layer: &Layer)
     {
-        let objwin = (memory.get_winout() >> 8) as u8;
-
-        for i in 0..self.cnt.len()
+        for (i, cnt) in self.cnt.iter_mut().enumerate()
         {
             if layer.pixel[i] != TRANSPARENT
             {
-                self.cnt[i] = objwin;
+                *cnt = (self.winout >> 8) as u8;
             }
         }
     }

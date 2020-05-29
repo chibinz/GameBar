@@ -26,6 +26,10 @@ pub struct PPU
     pub sequential: bool,           // Determine layout of sprites, 1 - 1d, 0 - 2d
     pub fblank    : bool,           // Force blanking
 
+    pub palette   : Vec<u16>,       // 16 bit colors
+    pub vram      : Vec<u8>,        // Tile mapping
+    pub obj_param : Vec<u16>,       // Affine sprite rotation / scaling parameter
+
     pub background: Vec<Background>,   // Background 0 - 3
     pub sprite    : Vec<Sprite>,       // Sprite 0 - 127
     pub window    : Window,
@@ -47,6 +51,10 @@ impl PPU
             sequential: false,
             fblank    : false,
             vcount    : 227, // VCount is incremented at beginning of each newline
+
+            palette   : vec![0; 0x200],
+            vram      : vec![0; 0x18000],
+            obj_param : vec![0; 0x100],
 
             background: vec![Background::new(); 4],
             sprite    : vec![Sprite::new(); 128],
@@ -85,7 +93,7 @@ impl PPU
             self.layer[i].clear();
         }
 
-        self.draw_window(memory);
+        self.draw_window();
 
         self.draw_background(memory);
 
@@ -156,8 +164,6 @@ impl PPU
     {
         for sprite in self.sprite.iter_mut().rev()
         {
-            memory.update_sprite(sprite);
-
             let priority = sprite.priority as usize;
             let layer = &mut self.layer[priority];
 
@@ -165,43 +171,43 @@ impl PPU
         }
     }
 
-    pub fn draw_window(&mut self, memory: &Memory)
+    pub fn draw_window(&mut self)
     {
         let window = &mut self.window;
         window.clear();
 
         if self.dispcnt.bits(15, 13) > 0
         {
-            window.draw_winout(memory);
+            window.draw_winout();
         }
 
-        if self.dispcnt.bit(15)
-        {
-            let mut layer = Layer::new();
-            let mut dummy = Window::new(); // Dummy window to let all sprite be drawn
-            dummy.clear();
+        // if self.dispcnt.bit(15)
+        // {
+        //     let mut layer = Layer::new();
+        //     let mut dummy = Window::new(); // Dummy window to let all sprite be drawn
+        //     dummy.clear();
 
-            for sprite in self.sprite.iter_mut().rev()
-            {
-                memory.update_sprite(sprite);
+        //     for sprite in self.sprite.iter_mut().rev()
+        //     {
+        //         memory.update_sprite(sprite);
 
-                if sprite.mode == 0b10 // Window mode
-                {
-                    sprite.draw(self.vcount as u32, self.sequential, &dummy, &mut layer, memory);
-                }
-            }
+        //         if sprite.mode == 0b10 // Window mode
+        //         {
+        //             sprite.draw(self.vcount as u32, self.sequential, &dummy, &mut layer, memory);
+        //         }
+        //     }
 
-            window.draw_objwin(&layer, memory)
-        }
+        //     window.draw_objwin(&layer)
+        // }
 
         if self.dispcnt.bit(14)
         {
-            window.draw_winin(self.vcount as u32, 1, memory);
+            window.draw_winin(self.vcount as u32, 1);
         }
 
         if self.dispcnt.bit(13)
         {
-            window.draw_winin(self.vcount as u32, 0, memory);
+            window.draw_winin(self.vcount as u32, 0);
         }
     }
 
