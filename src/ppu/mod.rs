@@ -167,7 +167,8 @@ impl PPU
             let priority = sprite.priority as usize;
             let layer = &mut self.layer[priority];
 
-            sprite.draw(self.vcount as u32, self.sequential, &self.window, layer, memory);
+            sprite.draw(self.vcount as u32, self.sequential, &self.window,
+                        layer, memory, &mut self.obj_param);
         }
     }
 

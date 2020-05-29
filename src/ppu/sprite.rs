@@ -33,7 +33,7 @@ pub static DIMENSION: [[(u32, u32); 4]; 3] =
 pub struct Sprite
 {
     pub index    : usize,      // Index of sprite, 0 - 127
-    pub attr     : [u16; 4],   // Raw object attributes, Used for fast oam read
+    pub attr     : [u16; 3],   // Raw object attributes, Used for fast oam read
 
     pub xcoord   : u32,        // X coordinate, top left for text sprites
     pub ycoord   : u32,        // Y coordinate, center for affine sprites
@@ -50,9 +50,6 @@ pub struct Sprite
     pub tile_n   : u32,        // Tile number
     pub priority : u32,
     pub palette_n: u32,        // Palette number (for 16 color sprites)
-
-    // Transform matrix used for Rotation and scaling
-    pub matrix   : (i32, i32, i32, i32)
 }
 
 impl Sprite
@@ -62,7 +59,7 @@ impl Sprite
         Self
         {
             index    : 0,
-            attr     : [0; 4],
+            attr     : [0; 3],
 
             xcoord   : 0,
             ycoord   : 0,
@@ -79,7 +76,6 @@ impl Sprite
             tile_n   : 0,
             priority : 0,
             palette_n: 0,
-            matrix   : (0, 0, 0, 0)
         }
     }
 
@@ -89,13 +85,14 @@ impl Sprite
         DIMENSION[self.shape as usize][self.size as usize]
     }
 
-    pub fn draw(&mut self, vcount: u32, sequential: bool, window: &Window, layer: &mut Layer, memory: &Memory)
+    pub fn draw(&mut self, vcount: u32, sequential: bool, window: &Window,
+                layer: &mut Layer, memory: &Memory, mat: &mut Vec<u16>)
     {
         if !self.disabled() && self.visible(vcount)
         {
             if self.affine_f
             {
-                self.draw_affine(vcount, sequential, window, layer, memory)
+                self.draw_affine(vcount, sequential, window, layer, memory, mat)
             }
             else
             {
@@ -144,8 +141,20 @@ impl Sprite
         }
     }
 
+    pub fn get_affine_matrix(&self, mat: &mut Vec<u16>) -> (i32, i32, i32, i32)
+    {
+        let index = self.affine_i as usize * 4;
+
+        let pa = mat[index] as i16 as i32;
+        let pb = mat[index + 1] as i16 as i32;
+        let pc = mat[index + 2] as i16 as i32;
+        let pd = mat[index + 3] as i16 as i32;
+
+        (pa, pb, pc, pd)
+    }
+
     #[allow(unused_assignments)]
-    pub fn draw_affine(&mut self, vcount: u32, sequential: bool, window: &Window, layer: &mut Layer, memory: &Memory)
+    pub fn draw_affine(&mut self, vcount: u32, sequential: bool, window: &Window, layer: &mut Layer, memory: &Memory, mat: &mut Vec<u16>)
     {
         let (width, height) = self.get_dimension();
 
@@ -171,14 +180,16 @@ impl Sprite
         let y = vcount as i32 - ycenter;
         let w = if sequential {width / 8} else {32};
 
+        let (pa, pb, pc, pd) = self.get_affine_matrix(mat);
+
         for x in -half_width..half_width
         {
             // Due to the linearity of the transform matrix, the origin is preserved.
             // That is, the screen origin overlaps the texture origin.
             // The transform matrix takes relative ONSCREEN distance to the origin as input
             // and transforms it into relative TEXTURE distance to origin.
-            let text_x = ((self.matrix.0 * x + self.matrix.1 * y) >> 8) + width as i32 / 2;
-            let text_y = ((self.matrix.2 * x + self.matrix.3 * y) >> 8) + height as i32 / 2;
+            let text_x = ((pa * x + pb * y) >> 8) + width as i32 / 2;
+            let text_y = ((pc * x + pd * y) >> 8) + height as i32 / 2;
 
             // Avoid replication
             if text_x < 0 || text_x >= width as i32

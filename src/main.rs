@@ -34,10 +34,7 @@ fn main()
     console.memory.load_rom(&args[1]);
     console.memory.load_bios(&"rom/gba_bios.bin".to_string());
 
-    let mut debugger = debug::Debugger::new();
-    debugger.console = &mut console as *mut console::Console;
-
-    std::thread::spawn(move || debug(debugger));
+    // debug(&mut console as *mut console::Console);
 
     while console.window.is_open()
     {
@@ -52,7 +49,11 @@ fn usage()
     println!("usage: GameBar <rom>");
 }
 
-fn debug(mut debugger: debug::Debugger)
+#[allow(dead_code)]
+fn debug(c: *mut console::Console)
 {
-    debugger.run();
+    let mut debugger = debug::Debugger::new();
+    debugger.console = c;
+
+    std::thread::spawn(move || debugger.run());
 }

@@ -6,7 +6,6 @@ use super::Memory;
 
 impl Memory
 {
-    #[inline]
     pub fn oam_load8(&self, offset: usize) -> u8
     {
         let value = self.oam_load16(offset);
@@ -18,7 +17,6 @@ impl Memory
         self.c().ppu.oam_load16(offset)
     }
 
-    #[inline]
     pub fn oam_load32(&self, offset: usize) -> u32
     {
         let lo = self.oam_load16(offset) as u32;
@@ -31,13 +29,13 @@ impl Memory
         self.c().ppu.oam_store16(offset, value);
     }
 
-    #[inline]
     pub fn oam_store32(&mut self, offset: usize, value: u32)
     {
         self.oam_store16(offset, value as u16);
         self.oam_store16(offset + 2, (value >> 16) as u16);
     }
 }
+
 impl Sprite
 {
     #[inline]
@@ -45,12 +43,13 @@ impl Sprite
     {
         self.attr[0]  = value;
 
-        self.ycoord   = value.bits(7, 0);
-        self.affine_f = value.bit(8);
-        self.double_f = value.bit(9);
-        self.mode     = value.bits(11, 10);
-        self.mosaic_f = value.bit(12);
-        self.shape    = value.bits(15, 14);
+        self.ycoord    = value.bits(7, 0);
+        self.affine_f  = value.bit(8);
+        self.double_f  = value.bit(9);
+        self.mode      = value.bits(11, 10);
+        self.mosaic_f  = value.bit(12);
+        self.palette_f = value.bit(13);
+        self.shape     = value.bits(15, 14);
     }
 
     #[inline]
@@ -78,10 +77,12 @@ impl Sprite
 
 impl PPU
 {
+    #[inline]
     pub fn oam_store16(&mut self, offset: usize, value: u16)
     {
-        let obj_index  = offset / 8;
-        let attr_index = offset % 8;
+        // offset is in bytes
+        let obj_index  = (offset / 2) / 4;
+        let attr_index = (offset / 2) % 4;
 
         match attr_index
         {
@@ -92,10 +93,11 @@ impl PPU
         }
     }
 
+    #[inline]
     pub fn oam_load16(&self, offset: usize) -> u16
     {
-        let obj_index  = offset / 8;
-        let attr_index = offset % 8;
+        let obj_index  = (offset / 2) / 4;
+        let attr_index = (offset / 2) % 4;
 
         match attr_index
         {

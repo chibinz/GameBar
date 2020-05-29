@@ -3,7 +3,7 @@ use std::process::exit;
 use std::collections::HashSet;
 
 use minifb::Window;
-// use minifb::WindowOptions;
+use minifb::WindowOptions;
 use crate::util::*;
 use crate::console::Console;
 
@@ -48,17 +48,29 @@ impl Debugger
 
     pub fn run(&mut self)
     {
+        let mut window =
+        Window::new
+        (
+            "Debug",
+            WIDTH,
+            HEIGHT,
+            WindowOptions
+            {
+                scale: minifb::Scale::X16,
+                ..WindowOptions::default()
+            }
+        ).unwrap();
+
         loop
         {
-            self.step();
+            // self.step();
+            self.display_tile(10, &mut window);
         }
     }
 
     pub fn step(&mut self)
     {
         self.c().cpu.print();
-
-        // self.display_tile(36);
     }
 
     pub fn prompt(&mut self)
