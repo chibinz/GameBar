@@ -1,8 +1,6 @@
 use crate::util::*;
-use crate::memory::Memory;
 
 use super::PPU;
-use super::TRANSPARENT;
 
 /// Background dimension in pixels
 pub static DIMENSION: [[(u32, u32); 4]; 2] =
@@ -85,7 +83,7 @@ impl Background
 
 impl PPU
 {
-    pub fn draw_text_background(&mut self, index: usize, memory: &Memory)
+    pub fn draw_text_background(&mut self, index: usize)
     {
         let bg = &self.background[index];
         let vcount = self.vcount;
@@ -101,7 +99,7 @@ impl PPU
             let mut pixel_x = i % 8;
             let mut pixel_y = line_n % 8;
 
-            let tile_entry = memory.text_tile_map(bg.map_b, bg.size_r, tile_x, tile_y);
+            let tile_entry = self.text_tile_map(bg.map_b, bg.size_r, tile_x, tile_y);
 
             let tile_n    = tile_entry.bits(9, 0);
             let hflip     = tile_entry.bit(10);
@@ -111,7 +109,7 @@ impl PPU
             if hflip {pixel_x = 7 - pixel_x};
             if vflip {pixel_y = 7 - pixel_y};
 
-            let palette_entry = memory.tile_data(bg.palette_f, bg.tile_b, tile_n, pixel_x, pixel_y);
+            let palette_entry = self.tile_data(bg.palette_f, bg.tile_b, tile_n, pixel_x, pixel_y);
 
             // Horizontal wrap around
             let x = i.wrapping_sub(bg.hscroll as u32) % bg.width;
@@ -122,9 +120,10 @@ impl PPU
         }
     }
 
-    pub fn draw_affine_background(&mut self, index: usize, memory: &Memory)
+    pub fn draw_affine_background(&mut self, index: usize)
     {
         let bg = &mut self.background[index];
+        let vram = &self.vram;
         let vcount = self.vcount;
         let window = &self.window;
 
@@ -144,7 +143,6 @@ impl PPU
                 }
                 else
                 {
-                    bg.pixel[i as usize] = TRANSPARENT;
                     continue
                 }
             }
@@ -157,7 +155,6 @@ impl PPU
                 }
                 else
                 {
-                    bg.pixel[i as usize] = TRANSPARENT;
                     continue
                 }
             }
@@ -167,8 +164,10 @@ impl PPU
             let pixel_x = text_x as u32 % 8;
             let pixel_y = text_y as u32 % 8;
 
-            let tile_n = memory.affine_tile_map(bg.map_b, bg.size_r, tile_x, tile_y) as u32;
-            let palette_entry = memory.tile_data8(bg.tile_b, tile_n, pixel_x, pixel_y);
+            // Can't use self.tile_data() due to borrow checker
+            let offset = tile_y * (16 << bg.size_r) + tile_x;
+            let tile_n = vram[(bg.map_b * 0x800 + offset) as usize] as u32;
+            let palette_entry = vram[(bg.tile_b * 0x4000 + tile_n * 64 + pixel_y * 8 + pixel_x) as usize];
 
             let color = self.palette[palette_entry as usize];
 
@@ -180,44 +179,42 @@ impl PPU
         bg.internal.1 += bg.matrix.3;
     }
 
-    pub fn draw_bitmap_3(&mut self, memory: &Memory)
+    pub fn draw_bitmap_3(&mut self)
     {
         let line_n = self.vcount as u32;
-        let layer = &mut self.layer[0];
         let window = &self.window;
 
         for x in 0..240
         {
-            let pixel = memory.vram16((line_n * 240 + x) * 2);
-            layer.paint(x, pixel, window, 2);
+            let pixel = self.vram16((line_n * 240 + x) * 2);
+            self.layer[0].paint(x, pixel, window, 2);
         }
     }
 
-    pub fn draw_bitmap_4(&mut self, memory: &Memory)
+    pub fn draw_bitmap_4(&mut self)
     {
         let start = if self.flip {0xa000} else {0};
         let line_n = self.vcount as u32;
 
         for x in 0..240
         {
-            let palette_entry = memory.vram8(start + line_n * 240 + x);
+            let palette_entry = self.vram8(start + line_n * 240 + x);
             let color = self.bg_palette(0, palette_entry as u32);
             self.layer[0].paint(x, color, &self.window, 2);
         }
     }
 
-    pub fn draw_bitmap_5(&mut self, memory: &Memory)
+    pub fn draw_bitmap_5(&mut self)
     {
         let start = if self.flip {0xa000} else {0};
         let line_n = self.vcount as u32;
-        let layer = &mut self.layer[0];
         let window = &self.window;
         if line_n > 127 {return}
 
         for x in 0..160
         {
-            let pixel = memory.vram16(start + (line_n * 160 + x) * 2);
-            layer.paint(x, pixel, window, 2);
+            let pixel = self.vram16(start + (line_n * 160 + x) * 2);
+            self.layer[0].paint(x, pixel, window, 2);
         }
     }
 }

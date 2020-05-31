@@ -1,6 +1,6 @@
 mod ioreg;
 mod vram;
-mod palette;
+mod param;
 mod oam;
 
 use std::io::Read;
@@ -14,9 +14,6 @@ pub struct Memory
     bios : Vec<u8>,
     ewram: Vec<u8>,
     iwram: Vec<u8>,
-    // param: Vec<u8>,
-    pub vram : Vec<u8>,
-    // oam  : Vec<u8>,
     rom  : Vec<u8>,
     sram : Vec<u8>,
 
@@ -34,9 +31,9 @@ impl Memory
             bios : vec![0; 0x00004000 - 0x00000000],
             ewram: vec![0; 0x02040000 - 0x02000000],
             iwram: vec![0; 0x03008000 - 0x03000000],
-            // param: vec![0; 0x05000400 - 0x05000000],
-            vram : vec![0; 0x06018000 - 0x06000000],
-            // oam  : vec![0; 0x07000400 - 0x07000000],
+            // param:      0x05000400 - 0x05000000
+            // vram :      0x06018000 - 0x06000000
+            // oam  :      0x07000400 - 0x07000000
             rom  : vec![0; 0x0a000000 - 0x08000000],
             sram : vec![0; 0x0e010000 - 0x0e000000],
 
@@ -61,7 +58,7 @@ impl Memory
             0x03 => self.iwram[offset],
             0x04 => self.ioram_load8(address),
             0x05 => self.param_load8(offset),
-            0x06 => self.vram[offset],
+            0x06 => self.vram_load8(offset),
             0x07 => self.oam_load8(offset),
             0x08..=
             0x0d => self.rom[offset],
@@ -84,7 +81,7 @@ impl Memory
             0x03 => ldh(&self.iwram),
             0x04 => self.ioram_load16(address),
             0x05 => self.param_load16(offset),
-            0x06 => ldh(&self.vram),
+            0x06 => self.vram_load16(offset),
             0x07 => self.oam_load16(offset),
             0x08..=
             0x0d => ldh(&self.rom),
@@ -107,7 +104,7 @@ impl Memory
             0x03 => ld(&self.iwram),
             0x04 => self.ioram_load32(address),
             0x05 => self.param_load32(offset),
-            0x06 => ld(&self.vram),
+            0x06 => self.vram_load32(offset),
             0x07 => self.oam_load32(offset),
             0x08..=
             0x0d => ld(&self.rom),
@@ -153,7 +150,7 @@ impl Memory
             0x03 => sth(&mut self.iwram),
             0x04 => self.ioram_store16(address, value),
             0x05 => self.param_store16(offset, value),
-            0x06 => sth(&mut self.vram),
+            0x06 => self.vram_store16(offset, value),
             0x07 => self.oam_store16(offset, value),
             _    => Self::unhandled(false, 2, address),
         };
@@ -180,7 +177,7 @@ impl Memory
             0x03 => st(&mut self.iwram),
             0x04 => self.ioram_store32(address, value),
             0x05 => self.param_store32(offset, value),
-            0x06 => st(&mut self.vram),
+            0x06 => self.vram_store32(offset, value),
             0x07 => self.oam_store32(offset, value),
             _    => Self::unhandled(false, 4, address),
         };

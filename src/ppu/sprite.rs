@@ -1,5 +1,3 @@
-use crate::memory::Memory;
-
 use super::PPU;
 
 /// Sprite dimension in pixels
@@ -133,7 +131,7 @@ impl Sprite
 
 impl PPU
 {
-    pub fn draw_sprite(&mut self, index: usize, memory: &Memory)
+    pub fn draw_sprite(&mut self, index: usize)
     {
         let sprite = &self.sprite[index];
         let vcount = self.vcount as u32;
@@ -142,16 +140,16 @@ impl PPU
         {
             if sprite.affine_f
             {
-                self.draw_affine_sprite(index, memory)
+                self.draw_affine_sprite(index)
             }
             else
             {
-                self.draw_text_sprite(index, memory)
+                self.draw_text_sprite(index)
             }
         }
     }
 
-    pub fn draw_text_sprite(&mut self, index: usize, memory: &Memory)
+    pub fn draw_text_sprite(&mut self, index: usize)
     {
         let sprite = &self.sprite[index];
         let vcount = self.vcount as u32;
@@ -185,7 +183,7 @@ impl PPU
             let tile_b = 4;
             let tile_n = sprite.tile_n + tile_y * w + tile_x;
 
-            let palette_entry = memory.tile_data(sprite.palette_f, tile_b, tile_n, pixel_x, pixel_y);
+            let palette_entry = self.tile_data(sprite.palette_f, tile_b, tile_n, pixel_x, pixel_y);
 
             // Horizontal wrap around
             let x = (sprite.xcoord + i) % 512;
@@ -197,7 +195,7 @@ impl PPU
     }
 
     #[allow(unused_assignments)]
-    pub fn draw_affine_sprite(&mut self, index: usize, memory: &Memory)
+    pub fn draw_affine_sprite(&mut self, index: usize)
     {
         let sprite = &self.sprite[index];
         let vcount = self.vcount as u32;
@@ -253,7 +251,7 @@ impl PPU
             let tile_b = 4;
             let tile_n = sprite.tile_n + tile_y * w + tile_x;
 
-            let palette_entry = memory.tile_data(sprite.palette_f, tile_b, tile_n, pixel_x, pixel_y);
+            let palette_entry = self.tile_data(sprite.palette_f, tile_b, tile_n, pixel_x, pixel_y);
 
             let i = (xcenter + x) as u32;
             let color = self.obj_palette(sprite.palette_n, palette_entry);

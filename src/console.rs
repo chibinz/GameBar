@@ -65,7 +65,7 @@ impl Console
 
         for _ in 0..160
         {
-            ppu.hdraw(irqcnt, memory);
+            ppu.hdraw(irqcnt);
             cpu.run(960, memory);
             timers.run(960, irqcnt);
 

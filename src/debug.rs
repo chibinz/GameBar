@@ -202,7 +202,7 @@ impl Debugger
         {
             // 32 bytes per tile
             let index = index * 32 + p / 2 + 0x10000;
-            let byte = self.c().memory.vram[index];
+            let byte = self.c().ppu.vram[index];
             let nibble = if p & 1 == 1 {byte >> 4} else {byte & 0x0f};
 
             let color = self.c().ppu.obj_palette(palette_num, nibble as u32);

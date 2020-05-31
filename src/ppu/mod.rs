@@ -4,7 +4,6 @@ pub mod sprite;
 pub mod window;
 
 use crate::util::*;
-use crate::memory::Memory;
 use crate::interrupt::IRQController;
 use crate::interrupt::Interrupt::*;
 
@@ -77,7 +76,7 @@ impl PPU
         p
     }
 
-    pub fn hdraw(&mut self, irqcnt: &mut IRQController, memory: &Memory)
+    pub fn hdraw(&mut self, irqcnt: &mut IRQController)
     {
         self.increment_vcount(irqcnt);
         self.dispstat &= !0b11;
@@ -96,9 +95,9 @@ impl PPU
 
         self.draw_window();
 
-        self.draw_background(memory);
+        self.draw_background();
 
-        self.draw_sprites(memory);
+        self.draw_sprites();
 
         self.combine_layers();
     }
@@ -147,25 +146,25 @@ impl PPU
         }
     }
 
-    pub fn draw_background(&mut self, memory: &Memory)
+    pub fn draw_background(&mut self)
     {
         match self.mode
         {
-            0 => self.draw_mode_0(memory),
-            1 => self.draw_mode_1(memory),
-            2 => self.draw_mode_2(memory),
-            3 => self.draw_bitmap_3(memory),
-            4 => self.draw_bitmap_4(memory),
-            5 => self.draw_bitmap_5(memory),
+            0 => self.draw_mode_0(),
+            1 => self.draw_mode_1(),
+            2 => self.draw_mode_2(),
+            3 => self.draw_bitmap_3(),
+            4 => self.draw_bitmap_4(),
+            5 => self.draw_bitmap_5(),
             _ => unreachable!(),
         }
     }
 
-    pub fn draw_sprites(&mut self, memory: &Memory)
+    pub fn draw_sprites(&mut self)
     {
         for i in (0..self.sprite.len()).rev()
         {
-            self.draw_sprite(i, memory);
+            self.draw_sprite(i);
         }
     }
 
@@ -209,27 +208,27 @@ impl PPU
         }
     }
 
-    pub fn draw_mode_0(&mut self, memory: &Memory)
+    pub fn draw_mode_0(&mut self)
     {
         // Background is drawn in reverse order to give
         // precedence to ones with lower index.
-        if self.dispcnt.bit(11) {self.draw_text_background(3, memory)}
-        if self.dispcnt.bit(10) {self.draw_text_background(2, memory)}
-        if self.dispcnt.bit(9) {self.draw_text_background(1, memory)}
-        if self.dispcnt.bit(8) {self.draw_text_background(0, memory)}
+        if self.dispcnt.bit(11) {self.draw_text_background(3)}
+        if self.dispcnt.bit(10) {self.draw_text_background(2)}
+        if self.dispcnt.bit(9) {self.draw_text_background(1)}
+        if self.dispcnt.bit(8) {self.draw_text_background(0)}
     }
 
-    pub fn draw_mode_1(&mut self, memory: &Memory)
+    pub fn draw_mode_1(&mut self)
     {
-        if self.dispcnt.bit(10) {self.draw_affine_background(2, memory)}
-        if self.dispcnt.bit(9) {self.draw_text_background(1, memory)}
-        if self.dispcnt.bit(8) {self.draw_text_background(0, memory)}
+        if self.dispcnt.bit(10) {self.draw_affine_background(2)}
+        if self.dispcnt.bit(9) {self.draw_text_background(1)}
+        if self.dispcnt.bit(8) {self.draw_text_background(0)}
     }
 
-    pub fn draw_mode_2(&mut self, memory: &Memory)
+    pub fn draw_mode_2(&mut self)
     {
-        if self.dispcnt.bit(11) {self.draw_affine_background(3, memory)}
-        if self.dispcnt.bit(10) {self.draw_affine_background(2, memory)}
+        if self.dispcnt.bit(11) {self.draw_affine_background(3)}
+        if self.dispcnt.bit(10) {self.draw_affine_background(2)}
     }
 
     pub fn force_blank(&mut self)
