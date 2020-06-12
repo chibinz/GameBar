@@ -11,6 +11,9 @@ mod keyboard;
 mod util;
 mod debug;
 
+use minifb::Window;
+use minifb::WindowOptions;
+
 use std::env;
 use std::marker::Send;
 
@@ -34,19 +37,37 @@ fn main()
     console.memory.load_rom(&args[1]);
     console.memory.load_bios(&"rom/gba_bios.bin".to_string());
 
+    let mut window = init_window();
+
     // debug(&mut console as *mut console::Console);
 
-    while console.window.is_open()
+    while window.is_open()
     {
-        let input = keyboard::input(&console.window);
+        let input = keyboard::input(&window);
         console.keypad.set_input(input, &mut console.irqcnt);
         console.step_frame();
+        window.update_with_buffer(&console.ppu.buffer, 240, 160).unwrap();
     }
 }
 
 fn usage()
 {
     println!("usage: GameBar <rom>");
+}
+
+fn init_window() -> Window
+{
+    Window::new
+    (
+        "GameBar",
+        240,
+        160,
+        WindowOptions
+        {
+            scale: minifb::Scale::X2,
+            ..WindowOptions::default()
+        }
+    ).unwrap()
 }
 
 #[allow(dead_code)]

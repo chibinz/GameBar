@@ -6,9 +6,6 @@ use crate::interrupt::IRQController;
 use crate::keyboard::Keypad;
 use crate::memory::Memory;
 
-use minifb::Window;
-use minifb::WindowOptions;
-
 pub struct Console
 {
     pub cpu   : CPU,
@@ -19,7 +16,6 @@ pub struct Console
     pub keypad: Keypad,
     pub memory: Memory,
 
-    pub window: Window,
     pub magic : u32,
 }
 
@@ -36,18 +32,6 @@ impl Console
             timers: Timers::new(),
             keypad: Keypad::new(),
             memory: Memory::new(),
-
-            window: Window::new
-            (
-                "GameBar",
-                240,
-                160,
-                WindowOptions
-                {
-                    scale: minifb::Scale::X2,
-                    ..WindowOptions::default()
-                }
-            ).unwrap(),
 
             magic: 0xdeadbeef,
         }
@@ -81,8 +65,6 @@ impl Console
             cpu.run(1232, memory);
             timers.run(1232, irqcnt);
         }
-
-        self.window.update_with_buffer(&ppu.buffer, 240, 160).unwrap();
     }
 
     /// Single step CPU, for debugging purpose
