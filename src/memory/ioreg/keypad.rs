@@ -1,4 +1,4 @@
-use crate::keyboard::Keypad;
+use crate::keypad::Keypad;
 
 impl Keypad
 {

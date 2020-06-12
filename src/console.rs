@@ -3,7 +3,7 @@ use crate::ppu::PPU;
 use crate::dma::DMA;
 use crate::timer::Timers;
 use crate::interrupt::IRQController;
-use crate::keyboard::Keypad;
+use crate::keypad::Keypad;
 use crate::memory::Memory;
 
 pub struct Console

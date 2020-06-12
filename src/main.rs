@@ -7,6 +7,7 @@ mod timer;
 mod interrupt;
 mod memory;
 mod console;
+mod keypad;
 mod keyboard;
 mod util;
 mod debug;
@@ -29,8 +30,8 @@ fn main()
         return;
     }
 
-    let mut console = console::Console::new();
-    console.memory.console = &mut console as *mut console::Console;
+    let mut console = Box::new(console::Console::new());
+    console.memory.console = &mut *console as *mut console::Console;
     console.irqcnt.cpu = &mut console.cpu as *mut cpu::CPU;
     console.cpu.dma = &mut console.dma as *mut dma::DMA;
 
