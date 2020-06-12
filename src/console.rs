@@ -60,7 +60,7 @@ impl Console
         let ppu    = &mut self.ppu;
         let memory = &mut self.memory;
         let timers = &mut self.timers;
-        let dma    = &mut self.dma;
+        // let dma    = &mut self.dma;
         let irqcnt = &mut self.irqcnt;
 
         for _ in 0..160
@@ -69,14 +69,11 @@ impl Console
             cpu.run(960, memory);
             timers.run(960, irqcnt);
 
-            dma.request(memory);
 
             ppu.hblank(irqcnt);
             cpu.run(272, memory);
             timers.run(272, irqcnt);
         }
-
-        dma.request(memory);
 
         for _ in 0..68
         {

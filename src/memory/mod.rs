@@ -15,7 +15,7 @@ pub struct Memory
     ewram: Vec<u8>,
     iwram: Vec<u8>,
     rom  : Vec<u8>,
-    sram : Vec<u8>,
+    // sram : Vec<u8>,
 
     /// Pointer to containing console struct
     pub console: *mut Console,
@@ -35,7 +35,7 @@ impl Memory
             // vram :      0x06018000 - 0x06000000
             // oam  :      0x07000400 - 0x07000000
             rom  : vec![0; 0x0a000000 - 0x08000000],
-            sram : vec![0; 0x0e010000 - 0x0e000000],
+            // sram : vec![0; 0x0e010000 - 0x0e000000],
 
             console: 0 as *mut Console,
         }
@@ -62,7 +62,7 @@ impl Memory
             0x07 => self.oam_load8(offset),
             0x08..=
             0x0d => self.rom[offset],
-            0x0e => self.sram[offset],
+            // 0x0e => self.sram[offset],
             _    => {Self::unhandled(true, 4, address); 0},
         }
     }
@@ -85,7 +85,7 @@ impl Memory
             0x07 => self.oam_load16(offset),
             0x08..=
             0x0d => ldh(&self.rom),
-            0x0e => ldh(&self.sram),
+            // 0x0e => ldh(&self.sram),
             _    => {Self::unhandled(true, 2, address); 0},
         }
     }
@@ -108,7 +108,7 @@ impl Memory
             0x07 => self.oam_load32(offset),
             0x08..=
             0x0d => ld(&self.rom),
-            0x0e => ld(&self.sram),
+            // 0x0e => ld(&self.sram),
             _    => {Self::unhandled(true, 4, address); 0},
         };
 
@@ -126,7 +126,7 @@ impl Memory
             0x02 => self.ewram[offset] = value,
             0x03 => self.iwram[offset] = value,
             0x04 => self.ioram_store8(address, value),
-            0x0e => self.sram[offset]  = value,
+            // 0x0e => self.sram[offset]  = value,
             _    => Self::unhandled(false, 1, address),
         };
     }

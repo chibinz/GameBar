@@ -235,7 +235,8 @@ impl PPU
     {
         for i in self.buffer.iter_mut()
         {
-            *i = 0;
+            // Use grey to distinguish force blanking color
+            *i = 0x00808080;
         }
     }
 }

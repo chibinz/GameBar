@@ -42,14 +42,14 @@ impl DMA
         }
     }
 
-    pub fn request(&mut self, memory: &mut Memory)
-    {
-        let mut n = 100000;
-        for c in self.channel.iter_mut()
-        {
-            c.transfer(&mut n, memory);
-        }
-    }
+    // pub fn request(&mut self, memory: &mut Memory)
+    // {
+    //     let mut n = 100000;
+    //     for c in self.channel.iter_mut()
+    //     {
+    //         c.transfer(&mut n, memory);
+    //     }
+    // }
 
     /// Check if any dma channel is ready but being held
     pub fn is_active(&self) -> bool

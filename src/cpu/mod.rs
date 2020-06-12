@@ -89,7 +89,7 @@ impl CPU
         }
 
         self.booted = self.booted || (self.r[15] >= 0x08000000);
-        // if self.booted {self.print(memory)}
+        // if self.booted {self.print()}
 
         if self.in_thumb_mode()
         {

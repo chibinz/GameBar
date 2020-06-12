@@ -121,7 +121,7 @@ impl Memory
 
         let ioreg = (address & 0xfffe) as usize;
 
-        // Seems like match pattern cannot be replaced with macros...
+        // Seems like match patterns cannot be replaced with macros...
         match ioreg
         {
             0x000 => ppu.set_dispcnt(value),
