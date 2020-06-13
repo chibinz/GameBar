@@ -9,6 +9,7 @@ mod memory;
 mod console;
 mod keypad;
 mod keyboard;
+mod event;
 mod util;
 mod debug;
 

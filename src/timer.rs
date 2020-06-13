@@ -79,6 +79,23 @@ impl Timer
         }
     }
 
+    pub fn calculate_increment(&mut self, ticks_past: u32, times_overflowed: u32) -> u32
+    {
+        if self.cascade_f
+        {
+            times_overflowed
+        }
+        else
+        {
+            self.modulo += ticks_past;
+            let increment = self.modulo / self.prescaler;
+
+            self.modulo %= self.prescaler;
+
+            increment
+        }
+    }
+
     pub fn increment_counter(&mut self, ticks: u32) -> bool
     {
         if self.enable
