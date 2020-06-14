@@ -158,7 +158,7 @@ impl PPU
         let (width, height) = sprite.get_dimension();
 
         // Vertical wrap around
-        let y = (vcount - sprite.ycoord) % 256;
+        let y = vcount.wrapping_sub(sprite.ycoord) % 256;
         let w = if sequential {width / 8} else {32};
 
         let mut tile_y  = y / 8;

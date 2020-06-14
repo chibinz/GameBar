@@ -56,7 +56,7 @@ impl Memory
             0x00 => self.bios[offset],
             0x02 => self.ewram[offset],
             0x03 => self.iwram[offset],
-            0x04 => self.ioram_load8(address),
+            0x04 => self.ioram_load8(offset),
             0x05 => self.param_load8(offset),
             0x06 => self.vram_load8(offset),
             0x07 => self.oam_load8(offset),
@@ -79,7 +79,7 @@ impl Memory
             0x00 => ldh(&self.bios),
             0x02 => ldh(&self.ewram),
             0x03 => ldh(&self.iwram),
-            0x04 => self.ioram_load16(address),
+            0x04 => self.ioram_load16(offset),
             0x05 => self.param_load16(offset),
             0x06 => self.vram_load16(offset),
             0x07 => self.oam_load16(offset),
@@ -102,7 +102,7 @@ impl Memory
             0x00 => ld(&self.bios),
             0x02 => ld(&self.ewram),
             0x03 => ld(&self.iwram),
-            0x04 => self.ioram_load32(address),
+            0x04 => self.ioram_load32(offset),
             0x05 => self.param_load32(offset),
             0x06 => self.vram_load32(offset),
             0x07 => self.oam_load32(offset),
@@ -125,7 +125,7 @@ impl Memory
         {
             0x02 => self.ewram[offset] = value,
             0x03 => self.iwram[offset] = value,
-            0x04 => self.ioram_store8(address, value),
+            0x04 => self.ioram_store8(offset, value),
             // 0x0e => self.sram[offset]  = value,
             _    => Self::unhandled(false, 1, address),
         };
@@ -148,7 +148,7 @@ impl Memory
         {
             0x02 => sth(&mut self.ewram),
             0x03 => sth(&mut self.iwram),
-            0x04 => self.ioram_store16(address, value),
+            0x04 => self.ioram_store16(offset, value),
             0x05 => self.param_store16(offset, value),
             0x06 => self.vram_store16(offset, value),
             0x07 => self.oam_store16(offset, value),
@@ -175,7 +175,7 @@ impl Memory
         {
             0x02 => st(&mut self.ewram),
             0x03 => st(&mut self.iwram),
-            0x04 => self.ioram_store32(address, value),
+            0x04 => self.ioram_store32(offset, value),
             0x05 => self.param_store32(offset, value),
             0x06 => self.vram_store32(offset, value),
             0x07 => self.oam_store32(offset, value),

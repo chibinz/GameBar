@@ -1,20 +1,39 @@
 use crate::memory::Memory;
+use crate::interrupt::IRQController;
+use crate::interrupt::Interrupt::*;
 
 pub struct DMA
 {
     pub channel: Vec<DMAChannel>
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct DMAChannel
 {
     pub index  : usize,   // DMA index 0 - 3
-    pub src    : u32,     // Internal register of current source address
-    pub dst    : u32,     // Internal register of current destination address
+    pub src    : u32,     // Source address when read from the bus
+    pub dst    : u32,     // Destination address
     pub count  : u16,     // Number of word / halfword to be copied
     pub control: u16,     // DMA control bits
 
+    in_src     : u32,     // Internal source register
+    in_dst     : u32,     // Internal destinatino register
+    srcinc     : u32,     // Added to in_src after every copy
+    dstinc     : u32,     // Added to dst_src after every copy
+    in_count   : u16,     // Keep track of how many words transferred
+
+    transfer   : fn(&mut Self, &mut Memory),
+    state      : State,
+
     pub active : bool,
+}
+
+#[derive(Clone)]
+enum State
+{
+    Unintialized,
+    Transferring,
+    Finished,
 }
 
 impl DMA
@@ -36,20 +55,11 @@ impl DMA
 
     pub fn run(&mut self, cycles: &mut i32, memory: &mut Memory)
     {
-        for c in self.channel.iter_mut()
-        {
-            c.transfer(cycles, memory);
-        }
+        // for c in self.channel.iter_mut()
+        // {
+        //     c.transfer(cycles, memory);
+        // }
     }
-
-    // pub fn request(&mut self, memory: &mut Memory)
-    // {
-    //     let mut n = 100000;
-    //     for c in self.channel.iter_mut()
-    //     {
-    //         c.transfer(&mut n, memory);
-    //     }
-    // }
 
     /// Check if any dma channel is ready but being held
     pub fn is_active(&self) -> bool
@@ -78,94 +88,109 @@ impl DMAChannel
             count   : 0,
             control : 0,
 
+            in_count: 0,
+            in_src  : 0,
+            in_dst  : 0,
+            srcinc  : 0,
+            dstinc  : 0,
+
+            transfer: Self::transfer16,
+            state   : State::Unintialized,
+
             active  : false,
         }
     }
 
-    /// Transfer data and return the number of cycles used
-    pub fn transfer(&mut self, cycles: &mut i32, memory: &mut Memory)
+    /// Things to be done before transfer initiates,
+    /// e.g. Copy into internal register, calculate increment...
+    pub fn setup(&mut self)
     {
-        // TODO special start mode
-        if self.start() == 3 {return}
-        if !self.enable() {return}
-
-        if self.word_f()
+        if self.enable()
         {
-            self.transfer32(cycles, memory);
+            // Copy into internal register
+            self.in_src = self.src;
+            self.in_dst = self.dst;
+
+            self.srcinc = self.get_increment(self.srccnt());
+            self.dstinc = self.get_increment(self.dstcnt());
+
+            self.transfer = if self.word_f() {Self::transfer32}
+                                        else {Self::transfer16};
+
+            self.state = State::Transferring;
+        }
+    }
+
+    /// Things to be done after transfer completes,
+    /// e.g. Source register write back, interrupt...
+    pub fn finish(&mut self, irqcnt: &mut IRQController)
+    {
+        self.src = self.in_src;
+        if self.dstcnt() != 3 {self.dst = self.in_dst}
+
+        // Clear enable bit if repeat flag not set
+        if !self.repeat_f() {self.control &= !0x8000}
+
+        if self.interrupt_f() {irqcnt.request(DMA3)}
+
+        self.active = false;
+
+        self.state = State::Unintialized;
+    }
+
+    pub fn step(&mut self, irqcnt: &mut IRQController, memory: &mut Memory)
+    {
+        use State::*;
+
+        match self.state
+        {
+            Unintialized => self.setup(),
+            Transferring => (self.transfer)(self, memory),
+            Finished     => self.finish(irqcnt),
+        }
+    }
+
+    pub fn transfer16(&mut self, memory: &mut Memory)
+    {
+        //     if self.start() == 3 {return}
+        //     if !self.enable() {return}
+        if self.in_count < self.count
+        {
+            memory.store16(self.in_dst, memory.load16(self.in_src));
+
+            // Incrment internal register
+            self.in_src = self.in_src.wrapping_add(self.srcinc);
+            self.in_dst = self.in_dst.wrapping_add(self.dstinc);
+
+            self.in_count += 1;
         }
         else
         {
-            self.transfer16(cycles, memory);
-        };
-
-        // Premature exit
-        if *cycles <= 0 {return}
-
-        if !self.repeat_f()
-        {
-            self.control &= !0x8000;
+            self.state = State::Finished;
         }
-
-        self.active = false;
     }
 
-    pub fn transfer16(&mut self, cycles: &mut i32, memory: &mut Memory)
+    pub fn transfer32(&mut self, memory: &mut Memory)
     {
-        // Copy into internal register
-        let mut src = self.src;
-        let mut dst = self.dst;
-
-        let srcinc = Self::get_increment(self.word_f(), self.srccnt());
-        let dstinc = Self::get_increment(self.word_f(), self.dstcnt());
-
-        for _ in 0..self.count
+        if self.in_count < self.count
         {
-            // If allocated time is used up, return early.
-            // dma registers will not be written back
-            if *cycles <= 0 {return}
-
-            memory.store16(dst, memory.load16(src));
+            memory.store32(self.in_dst, memory.load32(self.in_src));
 
             // Incrment internal register
-            src = src.wrapping_add(srcinc);
-            dst = dst.wrapping_add(dstinc);
+            self.in_src = self.in_src.wrapping_add(self.srcinc);
+            self.in_dst = self.in_dst.wrapping_add(self.dstinc);
 
-            // TODO improve timing accuracy
-            *cycles -= 2;
+            self.in_count += 1;
         }
-
-        // Write back
-        self.src = src;
-        if self.dstcnt() != 3 {self.dst = dst}
-    }
-
-    pub fn transfer32(&mut self, cycles: &mut i32, memory: &mut Memory)
-    {
-        let mut src = self.src;
-        let mut dst = self.dst;
-
-        let srcinc = Self::get_increment(self.word_f(), self.srccnt());
-        let dstinc = Self::get_increment(self.word_f(), self.dstcnt());
-
-        for _ in 0..self.count
+        else
         {
-            if *cycles <= 0 {return}
-
-            memory.store32(dst, memory.load32(src));
-
-            src = src.wrapping_add(srcinc);
-            dst = dst.wrapping_add(dstinc);
-
-            *cycles -= 2;
+            self.state = State::Finished;
         }
-
-        self.src = src;
-        if self.dstcnt() != 3 {self.dst = dst}
     }
 
-    pub fn get_increment(word_f: bool, cnt: u32) -> u32
+    pub fn get_increment(&self, cnt: u32) -> u32
     {
-        let inc: u32 = if word_f {4} else {2};
+        let inc: u32 = if self.word_f() {4} else {2};
         match cnt
         {
             0b00 => inc,

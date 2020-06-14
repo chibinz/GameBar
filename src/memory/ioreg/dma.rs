@@ -113,6 +113,12 @@ impl DMAChannel
     }
 
     #[inline]
+    pub fn interrupt_f(&self) -> bool
+    {
+        self.control.bit(14)
+    }
+
+    #[inline]
     pub fn enable(&self) -> bool
     {
         self.control.bit(15)
