@@ -17,13 +17,21 @@ impl Timer
     }
 
     #[inline]
+    pub fn get_control(&self) -> u16
+    {
+        self.control
+    }
+
+    #[inline]
     pub fn set_control(&mut self, value: u16)
     {
+        // Reload on switching on timer
         if !self.enable && value.bit(7) {self.counter = self.reload}
 
+        self.control   = value;
         self.prescaler = PRESCALER[value.bits(1, 0) as usize];
         self.cascade_f = value.bit(2);
         self.irq_f     = value.bit(6);
-        self.enable    = value.bit(7); // Reload on switching on timer
+        self.enable    = value.bit(7);
     }
 }

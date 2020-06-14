@@ -2,7 +2,7 @@ use crate::interrupt::IRQController;
 use crate::interrupt::Interrupt;
 use crate::interrupt::Interrupt::*;
 
-pub static PRESCALER: [u32; 4] =
+pub static PRESCALER: [u16; 4] =
 [
     1,
     64,
@@ -26,10 +26,11 @@ pub struct Timers
 #[derive(Clone, Debug)]
 pub struct Timer
 {
+    pub control  : u16,     // Raw control bits
     pub reload   : u16,     // Initial value on reload
     pub counter  : u16,     // Timer data
-    pub modulo   : u32,     // Leftover (< prescaler)
-    pub prescaler: u32,     // 1, 64, 256, 1024
+    pub modulo   : u16,     // Leftover (< prescaler)
+    pub prescaler: u16,     // 1, 64, 256, 1024
     pub irq_f    : bool,    // Interrupt on overflow
     pub cascade_f: bool,    // Cascade flag
     pub enable   : bool,    // Enable flag
@@ -45,20 +46,25 @@ impl Timers
         }
     }
 
-    pub fn run(&mut self, value: u32, irqcnt: &mut IRQController)
+    /// There might be some issues when ticks > u16::max_value()
+    pub fn run(&mut self, ticks: u32, irqcnt: &mut IRQController)
     {
-        let mut overflow = false;
+        let mut times_overflowed = 0;
 
         for (i, timer) in self.timer.iter_mut().enumerate()
         {
-            // If timer is set to cascade mode, it always increment by one
-            // regardless of the prescaler value.
-            let increment = if timer.cascade_f {(overflow as u32) * timer.prescaler}
-                            else {value};
+            if timer.enable
+            {
+                let increment = timer.calculate_increment(ticks as u16, times_overflowed);
 
-            overflow = timer.increment_counter(increment);
+                times_overflowed = timer.increment_counter(increment);
 
-            if overflow && timer.irq_f {irqcnt.request(IRQ[i])}
+                if times_overflowed > 0 && timer.irq_f {irqcnt.request(IRQ[i])}
+            }
+            else
+            {
+                times_overflowed = 0;
+            }
         }
     }
 }
@@ -69,6 +75,7 @@ impl Timer
     {
         Self
         {
+            control  : 0,
             reload   : 0,
             counter  : 0,
             prescaler: 0,
@@ -79,7 +86,7 @@ impl Timer
         }
     }
 
-    pub fn calculate_increment(&mut self, ticks_past: u32, times_overflowed: u32) -> u32
+    pub fn calculate_increment(&mut self, ticks_past: u16, times_overflowed: u16) -> u16
     {
         if self.cascade_f
         {
@@ -88,32 +95,39 @@ impl Timer
         else
         {
             self.modulo += ticks_past;
-            let increment = self.modulo / self.prescaler;
 
-            self.modulo %= self.prescaler;
+            let quotient = self.modulo / self.prescaler;
+            let remainder = self.modulo % self.prescaler;
 
-            increment
+            self.modulo = remainder;
+
+            quotient
         }
     }
 
-    pub fn increment_counter(&mut self, ticks: u32) -> bool
+    /// Add increment to the current counter value, return number of times overflowed
+    pub fn increment_counter(&mut self, increment: u16) -> u16
     {
-        if self.enable
+        let mut remaining = increment;
+        let mut times_overflowed = 0;
+
+        while remaining > 0
         {
-            self.modulo += ticks;
+            let (value, overflow) = self.counter.overflowing_add(remaining);
 
-            let increment = (self.modulo / self.prescaler) as u16;
-            let (value, overflow) = self.counter.overflowing_add(increment);
-
-            // Reload initial value on overflow
-            self.counter = if overflow {self.reload} else {value};
-            self.modulo %= self.prescaler;
-
-            overflow
+            if overflow
+            {
+                remaining -= u16::max_value() - self.counter;
+                times_overflowed += 1;
+                self.counter = self.reload;
+            }
+            else
+            {
+                remaining = 0;
+                self.counter = value;
+            }
         }
-        else
-        {
-            false
-        }
+
+        times_overflowed
     }
 }

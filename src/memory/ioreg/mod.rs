@@ -75,9 +75,13 @@ impl Memory
             0x0de => dma.channel[3].get_control(),
 
             0x100 => timers.timer[0].get_counter(),
+            0x102 => timers.timer[0].get_control(),
             0x104 => timers.timer[1].get_counter(),
+            0x106 => timers.timer[1].get_control(),
             0x108 => timers.timer[2].get_counter(),
+            0x10a => timers.timer[2].get_control(),
             0x10c => timers.timer[3].get_counter(),
+            0x10e => timers.timer[3].get_control(),
 
             0x130 => keypad.get_input(),
             0x132 => keypad.get_control(),
