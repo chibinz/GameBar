@@ -44,25 +44,28 @@ impl Console
         let ppu    = &mut self.ppu;
         let memory = &mut self.memory;
         let timers = &mut self.timers;
-        // let dma    = &mut self.dma;
+        let dma    = &mut self.dma;
         let irqcnt = &mut self.irqcnt;
 
         for _ in 0..160
         {
             ppu.hdraw(irqcnt);
-            cpu.run(960, memory);
+            cpu.run(960, memory, irqcnt);
             timers.run(960, irqcnt);
 
+            dma.request_hblank();
 
             ppu.hblank(irqcnt);
-            cpu.run(272, memory);
+            cpu.run(272, memory, irqcnt);
             timers.run(272, irqcnt);
         }
+
+        dma.request_vblank();
 
         for _ in 0..68
         {
             ppu.vblank(irqcnt);
-            cpu.run(1232, memory);
+            cpu.run(1232, memory, irqcnt);
             timers.run(1232, irqcnt);
         }
     }

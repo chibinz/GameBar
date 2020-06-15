@@ -8,6 +8,7 @@ mod barrel_shifter;
 use register::PSRBit::*;
 use crate::memory::Memory;
 use crate::dma::DMA;
+use crate::interrupt::IRQController;
 
 #[derive(Debug)]
 pub struct CPU
@@ -69,25 +70,28 @@ impl CPU
         cpu
     }
 
-    pub fn run(&mut self, cycles: i32, memory: &mut Memory)
+    pub fn run(&mut self, cycles: i32, memory: &mut Memory, irqcnt: &mut IRQController)
     {
         self.remaining += cycles;
+        let dma = unsafe {&mut *self.dma};
 
         while self.remaining > 0
         {
-            self.step(memory)
+            // Poll dma
+            if dma.is_active()
+            {
+                dma.step(irqcnt, memory);
+                self.remaining -= 2;
+            }
+            else
+            {
+                self.step(memory)
+            }
         }
     }
 
     pub fn step(&mut self, memory: &mut Memory)
     {
-        // Poll dma
-        let dma = unsafe {&mut *self.dma};
-        if dma.is_active()
-        {
-            dma.run(&mut self.remaining, memory);
-        }
-
         self.booted = self.booted || (self.r[15] >= 0x08000000);
         // if self.booted {self.print()}
 

@@ -51,7 +51,7 @@ impl Memory
     {
         let offset = mirror(address) & 0x00ffffff;
 
-        match address >> 24
+        match region(address)
         {
             0x00 => self.bios[offset],
             0x02 => self.ewram[offset],
@@ -74,7 +74,7 @@ impl Memory
 
         let ldh = |mem: &[u8]| into16(&mem[offset..offset+2]);
 
-        match address >> 24
+        match region(address)
         {
             0x00 => ldh(&self.bios),
             0x02 => ldh(&self.ewram),
@@ -97,7 +97,7 @@ impl Memory
 
         let ld = |mem: &[u8]| into32(&mem[offset..offset+4]);
 
-        let value = match address >> 24
+        let value = match region(address)
         {
             0x00 => ld(&self.bios),
             0x02 => ld(&self.ewram),
@@ -121,7 +121,7 @@ impl Memory
     {
         let offset = mirror(address) & 0x00ffffff;
 
-        match address >> 24
+        match region(address)
         {
             0x02 => self.ewram[offset] = value,
             0x03 => self.iwram[offset] = value,
@@ -144,7 +144,7 @@ impl Memory
             mem[offset + 1] = a[1];
         };
 
-        match address >> 24
+        match region(address)
         {
             0x02 => sth(&mut self.ewram),
             0x03 => sth(&mut self.iwram),
@@ -171,7 +171,7 @@ impl Memory
             mem[offset + 3] = a[3];
         };
 
-        match address >> 24
+        match region(address)
         {
             0x02 => st(&mut self.ewram),
             0x03 => st(&mut self.iwram),
@@ -209,10 +209,16 @@ impl Memory
     #[allow(unused_variables)]
     fn unhandled(load: bool, size: u32, address: u32)
     {
-        // let s = if load {"load"} else {"store"};
+        let s = if load {"load"} else {"store"};
 
-        // println!("Unhandled {}-byte {} at {:#08x}", size, s, address);
+        println!("Unhandled {}-byte {} at {:#08x}", size, s, address);
     }
+}
+
+fn region(address: u32) -> u32
+{
+    // Top nibble of address is ignored
+    (address >> 24) & 0xf
 }
 
 /// Return equivalent base address

@@ -16,20 +16,20 @@ pub struct DMAChannel
     pub count  : u16,     // Number of word / halfword to be copied
     pub control: u16,     // DMA control bits
 
-    in_src     : u32,     // Internal source register
-    in_dst     : u32,     // Internal destinatino register
-    srcinc     : u32,     // Added to in_src after every copy
-    dstinc     : u32,     // Added to dst_src after every copy
-    in_count   : u16,     // Keep track of how many words transferred
+    pub in_src     : u32,     // Internal source register
+    pub in_dst     : u32,     // Internal destinatino register
+    pub srcinc     : u32,     // Added to in_src after every copy
+    pub dstinc     : u32,     // Added to dst_src after every copy
+    pub in_count   : u16,     // Keep track of how many words transferred
 
     transfer   : fn(&mut Self, &mut Memory),
-    state      : State,
+    pub state      : State,
 
     pub active : bool,
 }
 
-#[derive(Clone)]
-enum State
+#[derive(Clone, Debug)]
+pub enum State
 {
     Unintialized,
     Transferring,
@@ -53,13 +53,40 @@ impl DMA
         d
     }
 
-    pub fn run(&mut self, cycles: &mut i32, memory: &mut Memory)
+    pub fn step(&mut self, irqcnt: &mut IRQController, memory: &mut Memory)
     {
-        // for c in self.channel.iter_mut()
-        // {
-        //     c.transfer(cycles, memory);
-        // }
+        for c in self.channel.iter_mut()
+        {
+            if c.active
+            {
+                c.step(irqcnt, memory);
+                break;
+            }
+        }
     }
+
+    pub fn request_hblank(&mut self)
+    {
+        for c in self.channel.iter_mut()
+        {
+            if c.start() == 0b10
+            {
+                c.active = true;
+            }
+        }
+    }
+
+    pub fn request_vblank(&mut self)
+    {
+        for c in self.channel.iter_mut()
+        {
+            if c.start() == 0b01
+            {
+                c.active = true;
+            }
+        }
+    }
+
 
     /// Check if any dma channel is ready but being held
     pub fn is_active(&self) -> bool
@@ -105,20 +132,22 @@ impl DMAChannel
     /// e.g. Copy into internal register, calculate increment...
     pub fn setup(&mut self)
     {
-        if self.enable()
-        {
-            // Copy into internal register
-            self.in_src = self.src;
-            self.in_dst = self.dst;
+        if !self.active {dbg!(self.index); return;}
+        if self.start() == 3 {self.state = State::Finished; return;}
+        assert!(self.active);
+        assert!(self.enable());
 
-            self.srcinc = self.get_increment(self.srccnt());
-            self.dstinc = self.get_increment(self.dstcnt());
+        // Copy into internal register
+        self.in_src = self.src;
+        self.in_dst = self.dst;
 
-            self.transfer = if self.word_f() {Self::transfer32}
-                                        else {Self::transfer16};
+        self.srcinc = self.get_increment(self.srccnt());
+        self.dstinc = self.get_increment(self.dstcnt());
 
-            self.state = State::Transferring;
-        }
+        self.transfer = if self.word_f() {Self::transfer32}
+                                    else {Self::transfer16};
+
+        self.state = State::Transferring;
     }
 
     /// Things to be done after transfer completes,
@@ -133,6 +162,7 @@ impl DMAChannel
 
         if self.interrupt_f() {irqcnt.request(DMA3)}
 
+        self.in_count = 0;
         self.active = false;
 
         self.state = State::Unintialized;
