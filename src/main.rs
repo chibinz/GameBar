@@ -22,9 +22,7 @@ fn main()
     }
 
     let mut console = Box::new(console::Console::new());
-    console.memory.console = &mut *console as *mut console::Console;
-    console.irqcnt.cpu = &mut console.cpu as *mut console::cpu::CPU;
-    console.cpu.dma = &mut console.dma as *mut console::dma::DMA;
+    console.init(); // Must be called before any operation
 
     console.memory.load_rom(&args[1]);
     console.memory.load_bios(&"rom/gba_bios.bin".to_string());

@@ -93,7 +93,7 @@ impl CPU
     pub fn step(&mut self, memory: &mut Memory)
     {
         self.booted = self.booted || (self.r[15] >= 0x08000000);
-        // if self.booted {self.print()}
+        if self.booted {self.print()}
 
         if self.in_thumb_mode()
         {

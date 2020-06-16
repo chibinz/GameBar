@@ -22,14 +22,14 @@ pub struct DMAChannel
     pub dstinc     : u32,     // Added to dst_src after every copy
     pub in_count   : u16,     // Keep track of how many words transferred
 
-    transfer   : fn(&mut Self, &mut Memory),
-    pub state      : State,
+    transfer       : fn(&mut Self, &mut Memory),
+    pub state      : DMAState,
 
     pub active : bool,
 }
 
 #[derive(Clone, Debug)]
-pub enum State
+pub enum DMAState
 {
     Unintialized,
     Transferring,
@@ -122,7 +122,7 @@ impl DMAChannel
             dstinc  : 0,
 
             transfer: Self::transfer16,
-            state   : State::Unintialized,
+            state   : DMAState::Unintialized,
 
             active  : false,
         }
@@ -133,7 +133,9 @@ impl DMAChannel
     pub fn setup(&mut self)
     {
         if !self.active {dbg!(self.index); return;}
-        if self.start() == 3 {self.state = State::Finished; return;}
+
+        // Start mode 3 not handled
+        assert_ne!(self.start(), 3);
         assert!(self.active);
         assert!(self.enable());
 
@@ -147,7 +149,7 @@ impl DMAChannel
         self.transfer = if self.word_f() {Self::transfer32}
                                     else {Self::transfer16};
 
-        self.state = State::Transferring;
+        self.state = DMAState::Transferring;
     }
 
     /// Things to be done after transfer completes,
@@ -165,12 +167,12 @@ impl DMAChannel
         self.in_count = 0;
         self.active = false;
 
-        self.state = State::Unintialized;
+        self.state = DMAState::Unintialized;
     }
 
     pub fn step(&mut self, irqcnt: &mut IRQController, memory: &mut Memory)
     {
-        use State::*;
+        use DMAState::*;
 
         match self.state
         {
@@ -182,8 +184,6 @@ impl DMAChannel
 
     pub fn transfer16(&mut self, memory: &mut Memory)
     {
-        //     if self.start() == 3 {return}
-        //     if !self.enable() {return}
         if self.in_count < self.count
         {
             memory.store16(self.in_dst, memory.load16(self.in_src));
@@ -196,7 +196,7 @@ impl DMAChannel
         }
         else
         {
-            self.state = State::Finished;
+            self.state = DMAState::Finished;
         }
     }
 
@@ -214,7 +214,7 @@ impl DMAChannel
         }
         else
         {
-            self.state = State::Finished;
+            self.state = DMAState::Finished;
         }
     }
 

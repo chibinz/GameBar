@@ -1,6 +1,6 @@
-pub mod cpu;
-pub mod ppu;
-pub mod dma;
+mod cpu;
+mod ppu;
+mod dma;
 mod timer;
 mod interrupt;
 mod memory;
@@ -46,6 +46,13 @@ impl Console
 
             magic: 0xdeadbeef,
         }
+    }
+
+    pub fn init(&mut self)
+    {
+        self.memory.console = self as *mut Self;
+        self.irqcnt.cpu = &mut self.cpu as *mut cpu::CPU;
+        self.cpu.dma = &mut self.dma as *mut dma::DMA;
     }
 
     /// Render a frame

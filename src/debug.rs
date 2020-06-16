@@ -3,7 +3,7 @@ use std::process::exit;
 use std::collections::HashSet;
 
 use minifb::Window;
-// use minifb::WindowOptions;
+
 use console::util::*;
 use console::Console;
 
@@ -54,10 +54,10 @@ impl Debugger
         //     "Debug",
         //     WIDTH,
         //     HEIGHT,
-        //     WindowOptions
+        //     minifb::WindowOptions
         //     {
         //         scale: minifb::Scale::X16,
-        //         ..WindowOptions::default()
+        //         ..minifb::WindowOptions::default()
         //     }
         // ).unwrap();
 

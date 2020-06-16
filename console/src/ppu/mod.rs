@@ -35,6 +35,19 @@ pub struct PPU
 
     pub layer     : Vec<Layer>,        // Layer 0 - 3, and an extra layer for backdrop
     pub buffer    : Vec<u32>,          // Frame buffer, 240 * 160
+
+    pub state     : PPUState,
+}
+
+pub enum PPUState
+{
+    HDraw,          // HDraw interval
+    HBlank,         // HBlank interval
+    HBlankStart,    // Transition to HBlank, (instant)
+    VBlank,         // VBlank interval
+    VBlankStart,    // Transition to VBlank,
+    // VCount match is not considered as a state because it
+    // may occur simultaneously with other states
 }
 
 impl PPU
@@ -61,6 +74,7 @@ impl PPU
 
             layer     : vec![Layer::new(); 5],
             buffer    : vec![0; 240 * 160],
+            state     : PPUState::HDraw,
         };
 
         for i in 0..4
@@ -74,6 +88,19 @@ impl PPU
         }
 
         p
+    }
+
+    pub fn state(&self) -> PPUState
+    {
+        use PPUState::*;
+
+        match self.dispstat.bits(1, 0)
+        {
+            0b00 => HDraw,
+            0b01 => VBlank,
+            0b10 => HBlank,
+            _    => unreachable!(),
+        }
     }
 
     pub fn hdraw(&mut self, irqcnt: &mut IRQController)
@@ -100,11 +127,14 @@ impl PPU
         self.draw_sprites();
 
         self.combine_layers();
+
+        self.state = PPUState::HBlankStart;
     }
 
     pub fn hblank(&mut self, irqcnt: &mut IRQController)
     {
         self.dispstat |= 0b10;
+        self.state = PPUState::HBlank;
 
         if self.dispstat.bit(4) {irqcnt.request(HBlank)}
     }
@@ -113,6 +143,7 @@ impl PPU
     {
         self.increment_vcount(irqcnt);
         self.dispstat |= 0b01;
+        self.state = PPUState::VBlank;
 
         if self.dispstat.bit(3) && self.vcount == 160 {irqcnt.request(VBlank)}
     }
@@ -121,7 +152,8 @@ impl PPU
     {
         self.vcount += 1;
 
-        if self.vcount > 227 {self.vcount = 0}
+        if self.vcount == 160 {self.state = PPUState::VBlankStart}
+        if self.vcount > 227 {self.state = PPUState::HDraw; self.vcount = 0}
         if self.dispstat.bit(5) && self.vcount == self.dispstat >> 8 {irqcnt.request(VCount)}
     }
 
