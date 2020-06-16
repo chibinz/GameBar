@@ -4,3 +4,4 @@ reference/
 rom/
 suite/
 **/*.rs.bk
+console/Cargo.lock

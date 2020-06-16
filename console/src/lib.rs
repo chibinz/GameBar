@@ -1,3 +1,14 @@
+pub mod cpu;
+pub mod ppu;
+pub mod dma;
+mod timer;
+mod interrupt;
+mod memory;
+mod keypad;
+mod event;
+
+pub mod util;
+
 use crate::cpu::CPU;
 use crate::ppu::PPU;
 use crate::dma::DMA;

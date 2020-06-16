@@ -1,17 +1,7 @@
 #![allow(non_snake_case)]
 
-mod cpu;
-mod ppu;
-mod dma;
-mod timer;
-mod interrupt;
-mod memory;
-mod console;
-mod keypad;
-mod keyboard;
-mod event;
-mod util;
 mod debug;
+mod keyboard;
 
 use minifb::Window;
 use minifb::WindowOptions;
@@ -33,8 +23,8 @@ fn main()
 
     let mut console = Box::new(console::Console::new());
     console.memory.console = &mut *console as *mut console::Console;
-    console.irqcnt.cpu = &mut console.cpu as *mut cpu::CPU;
-    console.cpu.dma = &mut console.dma as *mut dma::DMA;
+    console.irqcnt.cpu = &mut console.cpu as *mut console::cpu::CPU;
+    console.cpu.dma = &mut console.dma as *mut console::dma::DMA;
 
     console.memory.load_rom(&args[1]);
     console.memory.load_bios(&"rom/gba_bios.bin".to_string());

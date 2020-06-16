@@ -7,7 +7,7 @@ use std::io::Read;
 use std::fs::File;
 use std::convert::TryInto;
 
-use super::console::Console;
+use crate::Console;
 
 pub struct Memory
 {

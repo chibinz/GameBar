@@ -4,8 +4,8 @@ use std::collections::HashSet;
 
 use minifb::Window;
 // use minifb::WindowOptions;
-use crate::util::*;
-use crate::console::Console;
+use console::util::*;
+use console::Console;
 
 static WIDTH: usize = 8;
 static HEIGHT: usize = 8;
