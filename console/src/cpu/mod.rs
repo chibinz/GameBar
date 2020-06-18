@@ -29,6 +29,7 @@ pub struct CPU
     // 24 - 26: R13_und, R14_und, SPSR_und
 
     pub booted   : bool,
+    pub cycles   : i32,     // Ticks consumed for current instruction
     pub remaining: i32,     // Remaining ticks till run finish,
 
     // The CPU halts when DMA is active.
@@ -55,6 +56,7 @@ impl CPU
             bank: [0; 27],
 
             booted   : false,
+            cycles   : 0,
             remaining: 0,
 
             dma: 0 as *mut DMA,
@@ -78,14 +80,13 @@ impl CPU
         while self.remaining > 0
         {
             // Poll dma
-            if dma.is_active()
+            self.remaining -= if dma.is_active()
             {
-                dma.step(irqcnt, memory);
-                self.remaining -= 2;
+                dma.step(irqcnt, memory)
             }
             else
             {
-                self.step(memory);
+                self.step(memory)
             }
         }
     }
@@ -93,7 +94,10 @@ impl CPU
     pub fn step(&mut self, memory: &mut Memory) -> i32
     {
         self.booted = self.booted || (self.r[15] >= 0x08000000);
-        // if self.booted {self.print()}
+        // if self.booted {self.print(memory)}
+
+        // At least one sequential cycle for any instruction
+        self.cycles = 1;
 
         if self.in_thumb_mode()
         {
@@ -104,10 +108,7 @@ impl CPU
             arm::step(self, memory);
         }
 
-        // Normal execution takes 1S cycle
-        self.remaining -= 1;
-
-        2
+        return self.cycles
     }
 
     pub fn flush(&mut self)
@@ -115,16 +116,16 @@ impl CPU
         if self.in_thumb_mode()
         {
             self.r[15] &= 0xfffffffe;
-            self.r[15] += 2;
         }
         else
         {
             self.r[15] &= 0xfffffffc;
-            self.r[15] += 4;
         }
 
+        self.r[15] += self.inst_width();
+
         // A write to R15 or branch will add 1S + 1N cycles
-        self.remaining -= 2;
+        self.cycles += Memory::cpu_access_timing(self.r[15], self.inst_width() / 2);
     }
 
     pub fn software_interrupt(&mut self)
@@ -146,7 +147,7 @@ impl CPU
     {
         if self.get_cpsr_bit(I) {return}
 
-        let lr = self.r[15] - if self.in_thumb_mode() {0} else {4};
+        let lr = self.r[15] - self.inst_width();
         let spsr = self.get_cpsr();
 
         self.set_cpsr(register::PSRMode::IRQ as u32, false);
@@ -164,8 +165,14 @@ impl CPU
         self.get_cpsr_bit(T)
     }
 
+    #[inline]
+    pub fn inst_width(&self) -> u32
+    {
+        if self.in_thumb_mode() {2} else {4}
+    }
+
     #[allow(dead_code)]
-    pub fn print(&self)
+    pub fn print(&self, memory: &mut Memory)
     {
         let mut str = String::new();
 
@@ -191,17 +198,17 @@ impl CPU
         str += "]";
         str += "\n";
 
-        let instruction = self.prefetched;
-
         if self.in_thumb_mode()
         {
             let address = self.r[15] - 2;
+            let instruction = memory.load16(address);
             str += &format!("{:08x}: {:04x} ", address, instruction);
             str += &format!("{}", thumb::disassemble::disassemble(instruction as u16));
         }
         else
         {
             let address = self.r[15] - 4;
+            let instruction = memory.load32(address);
             str += &format!("{:08x}: {:08x} ", address, instruction);
             str += &format!("{}", arm::disassemble::disassemble(instruction));
         }

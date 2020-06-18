@@ -34,4 +34,6 @@ fn execute(cpu: &mut CPU, memory: &mut Memory, (l, offset5, rb, rd): (bool, u32,
     {
         memory.store16(address, cpu.r[rd as usize] as u16);
     }
+
+    cpu.cycles += 1 + Memory::cpu_access_timing(address, 1);
 }

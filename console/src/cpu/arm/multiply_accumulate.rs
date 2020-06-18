@@ -35,12 +35,17 @@ pub fn decode(instruction: u32) -> (bool, bool, u32, u32, u32, u32)
 #[inline]
 pub fn execute(cpu: &mut CPU, (a, s, rd, rn, rs, rm): (bool, bool, u32, u32, u32, u32))
 {
-    let mut result = cpu.r[rm as usize].wrapping_mul(cpu.r[rs as usize]);
+    let op0 = cpu.r[rm as usize];
+    let op1 = cpu.r[rs as usize];
+    let mut result = op0.wrapping_mul(op1);
 
     // If accumulate bit is set, add rn to result
     if a
     {
         result = result.wrapping_add(cpu.r[rn as usize]);
+
+        // One extra cycle for accumulation
+        cpu.cycles += 1;
     }
     else
     {
@@ -58,6 +63,30 @@ pub fn execute(cpu: &mut CPU, (a, s, rd, rn, rs, rm): (bool, bool, u32, u32, u32
     }
 
     cpu.r[rd as usize] = result;
+
+    // Internal cycles depending on size of operand
+    cpu.cycles += count_cycles(op0, op1);
+}
+
+pub fn count_cycles(op0: u32, op1: u32) -> i32
+{
+    if op0 < 0x100 && op1 < 0x100
+    {
+        1
+    }
+    else if op0 < 0x10000 && op1 < 0x10000
+    {
+        2
+    }
+    else if op0 < 0x1000000 && op1 < 0x1000000
+    {
+        3
+    }
+    else
+    {
+        4
+    }
+
 }
 
 #[cfg(test)]

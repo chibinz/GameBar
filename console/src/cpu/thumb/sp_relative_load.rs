@@ -31,4 +31,6 @@ fn execute(cpu: &mut CPU, memory: &mut Memory, (l, rd, word8): (bool, u32, u32))
     {
         memory.store32(address, cpu.r[rd as usize]);
     }
+
+    cpu.cycles += 1 + Memory::cpu_access_timing(address, 2);
 }

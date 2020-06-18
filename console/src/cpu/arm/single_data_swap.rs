@@ -24,14 +24,21 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory, (b, rn, rd, rm): (bool, u32, 
 {
     if b
     {
-        let temp = memory.load8(cpu.r[rn as usize]);
-        memory.store8(cpu.r[rn as usize], cpu.r[rm as usize] as u8);
+        let address = cpu.r[rn as usize];
+        let temp = memory.load8(address);
+        memory.store8(address, cpu.r[rm as usize] as u8);
         cpu.r[rd as usize] = temp as u32;
+
+        // One internal cycle plus one load and one store
+        cpu.cycles += 1 + 2 * Memory::cpu_access_timing(address, 0);
     }
     else
     {
-        let temp = memory.load32(cpu.r[rn as usize]);
-        memory.store32(cpu.r[rn as usize], cpu.r[rm as usize]);
+        let address = cpu.r[rn as usize];
+        let temp = memory.load32(address);
+        memory.store32(address, cpu.r[rm as usize]);
         cpu.r[rd as usize] = temp;
+
+        cpu.cycles += 1 + 2 * Memory::cpu_access_timing(address, 2);
     }
 }

@@ -1,7 +1,6 @@
 use crate::ppu::PPU;
 
 use super::Memory;
-use super::into16;
 
 impl Memory
 {
@@ -70,7 +69,7 @@ impl PPU
     pub fn vram16(&self, offset: u32) -> u16
     {
         let a = offset as usize;
-        into16(&self.vram[a..a+2])
+        Memory::into16(&self.vram[a..a+2])
     }
 
     #[inline]

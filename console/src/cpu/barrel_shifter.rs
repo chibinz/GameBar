@@ -31,6 +31,9 @@ pub fn shift_register(cpu: &mut CPU, operand2: u32) -> u32
         operand2.bits(11, 7)
     };
 
+    // One internal cycle for register specified shift
+    cpu.cycles += 1;
+
     shift(cpu, cpu.r[rm as usize], amount, stype, !r)
 }
 

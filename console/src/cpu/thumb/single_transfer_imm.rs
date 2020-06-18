@@ -34,4 +34,7 @@ fn execute(cpu: &mut CPU, memory: &mut Memory, (bl, offset5, rb, rd): (u32, u32,
         0b11 => cpu.r[rd as usize] = memory.load8(base + offset5) as u32,
         _    => unreachable!(),
     }
+
+    // 1I + 1N
+    cpu.cycles += 1 + Memory::cpu_access_timing(base, if bl.bit(1) {0} else {2});
 }

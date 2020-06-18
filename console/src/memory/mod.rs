@@ -2,6 +2,7 @@ mod ioreg;
 mod vram;
 mod param;
 mod oam;
+mod timing;
 
 use std::io::Read;
 use std::fs::File;
@@ -41,6 +42,7 @@ impl Memory
         }
     }
 
+    /// Return reference to containing console
     pub fn c(&self) -> &mut Console
     {
         unsafe {&mut *self.console}
@@ -49,9 +51,9 @@ impl Memory
     /// Load a byte from memory
     pub fn load8(&self, address: u32) -> u8
     {
-        let offset = mirror(address) & 0x00ffffff;
+        let offset = Self::mirror(address) & 0x00ffffff;
 
-        match region(address)
+        match Self::region(address)
         {
             0x00 => self.bios[offset],
             0x02 => self.ewram[offset],
@@ -70,11 +72,11 @@ impl Memory
     /// Load a halfword from memory
     pub fn load16(&self, address: u32) -> u16
     {
-        let offset = mirror(address) & 0x00fffffe;
+        let offset = Self::mirror(address) & 0x00fffffe;
 
-        let ldh = |mem: &[u8]| into16(&mem[offset..offset+2]);
+        let ldh = |mem: &[u8]| Self::into16(&mem[offset..offset+2]);
 
-        match region(address)
+        match Self::region(address)
         {
             0x00 => ldh(&self.bios),
             0x02 => ldh(&self.ewram),
@@ -93,11 +95,11 @@ impl Memory
     /// Load a word from memory
     pub fn load32(&self, address: u32) -> u32
     {
-        let offset = mirror(address) & 0x00fffffc;
+        let offset = Self::mirror(address) & 0x00fffffc;
 
-        let ld = |mem: &[u8]| into32(&mem[offset..offset+4]);
+        let ld = |mem: &[u8]| Self::into32(&mem[offset..offset+4]);
 
-        let value = match region(address)
+        let value = match Self::region(address)
         {
             0x00 => ld(&self.bios),
             0x02 => ld(&self.ewram),
@@ -119,9 +121,9 @@ impl Memory
     /// Store a byte in memory, only EWRAM, IWRAM, IORAM, SRAM are accessible
     pub fn store8(&mut self, address: u32, value: u8)
     {
-        let offset = mirror(address) & 0x00ffffff;
+        let offset = Self::mirror(address) & 0x00ffffff;
 
-        match region(address)
+        match Self::region(address)
         {
             0x02 => self.ewram[offset] = value,
             0x03 => self.iwram[offset] = value,
@@ -135,7 +137,7 @@ impl Memory
     pub fn store16(&mut self, address: u32, value: u16)
     {
         // Accesses are forced to halfword aligned
-        let offset = mirror(address) & 0x00fffffe;
+        let offset = Self::mirror(address) & 0x00fffffe;
 
         let sth = |mem: &mut [u8]|
         {
@@ -144,7 +146,7 @@ impl Memory
             mem[offset + 1] = a[1];
         };
 
-        match region(address)
+        match Self::region(address)
         {
             0x02 => sth(&mut self.ewram),
             0x03 => sth(&mut self.iwram),
@@ -160,7 +162,7 @@ impl Memory
     pub fn store32(&mut self, address: u32, value: u32)
     {
         // Accesses are forced to be word aligned
-        let offset = mirror(address) & 0x00fffffc;
+        let offset = Self::mirror(address) & 0x00fffffc;
 
         let st = |mem: &mut [u8]|
         {
@@ -171,7 +173,7 @@ impl Memory
             mem[offset + 3] = a[3];
         };
 
-        match region(address)
+        match Self::region(address)
         {
             0x02 => st(&mut self.ewram),
             0x03 => st(&mut self.iwram),
@@ -213,48 +215,49 @@ impl Memory
 
         // println!("Unhandled {}-byte {} at {:#08x}", size, s, address);
     }
-}
 
-fn region(address: u32) -> u32
-{
-    // Top nibble of address is ignored
-    (address >> 24) & 0xf
-}
-
-/// Return equivalent base address
-fn mirror(address: u32) -> usize
-{
-    let a = match address >> 24
+    #[inline]
+    fn region(address: u32) -> u32
     {
-        0x02 => address % 0x40000,
-        0x03 => address % 0x8000,
-        0x04 => address % 0x10000,
-        0x05 => address % 0x400,
-        0x06 =>
-            {
-                // vram is mirrored every 0x20000 and
-                // 0x6010000 - 0x6017fff is in turn mirrored from
-                // 0x6018000 - 0x601ffff
-                let b = address % 0x20000;
-                if b > 0x17fff {b - 0x8000} else {b}
-            },
-        0x07 => address % 0x400,
-        0x08..=
-        0x0d => address % 0x02000000,
-        _    => address,
-    };
+        // Top nibble of address is ignored
+        (address >> 24) & 0xf
+    }
 
-    a as usize
-}
+    /// Return equivalent base address
+    fn mirror(address: u32) -> usize
+    {
+        let a = match address >> 24
+        {
+            0x02 => address % 0x40000,
+            0x03 => address % 0x8000,
+            0x04 => address % 0x10000,
+            0x05 => address % 0x400,
+            0x06 =>
+                {
+                    // vram is mirrored every 0x20000 and
+                    // 0x6010000 - 0x6017fff is in turn mirrored from
+                    // 0x6018000 - 0x601ffff
+                    let b = address % 0x20000;
+                    if b > 0x17fff {b - 0x8000} else {b}
+                },
+            0x07 => address % 0x400,
+            0x08..=
+            0x0d => address % 0x02000000,
+            _    => address,
+        };
 
-#[inline]
-pub fn into16(a: &[u8]) -> u16
-{
-    u16::from_le_bytes(a[0..2].try_into().unwrap())
-}
+        a as usize
+    }
 
-#[inline]
-pub fn into32(a: &[u8]) -> u32
-{
-    u32::from_le_bytes(a[0..4].try_into().unwrap())
+    #[inline]
+    pub fn into16(a: &[u8]) -> u16
+    {
+        u16::from_le_bytes(a[0..2].try_into().unwrap())
+    }
+
+    #[inline]
+    pub fn into32(a: &[u8]) -> u32
+    {
+        u32::from_le_bytes(a[0..4].try_into().unwrap())
+    }
 }

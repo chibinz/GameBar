@@ -24,4 +24,6 @@ fn execute(cpu: &mut CPU, memory: &mut Memory, (rd, word8): (u32, u32))
     let address = (cpu.r[15] & 0xfffffffc) + (word8 << 2);
 
     cpu.r[rd as usize] = memory.load32(address);
+
+    cpu.cycles += 1 + Memory::cpu_access_timing(address, 2);
 }

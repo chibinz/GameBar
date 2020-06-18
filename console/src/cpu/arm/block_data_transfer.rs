@@ -116,7 +116,8 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
         }
     }
 
-    cpu.remaining -= count_cycles(rlist);
+    // One internal cycle plus n * memory waitstate
+    cpu.cycles += 1 + count_cycles(rlist) * Memory::cpu_access_timing(address, 2);
 }
 
 fn count_cycles(rlist: u32) -> i32

@@ -2,6 +2,8 @@ use crate::util::*;
 use crate::cpu::CPU;
 use crate::cpu::register::PSRBit::*;
 
+use super::multiply_accumulate::count_cycles;
+
 #[inline]
 pub fn interpret(cpu: &mut CPU, instruction: u32)
 {
@@ -63,6 +65,9 @@ pub fn execute(cpu: &mut CPU, (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, 
         let lo = cpu.r[rdlo as usize] as u64;
 
         result = result.wrapping_add(hi + lo);
+
+        // Extra cycle for accumulation
+        cpu.cycles += 1;
     }
 
     if s
@@ -75,6 +80,9 @@ pub fn execute(cpu: &mut CPU, (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, 
 
     cpu.r[rdhi as usize] = (result >> 32) as u32;
     cpu.r[rdlo as usize] = result as u32;
+
+    // Long multiplication consumes one additional internal cycle
+    cpu.cycles += 1 + count_cycles(cpu.r[rm as usize], cpu.r[rs as usize]);
 }
 
 #[cfg(test)]
