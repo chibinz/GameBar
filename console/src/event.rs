@@ -2,23 +2,6 @@
 // use std::collections::VecDeque;
 use crate::Console;
 
-// enum Event
-// {
-//     HDraw,
-//     HBlank,
-//     VBlank,
-//     CPU,
-//     DMA,
-//     Timer,
-// }
-
-// struct Scheduler
-// {
-//     pub tick_til_next_event: i32,
-//     pub total_tick: i64,
-//     pub events: VecDeque<Event>,
-// }
-
 // A Rough picture for how events are scheduled
 
 // PPU runs for 960 ticks
@@ -52,45 +35,61 @@ impl Console
         let dma    = &mut self.dma;
         let irqcnt = &mut self.irqcnt;
 
-        let ppu_ticks = match ppu.state()
+        while ppu.vcount < 226
         {
-            HDraw =>
+            let ppu_ticks = match ppu.state
             {
-                ppu.hdraw(irqcnt);
-                960
-            },
-            HBlankStart =>
-            {
-                ppu.hblank(irqcnt);
-                dma.request_hblank();
-                0
-            },
-            HBlank =>
-            {
-                272
-            },
-            VBlankStart =>
-            {
-                ppu.vblank(irqcnt);
-                dma.request_vblank();
-                0
-            }
-            VBlank => 960,
-        };
+                HDraw =>
+                {
+                    ppu.hdraw();
+                    960
+                },
+                HBlankStart =>
+                {
+                    ppu.hblank(irqcnt);
+                    dma.request_hblank();
+                    0
+                },
+                HBlank =>
+                {
+                    ppu.state = EndOfLine;
+                    272
+                },
+                VBlankStart =>
+                {
+                    ppu.vblank(irqcnt);
+                    dma.request_vblank();
+                    0
+                },
+                VBlank =>
+                {
+                    ppu.state = HBlank;
+                    960
+                },
+                EndOfLine =>
+                {
+                    ppu.increment_vcount(irqcnt);
+                    0
+                },
+            };
 
-        let mut remaining_ticks = ppu_ticks;
-        while remaining_ticks > 0
-        {
-            if dma.is_active()
+            let mut remaining_ticks = ppu_ticks;
+            while remaining_ticks > 0
             {
-                dma.step(irqcnt, memory);
+                remaining_ticks -=
+                if dma.is_active()
+                {
+                    dma.step(irqcnt, memory)
+                }
+                else
+                {
+                    cpu.step(memory)
+                }
             }
-            else
-            {
-                cpu.step(memory);
-            }
+
+            timers.run(ppu_ticks, irqcnt);
         }
 
-        timers.run(ppu_ticks, irqcnt);
+        ppu.increment_vcount(irqcnt);
     }
 }

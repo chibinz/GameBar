@@ -39,6 +39,7 @@ pub struct PPU
     pub state     : PPUState,
 }
 
+#[derive(Debug)]
 pub enum PPUState
 {
     HDraw,          // HDraw interval
@@ -46,6 +47,7 @@ pub enum PPUState
     HBlankStart,    // Transition to HBlank, (instant)
     VBlank,         // VBlank interval
     VBlankStart,    // Transition to VBlank,
+    EndOfLine,      // Scanline Complete
     // VCount match is not considered as a state because it
     // may occur simultaneously with other states
 }
@@ -90,22 +92,8 @@ impl PPU
         p
     }
 
-    pub fn state(&self) -> PPUState
+    pub fn hdraw(&mut self)
     {
-        use PPUState::*;
-
-        match self.dispstat.bits(1, 0)
-        {
-            0b00 => HDraw,
-            0b01 => VBlank,
-            0b10 => HBlank,
-            _    => unreachable!(),
-        }
-    }
-
-    pub fn hdraw(&mut self, irqcnt: &mut IRQController)
-    {
-        self.increment_vcount(irqcnt);
         self.dispstat &= !0b11;
 
         if self.fblank {self.force_blank()}
@@ -141,7 +129,6 @@ impl PPU
 
     pub fn vblank(&mut self, irqcnt: &mut IRQController)
     {
-        self.increment_vcount(irqcnt);
         self.dispstat |= 0b01;
         self.state = PPUState::VBlank;
 
@@ -152,8 +139,13 @@ impl PPU
     {
         self.vcount += 1;
 
-        if self.vcount == 160 {self.state = PPUState::VBlankStart}
-        if self.vcount > 227 {self.state = PPUState::HDraw; self.vcount = 0}
+        if self.vcount > 227 {self.vcount = 0}
+        self.state = if self.vcount < 160 {PPUState::HDraw} else {PPUState::VBlankStart};
+        self.check_vmatch(irqcnt);
+    }
+
+    pub fn check_vmatch(&mut self, irqcnt: &mut IRQController)
+    {
         if self.dispstat.bit(5) && self.vcount == self.dispstat >> 8 {irqcnt.request(VCount)}
     }
 

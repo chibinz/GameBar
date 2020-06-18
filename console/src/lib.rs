@@ -58,6 +58,7 @@ impl Console
     /// Render a frame
     pub fn step_frame(&mut self)
     {
+        // self.schedule();
         let cpu    = &mut self.cpu;
         let ppu    = &mut self.ppu;
         let memory = &mut self.memory;
@@ -67,7 +68,8 @@ impl Console
 
         for _ in 0..160
         {
-            ppu.hdraw(irqcnt);
+            ppu.increment_vcount(irqcnt);
+            ppu.hdraw();
             cpu.run(960, memory, irqcnt);
             timers.run(960, irqcnt);
 
@@ -82,6 +84,7 @@ impl Console
 
         for _ in 0..68
         {
+            ppu.increment_vcount(irqcnt);
             ppu.vblank(irqcnt);
             cpu.run(1232, memory, irqcnt);
             timers.run(1232, irqcnt);

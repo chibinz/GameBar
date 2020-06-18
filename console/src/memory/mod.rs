@@ -209,9 +209,9 @@ impl Memory
     #[allow(unused_variables)]
     fn unhandled(load: bool, size: u32, address: u32)
     {
-        let s = if load {"load"} else {"store"};
+        // let s = if load {"load"} else {"store"};
 
-        println!("Unhandled {}-byte {} at {:#08x}", size, s, address);
+        // println!("Unhandled {}-byte {} at {:#08x}", size, s, address);
     }
 }
 

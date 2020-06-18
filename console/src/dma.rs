@@ -53,7 +53,7 @@ impl DMA
         d
     }
 
-    pub fn step(&mut self, irqcnt: &mut IRQController, memory: &mut Memory)
+    pub fn step(&mut self, irqcnt: &mut IRQController, memory: &mut Memory) -> i32
     {
         for c in self.channel.iter_mut()
         {
@@ -63,6 +63,8 @@ impl DMA
                 break;
             }
         }
+
+        2
     }
 
     pub fn request_hblank(&mut self)

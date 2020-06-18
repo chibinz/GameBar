@@ -47,7 +47,7 @@ impl Timers
     }
 
     /// There might be some issues when ticks > u16::max_value()
-    pub fn run(&mut self, ticks: u32, irqcnt: &mut IRQController)
+    pub fn run(&mut self, ticks: i32, irqcnt: &mut IRQController)
     {
         let mut times_overflowed = 0;
 

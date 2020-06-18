@@ -85,15 +85,15 @@ impl CPU
             }
             else
             {
-                self.step(memory)
+                self.step(memory);
             }
         }
     }
 
-    pub fn step(&mut self, memory: &mut Memory)
+    pub fn step(&mut self, memory: &mut Memory) -> i32
     {
         self.booted = self.booted || (self.r[15] >= 0x08000000);
-        if self.booted {self.print()}
+        // if self.booted {self.print()}
 
         if self.in_thumb_mode()
         {
@@ -106,6 +106,8 @@ impl CPU
 
         // Normal execution takes 1S cycle
         self.remaining -= 1;
+
+        2
     }
 
     pub fn flush(&mut self)
