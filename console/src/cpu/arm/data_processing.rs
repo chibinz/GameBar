@@ -45,6 +45,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         if rm == 15 {op2 += 4};
     }
 
+    // adc, sbc, rsc use old carry flag
     let result = match opcode
     {
         0b0000 => alu::and(cpu, op1, op2, s),
@@ -52,9 +53,9 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         0b0010 => alu::sub(cpu, op1, op2, s),
         0b0011 => alu::rsb(cpu, op1, op2, s),
         0b0100 => alu::add(cpu, op1, op2, s),
-        0b0101 => alu::adc(cpu, op1, op2, s),
-        0b0110 => alu::sbc(cpu, op1, op2, s),
-        0b0111 => alu::rsc(cpu, op1, op2, s),
+        0b0101 => alu::adc(cpu, op1, op2, carry, s),
+        0b0110 => alu::sbc(cpu, op1, op2, carry, s),
+        0b0111 => alu::rsc(cpu, op1, op2, carry, s),
         0b1000 => alu::tst(cpu, op1, op2),
         0b1001 => alu::teq(cpu, op1, op2),
         0b1010 => alu::cmp(cpu, op1, op2),

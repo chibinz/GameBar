@@ -1,6 +1,7 @@
 use crate::util::*;
 use crate::cpu::CPU;
 use crate::cpu::alu;
+use crate::cpu::register::PSRBit::C;
 
 #[inline]
 pub fn interpret(cpu: &mut CPU, instruction: u16)
@@ -21,6 +22,7 @@ fn decode(instruction: u16) -> (u32, u32, u32)
 #[inline]
 fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32))
 {
+    let carry = cpu.get_cpsr_bit(C);
     let op1 = cpu.r[rd as usize];
     let op2 = cpu.r[rs as usize];
 
@@ -31,8 +33,8 @@ fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32))
         0b0010 => alu::lsl(cpu, op1, op2),
         0b0011 => alu::lsr(cpu, op1, op2),
         0b0100 => alu::asr(cpu, op1, op2),
-        0b0101 => alu::adc(cpu, op1, op2, true),
-        0b0110 => alu::sbc(cpu, op1, op2, true),
+        0b0101 => alu::adc(cpu, op1, op2, carry, true),
+        0b0110 => alu::sbc(cpu, op1, op2, carry, true),
         0b0111 => alu::ror(cpu, op1, op2),
         0b1000 => alu::tst(cpu, op1, op2),
         0b1001 => alu::neg(cpu, op1, op2),
