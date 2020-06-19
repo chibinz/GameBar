@@ -69,7 +69,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     }
 
     // One internal cycle plus memory waitstate
-    cpu.cycles += 1 + Memory::cpu_access_timing(address, 1);
+    cpu.cycles += 1 + Memory::access_timing(address, 1);
 }
 
 #[cfg(test)]

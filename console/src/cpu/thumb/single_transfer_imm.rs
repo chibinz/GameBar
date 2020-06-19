@@ -36,5 +36,5 @@ fn execute(cpu: &mut CPU, memory: &mut Memory, (bl, offset5, rb, rd): (u32, u32,
     }
 
     // 1I + 1N
-    cpu.cycles += 1 + Memory::cpu_access_timing(base, if bl.bit(1) {0} else {2});
+    cpu.cycles += 1 + Memory::access_timing(base, if bl.bit(1) {0} else {2});
 }

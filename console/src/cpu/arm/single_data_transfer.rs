@@ -68,7 +68,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
         _    => unreachable!()
     }
 
-    cpu.cycles += 1 + Memory::cpu_access_timing(address, if lb.bit(0) {0} else {2});
+    cpu.cycles += 1 + Memory::access_timing(address, if lb.bit(0) {0} else {2});
 }
 
 #[cfg(test)]

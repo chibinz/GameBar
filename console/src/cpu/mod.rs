@@ -125,7 +125,7 @@ impl CPU
         self.r[15] += self.inst_width();
 
         // A write to R15 or branch will add 1S + 1N cycles
-        self.cycles += Memory::cpu_access_timing(self.r[15], self.inst_width() / 2);
+        self.cycles += Memory::access_timing(self.r[15], self.inst_width() / 2);
     }
 
     pub fn software_interrupt(&mut self)

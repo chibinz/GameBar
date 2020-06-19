@@ -72,6 +72,8 @@ impl Memory
     /// Load a halfword from memory
     pub fn load16(&self, address: u32) -> u16
     {
+        assert_eq!(address & 1, 0);
+
         let offset = Self::mirror(address) & 0x00fffffe;
 
         let ldh = |mem: &[u8]| Self::into16(&mem[offset..offset+2]);
@@ -95,6 +97,8 @@ impl Memory
     /// Load a word from memory
     pub fn load32(&self, address: u32) -> u32
     {
+        assert_eq!(address & 0b11, 0);
+
         let offset = Self::mirror(address) & 0x00fffffc;
 
         let ld = |mem: &[u8]| Self::into32(&mem[offset..offset+4]);
@@ -136,6 +140,8 @@ impl Memory
     /// Store an halfword in memory, BIOS, ROM, SRAM are inaccessible
     pub fn store16(&mut self, address: u32, value: u16)
     {
+        assert_eq!(address & 1, 0);
+
         // Accesses are forced to halfword aligned
         let offset = Self::mirror(address) & 0x00fffffe;
 
@@ -161,6 +167,8 @@ impl Memory
     /// Store a word in memory, BIOS, ROM, SRAM are inaccessible
     pub fn store32(&mut self, address: u32, value: u32)
     {
+        assert_eq!(address & 0b11, 0);
+
         // Accesses are forced to be word aligned
         let offset = Self::mirror(address) & 0x00fffffc;
 

@@ -30,7 +30,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory, (b, rn, rd, rm): (bool, u32, 
         cpu.r[rd as usize] = temp as u32;
 
         // One internal cycle plus one load and one store
-        cpu.cycles += 1 + 2 * Memory::cpu_access_timing(address, 0);
+        cpu.cycles += 1 + 2 * Memory::access_timing(address, 0);
     }
     else
     {
@@ -39,6 +39,6 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory, (b, rn, rd, rm): (bool, u32, 
         memory.store32(address, cpu.r[rm as usize]);
         cpu.r[rd as usize] = temp;
 
-        cpu.cycles += 1 + 2 * Memory::cpu_access_timing(address, 2);
+        cpu.cycles += 1 + 2 * Memory::access_timing(address, 2);
     }
 }

@@ -24,6 +24,7 @@ pub struct DMAChannel
 
     transfer       : fn(&mut Self, &mut Memory),
     pub state      : DMAState,
+    pub cycles     : i32,     // Number of cycles consumed for transfer
 
     pub active : bool,
 }
@@ -59,12 +60,12 @@ impl DMA
         {
             if c.active
             {
-                c.step(irqcnt, memory);
-                break;
+                return c.step(irqcnt, memory);
             }
         }
 
-        2
+        // At least one dma channel should be active!
+        unreachable!()
     }
 
     pub fn request_hblank(&mut self)
@@ -88,7 +89,6 @@ impl DMA
             }
         }
     }
-
 
     /// Check if any dma channel is ready but being held
     pub fn is_active(&self) -> bool
@@ -125,6 +125,7 @@ impl DMAChannel
 
             transfer: Self::transfer16,
             state   : DMAState::Unintialized,
+            cycles  : 0,
 
             active  : false,
         }
@@ -172,9 +173,11 @@ impl DMAChannel
         self.state = DMAState::Unintialized;
     }
 
-    pub fn step(&mut self, irqcnt: &mut IRQController, memory: &mut Memory)
+    pub fn step(&mut self, irqcnt: &mut IRQController, memory: &mut Memory) -> i32
     {
         use DMAState::*;
+
+        self.cycles = 0;
 
         match self.state
         {
@@ -182,6 +185,8 @@ impl DMAChannel
             Transferring => (self.transfer)(self, memory),
             Finished     => self.finish(irqcnt),
         }
+
+        self.cycles
     }
 
     pub fn transfer16(&mut self, memory: &mut Memory)
@@ -195,6 +200,9 @@ impl DMAChannel
             self.in_dst = self.in_dst.wrapping_add(self.dstinc);
 
             self.in_count += 1;
+
+            self.cycles += Memory::access_timing(self.in_dst, 1);
+            self.cycles += Memory::access_timing(self.in_src, 1);
         }
         else
         {
@@ -213,6 +221,9 @@ impl DMAChannel
             self.in_dst = self.in_dst.wrapping_add(self.dstinc);
 
             self.in_count += 1;
+
+            self.cycles += Memory::access_timing(self.in_dst, 2);
+            self.cycles += Memory::access_timing(self.in_src, 2);
         }
         else
         {
