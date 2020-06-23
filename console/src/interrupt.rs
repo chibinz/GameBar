@@ -45,6 +45,11 @@ impl IRQController
         }
     }
 
+    pub fn pending(&self) -> bool
+    {
+        self.ime.bit(0) && self.ie & self.irf != 0
+    }
+
     pub fn request(&mut self, irq: Interrupt)
     {
         self.irf |= irq as u16;
@@ -54,12 +59,9 @@ impl IRQController
 
     pub fn check(&mut self)
     {
-        if self.ime.bit(0)
+        if self.pending()
         {
-            if self.ie & self.irf != 0
-            {
-                unsafe {(*self.cpu).hardware_interrupt()}
-            }
+            unsafe {(*self.cpu).hardware_interrupt()}
         }
     }
 }

@@ -52,7 +52,6 @@ impl Console
     {
         self.memory.console = self as *mut Self;
         self.irqcnt.cpu = &mut self.cpu as *mut cpu::CPU;
-        self.cpu.dma = &mut self.dma as *mut dma::DMA;
     }
 
     /// Render a frame
@@ -70,13 +69,13 @@ impl Console
         {
             ppu.increment_vcount(irqcnt);
             ppu.hdraw();
-            cpu.run(960, memory, irqcnt);
+            cpu.run(960, dma, irqcnt, memory);
             timers.run(960, irqcnt);
 
             dma.request_hblank();
 
             ppu.hblank(irqcnt);
-            cpu.run(272, memory, irqcnt);
+            cpu.run(272, dma, irqcnt, memory);
             timers.run(272, irqcnt);
         }
 
@@ -86,7 +85,7 @@ impl Console
         {
             ppu.increment_vcount(irqcnt);
             ppu.vblank(irqcnt);
-            cpu.run(1232, memory, irqcnt);
+            cpu.run(1232, dma, irqcnt, memory);
             timers.run(1232, irqcnt);
         }
     }

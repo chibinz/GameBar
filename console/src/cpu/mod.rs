@@ -72,10 +72,9 @@ impl CPU
         cpu
     }
 
-    pub fn run(&mut self, cycles: i32, memory: &mut Memory, irqcnt: &mut IRQController)
+    pub fn run(&mut self, cycles: i32, dma: &mut DMA, irqcnt: &mut IRQController, memory: &mut Memory)
     {
         self.remaining += cycles;
-        let dma = unsafe {&mut *self.dma};
 
         while self.remaining > 0
         {
@@ -113,14 +112,7 @@ impl CPU
 
     pub fn flush(&mut self)
     {
-        if self.in_thumb_mode()
-        {
-            self.r[15] &= 0xfffffffe;
-        }
-        else
-        {
-            self.r[15] &= 0xfffffffc;
-        }
+        self.r[15] &= !(self.inst_width() - 1);
 
         self.r[15] += self.inst_width();
 
@@ -130,7 +122,7 @@ impl CPU
 
     pub fn software_interrupt(&mut self)
     {
-        let lr = self.r[15] - if self.in_thumb_mode() {2} else {4};
+        let lr = self.r[15] - self.inst_width();
         let spsr = self.get_cpsr();
 
         // Switch mode(register bank), disable interrupt, save CPSR

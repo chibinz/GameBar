@@ -165,7 +165,9 @@ impl DMAChannel
         // Clear enable bit if repeat flag not set
         if !self.repeat_f() {self.control &= !0x8000}
 
-        if self.interrupt_f() {irqcnt.request(DMA3)}
+        let irq = [DMA0, DMA1, DMA2, DMA3];
+
+        if self.interrupt_f() {irqcnt.request(irq[self.index])}
 
         self.in_count = 0;
         self.active = false;

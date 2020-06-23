@@ -1,5 +1,4 @@
 use crate::interrupt::IRQController;
-use crate::interrupt::Interrupt;
 use crate::interrupt::Interrupt::*;
 
 pub static PRESCALER: [u16; 4] =
@@ -8,14 +7,6 @@ pub static PRESCALER: [u16; 4] =
     64,
     256,
     1024,
-];
-
-pub static IRQ: [Interrupt; 4] =
-[
-    Timer0,
-    Timer1,
-    Timer2,
-    Timer3,
 ];
 
 pub struct Timers
@@ -59,7 +50,9 @@ impl Timers
 
                 times_overflowed = timer.increment_counter(increment);
 
-                if times_overflowed > 0 && timer.irq_f {irqcnt.request(IRQ[i])}
+                let irq = [Timer0, Timer1, Timer2, Timer3];
+
+                if times_overflowed > 0 && timer.irq_f {irqcnt.request(irq[i])}
             }
             else
             {

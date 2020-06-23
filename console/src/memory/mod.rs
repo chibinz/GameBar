@@ -51,7 +51,7 @@ impl Memory
     /// Load a byte from memory
     pub fn load8(&self, address: u32) -> u8
     {
-        let offset = Self::mirror(address) & 0x00ffffff;
+        let offset = Self::mirror(address);
 
         match Self::region(address)
         {
@@ -72,9 +72,7 @@ impl Memory
     /// Load a halfword from memory
     pub fn load16(&self, address: u32) -> u16
     {
-        assert_eq!(address & 1, 0);
-
-        let offset = Self::mirror(address) & 0x00fffffe;
+        let offset = Self::mirror(address) & !0b1;
 
         let ldh = |mem: &[u8]| Self::into16(&mem[offset..offset+2]);
 
@@ -97,13 +95,11 @@ impl Memory
     /// Load a word from memory
     pub fn load32(&self, address: u32) -> u32
     {
-        assert_eq!(address & 0b11, 0);
-
-        let offset = Self::mirror(address) & 0x00fffffc;
+        let offset = Self::mirror(address) & !0b11;
 
         let ld = |mem: &[u8]| Self::into32(&mem[offset..offset+4]);
 
-        let value = match Self::region(address)
+        match Self::region(address)
         {
             0x00 => ld(&self.bios),
             0x02 => ld(&self.ewram),
@@ -116,16 +112,13 @@ impl Memory
             0x0d => ld(&self.rom),
             // 0x0e => ld(&self.sram),
             _    => {Self::unhandled(true, 4, address); 0},
-        };
-
-        let shift = (address & 0b11) * 8;
-        return value.rotate_right(shift);
+        }
     }
 
     /// Store a byte in memory, only EWRAM, IWRAM, IORAM, SRAM are accessible
     pub fn store8(&mut self, address: u32, value: u8)
     {
-        let offset = Self::mirror(address) & 0x00ffffff;
+        let offset = Self::mirror(address);
 
         match Self::region(address)
         {
@@ -140,10 +133,8 @@ impl Memory
     /// Store an halfword in memory, BIOS, ROM, SRAM are inaccessible
     pub fn store16(&mut self, address: u32, value: u16)
     {
-        assert_eq!(address & 1, 0);
-
         // Accesses are forced to halfword aligned
-        let offset = Self::mirror(address) & 0x00fffffe;
+        let offset = Self::mirror(address) & !0b1;
 
         let sth = |mem: &mut [u8]|
         {
@@ -167,10 +158,8 @@ impl Memory
     /// Store a word in memory, BIOS, ROM, SRAM are inaccessible
     pub fn store32(&mut self, address: u32, value: u32)
     {
-        assert_eq!(address & 0b11, 0);
-
         // Accesses are forced to be word aligned
-        let offset = Self::mirror(address) & 0x00fffffc;
+        let offset = Self::mirror(address) & !0b11;
 
         let st = |mem: &mut [u8]|
         {
