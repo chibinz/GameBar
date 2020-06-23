@@ -217,7 +217,7 @@ impl Memory
     fn region(address: u32) -> u32
     {
         // Top nibble of address is ignored
-        (address >> 24) & 0xf
+        address >> 24
     }
 
     /// Return equivalent base address

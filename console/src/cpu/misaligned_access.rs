@@ -28,7 +28,7 @@ impl CPU
     {
         let rotation = (address & 1) * 8;
 
-        let value = memory.load16(address);
+        let value = memory.load16(address) as u32;
 
         value.rotate_right(rotation) as u32
     }

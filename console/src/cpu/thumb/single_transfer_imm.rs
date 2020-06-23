@@ -25,13 +25,14 @@ fn decode(instruction: u16) -> (u32, u32, u32, u32)
 fn execute(cpu: &mut CPU, memory: &mut Memory, (bl, offset5, rb, rd): (u32, u32, u32, u32))
 {
     let base = cpu.r[rb as usize];
+    let address = base + (offset5 << if bl.bit(1) {0} else {2});
 
     match bl
     {
-        0b00 => memory.store32(base + (offset5 << 2), cpu.r[rd as usize]),
-        0b01 => cpu.r[rd as usize] = memory.load32(base + (offset5 << 2)),
-        0b10 => memory.store8(base + offset5, cpu.r[rd as usize] as u8),
-        0b11 => cpu.r[rd as usize] = memory.load8(base + offset5) as u32,
+        0b00 => memory.store32(address, cpu.r[rd as usize]),
+        0b01 => cpu.r[rd as usize] = CPU::ldr(address, memory),
+        0b10 => memory.store8(address, cpu.r[rd as usize] as u8),
+        0b11 => cpu.r[rd as usize] = memory.load8(address) as u32,
         _    => unreachable!(),
     }
 

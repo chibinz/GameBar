@@ -12,7 +12,3 @@ minifb = "0.15"
 
 [profile.dev]
 opt-level = 3
-
-[profile.release]
-lto = true
-codegen-units = 1

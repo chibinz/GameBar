@@ -23,7 +23,7 @@ fn execute(cpu: &mut CPU, memory: &mut Memory, (rd, word8): (u32, u32))
     // Bit 1 of PC is forced to 0 to ensure it is word aligned.
     let address = (cpu.r[15] & 0xfffffffc) + (word8 << 2);
 
-    cpu.r[rd as usize] = memory.load32(address);
+    cpu.r[rd as usize] = CPU::ldr(address, memory);
 
     cpu.cycles += 1 + Memory::access_timing(address, 2);
 }

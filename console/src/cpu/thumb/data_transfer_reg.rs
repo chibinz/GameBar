@@ -33,10 +33,10 @@ fn execute(cpu: &mut CPU, memory: &mut Memory, (lbh, ro, rb, rd): (u32, u32, u32
         0b001 => {memory.store16(address, cpu.r[rd as usize] as u16); 1},
         0b010 => {memory.store8(address, cpu.r[rd as usize] as u8); 0},
         0b011 => {cpu.r[rd as usize] = memory.load8(address) as i8 as i32 as u32; 0},
-        0b100 => {cpu.r[rd as usize] = memory.load32(address); 2},
-        0b101 => {cpu.r[rd as usize] = memory.load16(address) as u32; 1},
+        0b100 => {cpu.r[rd as usize] = CPU::ldr(address, memory); 2},
+        0b101 => {cpu.r[rd as usize] = CPU::ldrh(address, memory); 1},
         0b110 => {cpu.r[rd as usize] = memory.load8(address) as u32; 0},
-        0b111 => {cpu.r[rd as usize] = memory.load16(address) as i16 as i32 as u32; 1},
+        0b111 => {cpu.r[rd as usize] = CPU::ldrsh(address, memory); 1},
         _    => unreachable!(),
     };
 

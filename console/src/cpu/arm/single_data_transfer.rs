@@ -61,7 +61,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     {
         0b00 => memory.store32(address, value),
         0b01 => memory.store8(address, value as u8),
-        0b10 => {cpu.r[rd as usize] = memory.load32(address);
+        0b10 => {cpu.r[rd as usize] = CPU::ldr(address, memory);
                  if rd == 15 {cpu.flush()}},
         0b11 => {cpu.r[rd as usize] = memory.load8(address) as u32;
                  if rd == 15 {cpu.flush()}},

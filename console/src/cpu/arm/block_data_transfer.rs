@@ -30,7 +30,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     (p, u, s, w, l, rn, rlist): (bool, bool, bool, bool, bool, u32, u32))
 {
     // Empty rlist not handled
-    // debug_assert_ne!(rlist, 0);
+    assert_ne!(rlist, 0);
 
     // Misaligned address not handled
     let mut address = cpu.r[rn as usize];

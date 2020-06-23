@@ -28,7 +28,7 @@ fn execute(cpu: &mut CPU, memory: &mut Memory, (l, offset5, rb, rd): (bool, u32,
 
     if l
     {
-        cpu.r[rd as usize] = memory.load16(address) as u32;
+        cpu.r[rd as usize] = CPU::ldrh(address, memory);
     }
     else
     {

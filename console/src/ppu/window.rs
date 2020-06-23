@@ -97,10 +97,8 @@ impl Window
 
     pub fn get_display_flag(&self, x: u32, index: u32) -> bool
     {
-        if x >= 240
-        {
-            return false;
-        }
+        if x >= 240 {return false}
+
         self.cnt[x as usize].bit(index)
     }
 

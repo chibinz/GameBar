@@ -33,13 +33,13 @@ fn execute(cpu: &mut CPU, memory: &mut Memory, (l, r, rlist): (bool, bool, u32))
         memory.store32(cpu.r[13], cpu.r[14]);
     }
 
-    block_data_transfer::execute(cpu, memory, (!l, l, false, true, l, 13, rlist));
+    if rlist != 0 {block_data_transfer::execute(cpu, memory, (!l, l, false, true, l, 13, rlist))}
 
     // Pop values off the stack into registers specified by rlist,
     // and then Pop PC off the stack
     if r && l
     {
-        cpu.r[15] = memory.load32(cpu.r[13]);
+        cpu.r[15] = CPU::ldr(cpu.r[13], memory);
         cpu.flush();
 
         cpu.r[13] += 4;

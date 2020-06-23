@@ -35,7 +35,7 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory, (b, rn, rd, rm): (bool, u32, 
     else
     {
         let address = cpu.r[rn as usize];
-        let temp = memory.load32(address);
+        let temp = CPU::ldr(address, memory);
         memory.store32(address, cpu.r[rm as usize]);
         cpu.r[rd as usize] = temp;
 

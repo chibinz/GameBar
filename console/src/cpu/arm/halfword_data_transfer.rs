@@ -59,11 +59,11 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
         0b001 => memory.store16(address, value as u16),
         0b010 => memory.store8(address, value as u8),
         0b011 => memory.store16(address, value as u16),
-        0b101 => cpu.r[rd as usize] = memory.load16(address) as u32
+        0b101 => cpu.r[rd as usize] = CPU::ldrh(address, memory)
                                     + if rd == 15 {4} else {0},
         0b110 => cpu.r[rd as usize] = memory.load8(address) as i8 as i32 as u32
                                     + if rd == 15 {4} else {0},
-        0b111 => cpu.r[rd as usize] = memory.load16(address) as i16 as i32 as u32
+        0b111 => cpu.r[rd as usize] = CPU::ldrsh(address, memory)
                                     + if rd == 15 {4} else {0},
         _     => unreachable!()
     }

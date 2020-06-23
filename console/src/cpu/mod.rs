@@ -4,6 +4,7 @@ pub mod thumb;
 mod register;
 mod alu;
 mod barrel_shifter;
+mod misaligned_access;
 
 use register::PSRBit::*;
 use crate::memory::Memory;
@@ -112,6 +113,7 @@ impl CPU
 
     pub fn flush(&mut self)
     {
+        // Instruction address are forcibly word / halfword aligned
         self.r[15] &= !(self.inst_width() - 1);
 
         self.r[15] += self.inst_width();
