@@ -11,12 +11,10 @@ use std::marker::Send;
 
 unsafe impl Send for debug::Debugger {}
 
-fn main()
-{
+fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() != 2
-    {
+    if args.len() != 2 {
         usage();
         return;
     }
@@ -31,38 +29,35 @@ fn main()
 
     // debug(&mut console as *mut console::Console);
 
-    while window.is_open()
-    {
+    while window.is_open() {
         let input = keyboard::input(&window);
         console.keypad.set_input(input, &mut console.irqcnt);
         console.step_frame();
-        window.update_with_buffer(&console.ppu.buffer, 240, 160).unwrap();
+        window
+            .update_with_buffer(&console.ppu.buffer, 240, 160)
+            .unwrap();
     }
 }
 
-fn usage()
-{
+fn usage() {
     println!("usage: GameBar <rom>");
 }
 
-fn init_window() -> Window
-{
-    Window::new
-    (
+fn init_window() -> Window {
+    Window::new(
         "GameBar",
         240,
         160,
-        WindowOptions
-        {
+        WindowOptions {
             scale: minifb::Scale::X2,
             ..WindowOptions::default()
-        }
-    ).unwrap()
+        },
+    )
+    .unwrap()
 }
 
 #[allow(dead_code)]
-fn debug(c: *mut console::Console)
-{
+fn debug(c: *mut console::Console) {
     let mut debugger = debug::Debugger::new();
     debugger.console = c;
 

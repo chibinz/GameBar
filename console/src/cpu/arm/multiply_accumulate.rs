@@ -1,16 +1,14 @@
-use crate::util::*;
-use crate::cpu::CPU;
 use crate::cpu::register::PSRBit::*;
+use crate::cpu::CPU;
+use crate::util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instruction: u32)
-{
+pub fn interpret(cpu: &mut CPU, instruction: u32) {
     execute(cpu, decode(instruction));
 }
 
 #[inline]
-pub fn decode(instruction: u32) -> (bool, bool, u32, u32, u32, u32)
-{
+pub fn decode(instruction: u32) -> (bool, bool, u32, u32, u32, u32) {
     debug_assert_eq!(instruction.bits(7, 4), 0b1001);
 
     let a = instruction.bit(21);
@@ -33,28 +31,23 @@ pub fn decode(instruction: u32) -> (bool, bool, u32, u32, u32, u32)
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, (a, s, rd, rn, rs, rm): (bool, bool, u32, u32, u32, u32))
-{
+pub fn execute(cpu: &mut CPU, (a, s, rd, rn, rs, rm): (bool, bool, u32, u32, u32, u32)) {
     let op0 = cpu.r[rm as usize];
     let op1 = cpu.r[rs as usize];
     let mut result = op0.wrapping_mul(op1);
 
     // If accumulate bit is set, add rn to result
-    if a
-    {
+    if a {
         result = result.wrapping_add(cpu.r[rn as usize]);
 
         // One extra cycle for accumulation
         cpu.cycles += 1;
-    }
-    else
-    {
+    } else {
         // Rn should be set to 0 if not used as accumulate
         debug_assert_eq!(rn, 0);
     }
 
-    if s
-    {
+    if s {
         cpu.set_cpsr_bit(Z, result == 0);
         cpu.set_cpsr_bit(N, result.bit(31));
 
@@ -68,35 +61,24 @@ pub fn execute(cpu: &mut CPU, (a, s, rd, rn, rs, rm): (bool, bool, u32, u32, u32
     cpu.cycles += count_cycles(op0, op1);
 }
 
-pub fn count_cycles(op0: u32, op1: u32) -> i32
-{
-    if op0 < 0x100 && op1 < 0x100
-    {
+pub fn count_cycles(op0: u32, op1: u32) -> i32 {
+    if op0 < 0x100 && op1 < 0x100 {
         1
-    }
-    else if op0 < 0x10000 && op1 < 0x10000
-    {
+    } else if op0 < 0x10000 && op1 < 0x10000 {
         2
-    }
-    else if op0 < 0x1000000 && op1 < 0x1000000
-    {
+    } else if op0 < 0x1000000 && op1 < 0x1000000 {
         3
-    }
-    else
-    {
+    } else {
         4
     }
-
 }
 
 #[cfg(test)]
-mod tests
-{
+mod tests {
     use super::*;
 
     #[test]
-    fn mul_execute()
-    {
+    fn mul_execute() {
         let mut cpu = CPU::new();
 
         cpu.r[0] = 0xfffffff6;

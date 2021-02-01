@@ -1,18 +1,16 @@
-use crate::util::*;
-use crate::cpu::CPU;
 use crate::cpu::alu;
+use crate::cpu::barrel_shifter::{rotate_immediate, shift_register};
 use crate::cpu::register::PSRBit::C;
-use crate::cpu::barrel_shifter::{shift_register, rotate_immediate};
+use crate::cpu::CPU;
+use crate::util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instruction: u32)
-{
+pub fn interpret(cpu: &mut CPU, instruction: u32) {
     execute(cpu, decode(instruction));
 }
 
 #[inline]
-pub fn decode(instruction: u32) -> (bool, u32, bool, u32, u32, u32)
-{
+pub fn decode(instruction: u32) -> (bool, u32, bool, u32, u32, u32) {
     let i = instruction.bit(25);
     let opcode = instruction.bits(24, 21);
     let s = instruction.bit(20);
@@ -24,30 +22,35 @@ pub fn decode(instruction: u32) -> (bool, u32, bool, u32, u32, u32)
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32))
-{
-
+pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32)) {
     let carry = cpu.get_cpsr_bit(C);
 
     let mut op1 = cpu.r[rn as usize];
-    let mut op2 = if i {rotate_immediate(cpu, operand2)}
-                  else {shift_register(cpu, operand2)};
+    let mut op2 = if i {
+        rotate_immediate(cpu, operand2)
+    } else {
+        shift_register(cpu, operand2)
+    };
 
-    if !s {cpu.set_cpsr_bit(C, carry)}
+    if !s {
+        cpu.set_cpsr_bit(C, carry)
+    }
 
     // If a register is used to specify shift amount, the value of pc
     // will be 12 head of the address of the currently executed instruction.
-    if !i && operand2.bit(4)
-    {
+    if !i && operand2.bit(4) {
         let rm = operand2.bits(3, 0);
 
-        if rn == 15 {op1 += 4};
-        if rm == 15 {op2 += 4};
+        if rn == 15 {
+            op1 += 4
+        };
+        if rm == 15 {
+            op2 += 4
+        };
     }
 
     // adc, sbc, rsc use old carry flag
-    let result = match opcode
-    {
+    let result = match opcode {
         0b0000 => alu::and(cpu, op1, op2, s),
         0b0001 => alu::eor(cpu, op1, op2, s),
         0b0010 => alu::sub(cpu, op1, op2, s),
@@ -64,24 +67,21 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         0b1101 => alu::mov(cpu, op1, op2, s),
         0b1110 => alu::bic(cpu, op1, op2, s),
         0b1111 => alu::mvn(cpu, op1, op2, s),
-        _      => unreachable!()
+        _ => unreachable!(),
     };
 
     // Write result to register, if needed
-    if opcode < 0b1000 || opcode > 0b1011
-    {
+    if opcode < 0b1000 || opcode > 0b1011 {
         cpu.r[rd as usize] = result;
 
-        if rd == 15
-        {
+        if rd == 15 {
             // Direct manipulation of pc will result in a pipeline flush.
             // The next instruction will be fetched from memory address
             // at pc. pc is further incremented by 4 to maintain offset 8
             // from the currently executed instruction.
             cpu.flush();
 
-            if s
-            {
+            if s {
                 cpu.restore_cpsr();
             }
         }
@@ -89,13 +89,11 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
 }
 
 #[cfg(test)]
-mod tests
-{
+mod tests {
     use super::*;
 
     #[test]
-    fn data_execute()
-    {
+    fn data_execute() {
         let mut cpu = CPU::new();
 
         // AND R1, R2, R4 LSL R1

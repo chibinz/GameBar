@@ -1,18 +1,16 @@
-use crate::util::*;
-use crate::cpu::CPU;
 use crate::cpu::register::PSRBit::*;
+use crate::cpu::CPU;
+use crate::util::*;
 
 use super::multiply_accumulate::count_cycles;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instruction: u32)
-{
+pub fn interpret(cpu: &mut CPU, instruction: u32) {
     execute(cpu, decode(instruction));
 }
 
 #[inline]
-pub fn decode(instruction: u32) -> (bool, bool, bool, u32, u32, u32, u32)
-{
+pub fn decode(instruction: u32) -> (bool, bool, bool, u32, u32, u32, u32) {
     debug_assert_eq!(instruction.bits(7, 4), 0b1001);
 
     let u = instruction.bit(22);
@@ -38,20 +36,19 @@ pub fn decode(instruction: u32) -> (bool, bool, bool, u32, u32, u32, u32)
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, u32, u32, u32 ,u32))
-{
+pub fn execute(
+    cpu: &mut CPU,
+    (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, u32, u32, u32, u32),
+) {
     let mut result: u64;
 
     // 0 for u means unsigned
-    if !u
-    {
+    if !u {
         let operand1 = cpu.r[rm as usize] as u64;
         let operand2 = cpu.r[rs as usize] as u64;
 
         result = operand1 * operand2;
-    }
-    else
-    {
+    } else {
         // Operands are sign extended to 64 bits. `i32` is necessary for sign extension.
         let operand1 = cpu.r[rm as usize] as i32 as i64;
         let operand2 = cpu.r[rs as usize] as i32 as i64;
@@ -59,8 +56,7 @@ pub fn execute(cpu: &mut CPU, (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, 
         result = (operand1 * operand2) as u64;
     }
 
-    if a
-    {
+    if a {
         let hi = (cpu.r[rdhi as usize] as u64) << 32;
         let lo = cpu.r[rdlo as usize] as u64;
 
@@ -70,8 +66,7 @@ pub fn execute(cpu: &mut CPU, (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, 
         cpu.cycles += 1;
     }
 
-    if s
-    {
+    if s {
         cpu.set_cpsr_bit(Z, result == 0);
         cpu.set_cpsr_bit(N, result >> 63 == 1);
 
@@ -86,13 +81,11 @@ pub fn execute(cpu: &mut CPU, (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, 
 }
 
 #[cfg(test)]
-mod tests
-{
+mod tests {
     use super::*;
 
     #[test]
-    fn mul_long_execute()
-    {
+    fn mul_long_execute() {
         let mut cpu = CPU::new();
 
         // unsigned

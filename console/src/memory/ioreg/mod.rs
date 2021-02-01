@@ -1,31 +1,27 @@
-mod ppu;
 mod dma;
-mod timer;
 mod interrupt;
 mod keypad;
+mod ppu;
+mod timer;
 
 use super::Memory;
 
-impl Memory
-{
+impl Memory {
     #[inline]
-    pub fn ioram_load8(&self, offset: usize) -> u8
-    {
+    pub fn ioram_load8(&self, offset: usize) -> u8 {
         let value = self.ioram_load16(offset);
         value.to_le_bytes()[offset as usize & 1]
     }
 
-    pub fn ioram_load16(&self, offset: usize) -> u16
-    {
-        let console = unsafe {& *self.console};
-        let ppu     = &console.ppu;
-        let dma     = &console.dma;
-        let timers  = &console.timers;
-        let irqcnt  = &console.irqcnt;
-        let keypad  = &console.keypad;
+    pub fn ioram_load16(&self, offset: usize) -> u16 {
+        let console = unsafe { &*self.console };
+        let ppu = &console.ppu;
+        let dma = &console.dma;
+        let timers = &console.timers;
+        let irqcnt = &console.irqcnt;
+        let keypad = &console.keypad;
 
-        match offset
-        {
+        match offset {
             0x000 => ppu.get_dispcnt(),
             0x004 => ppu.get_dispstat(),
             0x006 => ppu.get_vcount(),
@@ -35,7 +31,6 @@ impl Memory
             0x00c => ppu.background[2].get_control(),
             0x00e => ppu.background[3].get_control(),
             // Background offset & rotation registers are write only
-
             0x040 => ppu.window.get_win0h(),
             0x042 => ppu.window.get_win1h(),
             0x044 => ppu.window.get_win0v(),
@@ -43,7 +38,6 @@ impl Memory
             0x048 => ppu.window.get_winin(),
             0x04a => ppu.window.get_winout(),
             // Window boundary register are write only
-
             0x0b0 => dma.channel[0].get_src_l(),
             0x0b2 => dma.channel[0].get_src_h(),
             0x0b4 => dma.channel[0].get_dst_l(),
@@ -87,21 +81,19 @@ impl Memory
             0x200 => irqcnt.get_ie(),
             0x202 => irqcnt.get_irf(),
             0x208 => irqcnt.get_ime(),
-            _     => 0 // {Self::unhandled(true, 2, offset); 0},
+            _ => 0, // {Self::unhandled(true, 2, offset); 0},
         }
     }
 
     #[inline]
-    pub fn ioram_load32(&self, offset: usize) -> u32
-    {
+    pub fn ioram_load32(&self, offset: usize) -> u32 {
         let lo = self.ioram_load16(offset) as u32;
         let hi = self.ioram_load16(offset + 2) as u32;
         (hi << 16) | lo
     }
 
     #[inline]
-    pub fn ioram_store8(&mut self, offset: usize, value: u8)
-    {
+    pub fn ioram_store8(&mut self, offset: usize, value: u8) {
         let mut old = self.ioram_load16(offset).to_le_bytes();
         old[offset as usize & 1] = value;
         let new = u16::from_le_bytes(old);
@@ -110,20 +102,18 @@ impl Memory
         self.ioram_store16(offset, new);
     }
 
-    pub fn ioram_store16(&mut self, offset: usize, value: u16)
-    {
-        let console = unsafe {&mut *self.console};
-        let ppu     = &mut console.ppu;
-        let dma     = &mut console.dma;
-        let timers  = &mut console.timers;
-        let irqcnt  = &mut console.irqcnt;
-        let keypad  = &mut console.keypad;
+    pub fn ioram_store16(&mut self, offset: usize, value: u16) {
+        let console = unsafe { &mut *self.console };
+        let ppu = &mut console.ppu;
+        let dma = &mut console.dma;
+        let timers = &mut console.timers;
+        let irqcnt = &mut console.irqcnt;
+        let keypad = &mut console.keypad;
 
         assert_eq!(console.magic, 0xdeadbeef);
 
         // Seems like match patterns cannot be replaced with macros...
-        match offset
-        {
+        match offset {
             0x000 => ppu.set_dispcnt(value),
             0x004 => ppu.set_dispstat(value),
             // vcount is read only
@@ -213,13 +203,12 @@ impl Memory
             0x200 => irqcnt.set_ie(value),
             0x202 => irqcnt.ack_irf(value),
             0x208 => irqcnt.set_ime(value),
-            _     => () // Self::unhandled(false, 2, offset),
+            _ => (), // Self::unhandled(false, 2, offset),
         }
     }
 
     #[inline]
-    pub fn ioram_store32(&mut self, offset: usize, value: u32)
-    {
+    pub fn ioram_store32(&mut self, offset: usize, value: u32) {
         self.ioram_store16(offset, value as u16);
         self.ioram_store16(offset + 2, (value >> 16) as u16);
     }

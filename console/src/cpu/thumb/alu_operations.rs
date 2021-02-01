@@ -1,17 +1,15 @@
-use crate::util::*;
-use crate::cpu::CPU;
 use crate::cpu::alu;
 use crate::cpu::register::PSRBit::C;
+use crate::cpu::CPU;
+use crate::util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instruction: u16)
-{
+pub fn interpret(cpu: &mut CPU, instruction: u16) {
     execute(cpu, decode(instruction));
 }
 
 #[inline]
-fn decode(instruction: u16) -> (u32, u32, u32)
-{
+fn decode(instruction: u16) -> (u32, u32, u32) {
     let op = instruction.bits(9, 6);
     let rs = instruction.bits(5, 3);
     let rd = instruction.bits(2, 0);
@@ -20,14 +18,12 @@ fn decode(instruction: u16) -> (u32, u32, u32)
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32))
-{
+fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32)) {
     let carry = cpu.get_cpsr_bit(C);
     let op1 = cpu.r[rd as usize];
     let op2 = cpu.r[rs as usize];
 
-    let result = match op
-    {
+    let result = match op {
         0b0000 => alu::and(cpu, op1, op2, true),
         0b0001 => alu::eor(cpu, op1, op2, true),
         0b0010 => alu::lsl(cpu, op1, op2),
@@ -44,24 +40,21 @@ fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32))
         0b1101 => alu::mul(cpu, op1, op2, true),
         0b1110 => alu::bic(cpu, op1, op2, true),
         0b1111 => alu::mvn(cpu, op1, op2, true),
-        _      => unreachable!()
+        _ => unreachable!(),
     };
 
-    if op != 0b1000 && op != 0b1010 && op != 0b1011
-    {
+    if op != 0b1000 && op != 0b1010 && op != 0b1011 {
         cpu.r[rd as usize] = result;
     }
 }
 
 #[cfg(test)]
-mod tests
-{
+mod tests {
     use super::*;
     use crate::cpu::register::PSRBit::*;
 
     #[test]
-    fn alu_operations()
-    {
+    fn alu_operations() {
         let mut cpu = CPU::new();
 
         // MUL 0x80000000, 0x10000000

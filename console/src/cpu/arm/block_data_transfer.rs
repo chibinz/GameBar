@@ -1,34 +1,34 @@
-use crate::util::*;
-use crate::cpu::CPU;
 use crate::cpu::register::PSRMode::User;
+use crate::cpu::CPU;
 use crate::memory::Memory;
+use crate::util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, memory: &mut Memory, instruction: u32)
-{
+pub fn interpret(cpu: &mut CPU, memory: &mut Memory, instruction: u32) {
     execute(cpu, memory, decode(instruction));
 }
 
 #[inline]
-pub fn decode(instruction: u32) -> (bool, bool, bool, bool, bool, u32, u32)
-{
+pub fn decode(instruction: u32) -> (bool, bool, bool, bool, bool, u32, u32) {
     debug_assert_eq!(instruction.bits(27, 25), 0b100);
 
-    let p     = instruction.bit(24);
-    let u     = instruction.bit(23);
-    let s     = instruction.bit(22);
-    let w     = instruction.bit(21);
-    let l     = instruction.bit(20);
-    let rn    = instruction.bits(19, 16);
+    let p = instruction.bit(24);
+    let u = instruction.bit(23);
+    let s = instruction.bit(22);
+    let w = instruction.bit(21);
+    let l = instruction.bit(20);
+    let rn = instruction.bits(19, 16);
     let rlist = instruction.bits(15, 0);
 
     (p, u, s, w, l, rn, rlist)
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, memory: &mut Memory,
-    (p, u, s, w, l, rn, rlist): (bool, bool, bool, bool, bool, u32, u32))
-{
+pub fn execute(
+    cpu: &mut CPU,
+    memory: &mut Memory,
+    (p, u, s, w, l, rn, rlist): (bool, bool, bool, bool, bool, u32, u32),
+) {
     // Empty rlist not handled
     assert_ne!(rlist, 0);
 
@@ -38,10 +38,8 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
 
     let saved_cpsr = cpu.get_cpsr();
 
-    if s
-    {
-        if !(l && rlist.bit(15))
-        {
+    if s {
+        if !(l && rlist.bit(15)) {
             // Switch to User mode register bank
             cpu.set_cpsr(User as u32, false);
         }
@@ -49,69 +47,52 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
 
     // Whether or not the p bit is set, the final address after transfer
     // should be the same.
-    if w
-    {
-        if u
-        {
+    if w {
+        if u {
             cpu.r[rn as usize] = address + 4 * rlist.count_ones();
-        }
-        else
-        {
+        } else {
             cpu.r[rn as usize] = address - 4 * rlist.count_ones();
         }
     }
 
-    if p
-    {
-        address = if u {address + 4} else {address - 4}
+    if p {
+        address = if u { address + 4 } else { address - 4 }
     }
 
     // Empty list not handled
-    for i in 0..16
-    {
-        let j = if u {i} else {15 - i};
-        if rlist.bit(j)
-        {
-            if l
-            {
+    for i in 0..16 {
+        let j = if u { i } else { 15 - i };
+        if rlist.bit(j) {
+            if l {
                 cpu.r[j as usize] = memory.load32(address);
 
-                if j == 15
-                {
+                if j == 15 {
                     cpu.flush();
                 }
-            }
-            else
-            {
+            } else {
                 memory.store32(address, cpu.r[j as usize]);
 
-                if j == 15
-                {
+                if j == 15 {
                     memory.store32(address, cpu.r[15] + 4);
                 }
 
                 // The first register to be stored will store the
                 // unchanged value.
-                if w && j == rn && rlist.trailing_zeros() == rn
-                {
+                if w && j == rn && rlist.trailing_zeros() == rn {
                     memory.store32(address, original);
                 }
             }
 
-            address = if u {address + 4} else {address - 4};
+            address = if u { address + 4 } else { address - 4 };
         }
     }
 
-    if s
-    {
+    if s {
         // If the instruction is a LDM then SPSR_<mode> is transferred
         // to CPSR at the same time as R15 is loaded.
-        if l && rlist.bit(15)
-        {
+        if l && rlist.bit(15) {
             cpu.restore_cpsr();
-        }
-        else
-        {
+        } else {
             cpu.set_cpsr(saved_cpsr, false);
         }
     }
@@ -120,34 +101,33 @@ pub fn execute(cpu: &mut CPU, memory: &mut Memory,
     cpu.cycles += 1 + count_cycles(rlist) * Memory::access_timing(address, 2);
 }
 
-fn count_cycles(rlist: u32) -> i32
-{
+fn count_cycles(rlist: u32) -> i32 {
     rlist.count_ones() as i32
 }
 
 #[cfg(test)]
-mod tests
-{
+mod tests {
     use super::*;
 
     #[test]
-    fn post_increment()
-    {
+    fn post_increment() {
         let mut cpu = CPU::new();
         let mut memory = Memory::new();
 
         cpu.set_spsr(cpu.get_cpsr(), false);
 
-        for i in 0..16
-        {
+        for i in 0..16 {
             memory.store32(0x02000000 + i * 4, i);
         }
         cpu.r[0] = 0x02000000;
 
         // Write back bit is redundant because R0 is overwritten
-        execute(&mut cpu, &mut memory, (false, true, true, true, true, 0, 0xffff));
-        for i in 0..15
-        {
+        execute(
+            &mut cpu,
+            &mut memory,
+            (false, true, true, true, true, 0, 0xffff),
+        );
+        for i in 0..15 {
             assert_eq!(cpu.r[i as usize], i);
         }
 
@@ -156,8 +136,7 @@ mod tests
     }
 
     #[test]
-    fn pre_increment()
-    {
+    fn pre_increment() {
         let mut cpu = CPU::new();
         let mut memory = Memory::new();
 
@@ -166,7 +145,11 @@ mod tests
         memory.store32(0x0200000c, 3);
         cpu.r[0] = 0x02000000;
 
-        execute(&mut cpu, &mut memory, (true, true, true, true, true, 0, 0x000e));
+        execute(
+            &mut cpu,
+            &mut memory,
+            (true, true, true, true, true, 0, 0x000e),
+        );
         assert_eq!(cpu.r[1], 1);
         assert_eq!(cpu.r[2], 2);
         assert_eq!(cpu.r[3], 3);
@@ -174,8 +157,7 @@ mod tests
     }
 
     #[test]
-    fn post_decrement()
-    {
+    fn post_decrement() {
         let mut cpu = CPU::new();
         let mut memory = Memory::new();
 
@@ -184,7 +166,11 @@ mod tests
         memory.store32(0x0200000c, 3);
         cpu.r[0] = 0x0200000c;
 
-        execute(&mut cpu, &mut memory, (false, false, true, true, true, 0, 0x000e));
+        execute(
+            &mut cpu,
+            &mut memory,
+            (false, false, true, true, true, 0, 0x000e),
+        );
         assert_eq!(cpu.r[1], 1);
         assert_eq!(cpu.r[2], 2);
         assert_eq!(cpu.r[3], 3);
@@ -192,8 +178,7 @@ mod tests
     }
 
     #[test]
-    fn pre_decrement()
-    {
+    fn pre_decrement() {
         let mut cpu = CPU::new();
         let mut memory = Memory::new();
 
@@ -202,7 +187,11 @@ mod tests
         memory.store32(0x02000008, 3);
         cpu.r[0] = 0x0200000c;
 
-        execute(&mut cpu, &mut memory, (true, false, true, true, true, 0, 0x1110));
+        execute(
+            &mut cpu,
+            &mut memory,
+            (true, false, true, true, true, 0, 0x1110),
+        );
         assert_eq!(cpu.r[4], 1);
         assert_eq!(cpu.r[8], 2);
         assert_eq!(cpu.r[12], 3);

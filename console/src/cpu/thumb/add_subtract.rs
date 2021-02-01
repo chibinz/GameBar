@@ -1,16 +1,14 @@
-use crate::util::*;
-use crate::cpu::CPU;
 use crate::cpu::alu;
+use crate::cpu::CPU;
+use crate::util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instruction: u16)
-{
+pub fn interpret(cpu: &mut CPU, instruction: u16) {
     execute(cpu, decode(instruction));
 }
 
 #[inline]
-fn decode(instruction: u16) -> (bool, bool, u32, u32, u32)
-{
+fn decode(instruction: u16) -> (bool, bool, u32, u32, u32) {
     let i = instruction.bit(10);
     let op = instruction.bit(9);
     let operand2 = instruction.bits(8, 6);
@@ -21,26 +19,30 @@ fn decode(instruction: u16) -> (bool, bool, u32, u32, u32)
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32))
-{
+fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32)) {
     let op1 = cpu.r[rs as usize];
-    let op2 = if i {operand2} else {cpu.r[operand2 as usize]};
+    let op2 = if i {
+        operand2
+    } else {
+        cpu.r[operand2 as usize]
+    };
 
-    let result = if op {alu::sub(cpu, op1, op2, true)}
-                  else {alu::add(cpu, op1, op2, true)};
+    let result = if op {
+        alu::sub(cpu, op1, op2, true)
+    } else {
+        alu::add(cpu, op1, op2, true)
+    };
 
     cpu.r[rd as usize] = result;
 }
 
 #[cfg(test)]
-mod tests
-{
+mod tests {
     use super::*;
     use crate::cpu::register::PSRBit::*;
 
     #[test]
-    fn add_subtract()
-    {
+    fn add_subtract() {
         let mut cpu = CPU::new();
 
         cpu.r[1] = 0xffffffff;

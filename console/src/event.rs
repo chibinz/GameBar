@@ -22,67 +22,52 @@ use crate::Console;
 // / HBlank /
 // /-- 272 -/
 
-impl Console
-{
-    pub fn schedule(&mut self)
-    {
+impl Console {
+    pub fn schedule(&mut self) {
         use super::ppu::PPUState::*;
 
-        let cpu    = &mut self.cpu;
-        let ppu    = &mut self.ppu;
+        let cpu = &mut self.cpu;
+        let ppu = &mut self.ppu;
         let memory = &mut self.memory;
         let timers = &mut self.timers;
-        let dma    = &mut self.dma;
+        let dma = &mut self.dma;
         let irqcnt = &mut self.irqcnt;
 
-        while ppu.vcount < 226
-        {
-            let ppu_ticks = match ppu.state
-            {
-                HDraw =>
-                {
+        while ppu.vcount < 226 {
+            let ppu_ticks = match ppu.state {
+                HDraw => {
                     ppu.hdraw();
                     960
-                },
-                HBlankStart =>
-                {
+                }
+                HBlankStart => {
                     ppu.hblank(irqcnt);
                     dma.request_hblank();
                     0
-                },
-                HBlank =>
-                {
+                }
+                HBlank => {
                     ppu.state = EndOfLine;
                     272
-                },
-                VBlankStart =>
-                {
+                }
+                VBlankStart => {
                     ppu.vblank(irqcnt);
                     dma.request_vblank();
                     0
-                },
-                VBlank =>
-                {
+                }
+                VBlank => {
                     ppu.state = HBlank;
                     960
-                },
-                EndOfLine =>
-                {
+                }
+                EndOfLine => {
                     ppu.increment_vcount(irqcnt);
                     0
-                },
+                }
             };
 
             let mut remaining_ticks = ppu_ticks;
-            while remaining_ticks > 0
-            {
-                remaining_ticks -=
-                if dma.is_active()
-                {
+            while remaining_ticks > 0 {
+                remaining_ticks -= if dma.is_active() {
                     dma.step(irqcnt, memory)
-                }
-                else
-                {
+                } else {
                     cpu.step(memory)
                 }
             }

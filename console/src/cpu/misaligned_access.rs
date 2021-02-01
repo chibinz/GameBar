@@ -10,11 +10,9 @@ use crate::util::*;
 
 use super::CPU;
 
-impl CPU
-{
+impl CPU {
     #[inline]
-    pub fn ldr(address: u32, memory: &mut Memory) -> u32
-    {
+    pub fn ldr(address: u32, memory: &mut Memory) -> u32 {
         let rotation = (address & 0b11) * 8;
 
         // Memory loads are forcibly aligned
@@ -24,8 +22,7 @@ impl CPU
     }
 
     #[inline]
-    pub fn ldrh(address: u32, memory: &mut Memory) -> u32
-    {
+    pub fn ldrh(address: u32, memory: &mut Memory) -> u32 {
         let rotation = (address & 1) * 8;
 
         let value = memory.load16(address) as u32;
@@ -34,15 +31,11 @@ impl CPU
     }
 
     #[inline]
-    pub fn ldrsh(address: u32, memory: &mut Memory) -> u32
-    {
-        if address.bit(0)
-        {
+    pub fn ldrsh(address: u32, memory: &mut Memory) -> u32 {
+        if address.bit(0) {
             // Misaligned LDRSH is effectively LDRSB
             memory.load8(address) as i8 as i32 as u32
-        }
-        else
-        {
+        } else {
             memory.load16(address) as i16 as i32 as u32
         }
     }

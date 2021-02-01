@@ -1,16 +1,14 @@
-use crate::util::*;
-use crate::cpu::CPU;
 use crate::cpu::alu;
+use crate::cpu::CPU;
+use crate::util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instruction: u16)
-{
+pub fn interpret(cpu: &mut CPU, instruction: u16) {
     execute(cpu, decode(instruction));
 }
 
 #[inline]
-fn decode(instruction: u16) -> (u32, u32, u32)
-{
+fn decode(instruction: u16) -> (u32, u32, u32) {
     let op = instruction.bits(12, 11);
     let rd = instruction.bits(10, 8);
     let offset8 = instruction.bits(7, 0);
@@ -19,35 +17,30 @@ fn decode(instruction: u16) -> (u32, u32, u32)
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, (op, rd, offset8): (u32, u32, u32))
-{
+fn execute(cpu: &mut CPU, (op, rd, offset8): (u32, u32, u32)) {
     let op1 = cpu.r[rd as usize];
     let op2 = offset8;
 
-    let result = match op
-    {
+    let result = match op {
         0b00 => alu::mov(cpu, op1, op2, true),
         0b01 => alu::cmp(cpu, op1, op2),
         0b10 => alu::add(cpu, op1, op2, true),
         0b11 => alu::sub(cpu, op1, op2, true),
-        _    => unreachable!()
+        _ => unreachable!(),
     };
 
-    if op != 0b01
-    {
+    if op != 0b01 {
         cpu.r[rd as usize] = result;
     }
 }
 
 #[cfg(test)]
-mod tests
-{
+mod tests {
     use super::*;
     use crate::cpu::register::PSRBit::*;
 
     #[test]
-    fn move_compare()
-    {
+    fn move_compare() {
         let mut cpu = CPU::new();
 
         cpu.r[1] = 0xffffffff;

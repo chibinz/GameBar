@@ -1,90 +1,68 @@
 use super::PPU;
 
 /// Sprite dimension in pixels
-pub static DIMENSION: [[(u32, u32); 4]; 3] =
-[
+pub static DIMENSION: [[(u32, u32); 4]; 3] = [
     // Square
-    [
-        ( 8,  8),
-        (16, 16),
-        (32, 32),
-        (64, 64),
-    ],
+    [(8, 8), (16, 16), (32, 32), (64, 64)],
     // Horizontal
-    [
-        (16,  8),
-        (32,  8),
-        (32, 16),
-        (64, 32),
-    ],
+    [(16, 8), (32, 8), (32, 16), (64, 32)],
     // Vertical
-    [
-        ( 8, 16),
-        ( 8, 32),
-        (16, 32),
-        (32, 64),
-    ],
+    [(8, 16), (8, 32), (16, 32), (32, 64)],
 ];
 
 #[derive(Debug, Clone)]
-pub struct Sprite
-{
-    pub index    : usize,      // Index of sprite, 0 - 127
-    pub attr     : [u16; 3],   // Raw object attributes, Used for fast oam read
+pub struct Sprite {
+    pub index: usize,   // Index of sprite, 0 - 127
+    pub attr: [u16; 3], // Raw object attributes, Used for fast oam read
 
-    pub xcoord   : u32,        // X coordinate, top left for text sprites
-    pub ycoord   : u32,        // Y coordinate, center for affine sprites
-    pub shape    : u32,        // 0 - square, 1 - horizontal, 2 - vertical
-    pub size     : u32,        // 0 - 8, 1 - 16, 2 - 32, 3 - 64 pixels
-    pub mode     : u32,        // 0 - normal, 1 - semi-transparent, 2 - window
-    pub affine_f : bool,       // Rotational / scaling flag
-    pub double_f : bool,       // Double size flag
-    pub mosaic_f : bool,       // Mosaic flag
-    pub palette_f: bool,       // Palette type, 1 - 256, 2 - 16
-    pub hflip    : bool,       // Horizontal flip bit
-    pub vflip    : bool,       // Vertical flip bit
-    pub affine_i : u32,        // Rotation / scaling data index
-    pub tile_n   : u32,        // Tile number
-    pub priority : u32,
-    pub palette_n: u32,        // Palette number (for 16 color sprites)
+    pub xcoord: u32,     // X coordinate, top left for text sprites
+    pub ycoord: u32,     // Y coordinate, center for affine sprites
+    pub shape: u32,      // 0 - square, 1 - horizontal, 2 - vertical
+    pub size: u32,       // 0 - 8, 1 - 16, 2 - 32, 3 - 64 pixels
+    pub mode: u32,       // 0 - normal, 1 - semi-transparent, 2 - window
+    pub affine_f: bool,  // Rotational / scaling flag
+    pub double_f: bool,  // Double size flag
+    pub mosaic_f: bool,  // Mosaic flag
+    pub palette_f: bool, // Palette type, 1 - 256, 2 - 16
+    pub hflip: bool,     // Horizontal flip bit
+    pub vflip: bool,     // Vertical flip bit
+    pub affine_i: u32,   // Rotation / scaling data index
+    pub tile_n: u32,     // Tile number
+    pub priority: u32,
+    pub palette_n: u32, // Palette number (for 16 color sprites)
 }
 
-impl Sprite
-{
-    pub fn new() -> Self
-    {
-        Self
-        {
-            index    : 0,
-            attr     : [0; 3],
+impl Sprite {
+    pub fn new() -> Self {
+        Self {
+            index: 0,
+            attr: [0; 3],
 
-            xcoord   : 0,
-            ycoord   : 0,
-            shape    : 0,
-            size     : 0,
-            mode     : 0,
-            affine_f : false,
-            double_f : false,
-            mosaic_f : false,
+            xcoord: 0,
+            ycoord: 0,
+            shape: 0,
+            size: 0,
+            mode: 0,
+            affine_f: false,
+            double_f: false,
+            mosaic_f: false,
             palette_f: false,
-            hflip    : false,
-            vflip    : false,
-            affine_i : 0,
-            tile_n   : 0,
-            priority : 0,
+            hflip: false,
+            vflip: false,
+            affine_i: 0,
+            tile_n: 0,
+            priority: 0,
             palette_n: 0,
         }
     }
 
     #[inline]
-    pub fn get_dimension(&self) -> (u32, u32)
-    {
+    pub fn get_dimension(&self) -> (u32, u32) {
         DIMENSION[self.shape as usize][self.size as usize]
     }
 
     #[inline]
-    pub fn get_affine_matrix(&self, mat: &mut Vec<u16>) -> (i32, i32, i32, i32)
-    {
+    pub fn get_affine_matrix(&self, mat: &mut Vec<u16>) -> (i32, i32, i32, i32) {
         let index = self.affine_i as usize * 4;
 
         let pa = mat[index] as i16 as i32;
@@ -96,14 +74,12 @@ impl Sprite
     }
 
     #[inline]
-    pub fn disabled(&self) -> bool
-    {
+    pub fn disabled(&self) -> bool {
         !self.affine_f && self.double_f
     }
 
     #[inline]
-    pub fn visible(&self, vcount: u32) -> bool
-    {
+    pub fn visible(&self, vcount: u32) -> bool {
         let (width, height) = self.get_dimension();
 
         let v = vcount as i32;
@@ -113,44 +89,37 @@ impl Sprite
         let mut h = height as i32;
 
         // Horizontal and vertical wrap around
-        if x + w > 512 {x -= 512};
-        if y + h > 256 {y -= 256};
+        if x + w > 512 {
+            x -= 512
+        };
+        if y + h > 256 {
+            y -= 256
+        };
 
-        if self.double_f
-        {
+        if self.double_f {
             w *= 2;
             h *= 2;
         }
 
-           x < 240
-        && x + w >= 0
-        && y <= v as i32
-        && y + h > v as i32
+        x < 240 && x + w >= 0 && y <= v as i32 && y + h > v as i32
     }
 }
 
-impl PPU
-{
-    pub fn draw_sprite(&mut self, index: usize)
-    {
+impl PPU {
+    pub fn draw_sprite(&mut self, index: usize) {
         let sprite = &self.sprite[index];
         let vcount = self.vcount as u32;
 
-        if !sprite.disabled() && sprite.visible(vcount)
-        {
-            if sprite.affine_f
-            {
+        if !sprite.disabled() && sprite.visible(vcount) {
+            if sprite.affine_f {
                 self.draw_affine_sprite(index)
-            }
-            else
-            {
+            } else {
                 self.draw_text_sprite(index)
             }
         }
     }
 
-    pub fn draw_text_sprite(&mut self, index: usize)
-    {
+    pub fn draw_text_sprite(&mut self, index: usize) {
         let sprite = &self.sprite[index];
         let vcount = self.vcount as u32;
         let sequential = self.sequential;
@@ -159,23 +128,20 @@ impl PPU
 
         // Vertical wrap around
         let y = vcount.wrapping_sub(sprite.ycoord) % 256;
-        let w = if sequential {width / 8} else {32};
+        let w = if sequential { width / 8 } else { 32 };
 
-        let mut tile_y  = y / 8;
+        let mut tile_y = y / 8;
         let mut pixel_y = y % 8;
-        if sprite.vflip
-        {
-            tile_y  = height / 8 - tile_y - 1;
+        if sprite.vflip {
+            tile_y = height / 8 - tile_y - 1;
             pixel_y = 7 - pixel_y;
         }
 
-        for i in 0..width
-        {
-            let mut tile_x  = i / 8;
+        for i in 0..width {
+            let mut tile_x = i / 8;
             let mut pixel_x = i % 8;
-            if sprite.hflip
-            {
-                tile_x  = width / 8 - tile_x - 1;
+            if sprite.hflip {
+                tile_x = width / 8 - tile_x - 1;
                 pixel_x = 7 - pixel_x;
             }
 
@@ -195,26 +161,24 @@ impl PPU
     }
 
     #[allow(unused_assignments)]
-    pub fn draw_affine_sprite(&mut self, index: usize)
-    {
+    pub fn draw_affine_sprite(&mut self, index: usize) {
         let sprite = &self.sprite[index];
         let vcount = self.vcount as u32;
         let sequential = self.sequential;
         let window = &self.window;
         let (width, height) = sprite.get_dimension();
 
-        let mut half_width = width as i32/ 2;
+        let mut half_width = width as i32 / 2;
         let mut half_height = height as i32 / 2;
 
         let mut xcenter = sprite.xcoord as i32 + half_width;
         let mut ycenter = sprite.ycoord as i32 + half_height;
 
         // Double flag only doubles the viewport size, not the sprite size
-        if sprite.double_f
-        {
-            xcenter     += half_width;
-            ycenter     += half_height;
-            half_width  *= 2;
+        if sprite.double_f {
+            xcenter += half_width;
+            ycenter += half_height;
+            half_width *= 2;
             half_height *= 2;
         }
 
@@ -223,12 +187,11 @@ impl PPU
         ycenter %= 256;
 
         let y = vcount as i32 - ycenter;
-        let w = if sequential {width / 8} else {32};
+        let w = if sequential { width / 8 } else { 32 };
 
         let (pa, pb, pc, pd) = sprite.get_affine_matrix(&mut self.obj_param);
 
-        for x in -half_width..half_width
-        {
+        for x in -half_width..half_width {
             // Due to the linearity of the transform matrix, the origin is preserved.
             // That is, the screen origin overlaps the texture origin.
             // The transform matrix takes relative ONSCREEN distance to the origin as input
@@ -237,9 +200,7 @@ impl PPU
             let text_y = ((pc * x + pd * y) >> 8) + height as i32 / 2;
 
             // Avoid replication
-            if text_x < 0 || text_x >= width as i32
-            || text_y < 0 || text_y >= height as i32
-            {
+            if text_x < 0 || text_x >= width as i32 || text_y < 0 || text_y >= height as i32 {
                 continue;
             }
 

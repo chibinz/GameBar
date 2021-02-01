@@ -1,17 +1,15 @@
-use crate::util::*;
-use crate::cpu::CPU;
 use crate::cpu::alu;
 use crate::cpu::barrel_shifter::shift;
+use crate::cpu::CPU;
+use crate::util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instruction: u16)
-{
+pub fn interpret(cpu: &mut CPU, instruction: u16) {
     execute(cpu, decode(instruction));
 }
 
 #[inline]
-fn decode(instruction: u16) -> (u32, u32, u32, u32)
-{
+fn decode(instruction: u16) -> (u32, u32, u32, u32) {
     let op = instruction.bits(12, 11);
     let offset5 = instruction.bits(10, 6);
     let rs = instruction.bits(5, 3);
@@ -21,8 +19,7 @@ fn decode(instruction: u16) -> (u32, u32, u32, u32)
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, (op, offset5, rs, rd): (u32, u32, u32, u32))
-{
+fn execute(cpu: &mut CPU, (op, offset5, rs, rd): (u32, u32, u32, u32)) {
     let shifted = shift(cpu, cpu.r[rs as usize], offset5, op, true);
 
     // Use alu's mov instead of direct assignment to set flags
@@ -30,14 +27,12 @@ fn execute(cpu: &mut CPU, (op, offset5, rs, rd): (u32, u32, u32, u32))
 }
 
 #[cfg(test)]
-mod tests
-{
+mod tests {
     use super::*;
     use crate::cpu::register::PSRBit::*;
 
     #[test]
-    fn logical_left()
-    {
+    fn logical_left() {
         let mut cpu = CPU::new();
 
         cpu.r[0] = 1;
@@ -52,8 +47,7 @@ mod tests
     }
 
     #[test]
-    fn logical_right()
-    {
+    fn logical_right() {
         let mut cpu = CPU::new();
 
         cpu.r[0] = 0x80000000;
@@ -68,8 +62,7 @@ mod tests
     }
 
     #[test]
-    fn arithmetic_right()
-    {
+    fn arithmetic_right() {
         let mut cpu = CPU::new();
 
         cpu.r[0] = 0x80000000;
