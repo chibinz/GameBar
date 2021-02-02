@@ -1,5 +1,3 @@
-#![allow(non_snake_case)]
-
 mod debug;
 mod keyboard;
 

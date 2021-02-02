@@ -8,7 +8,8 @@ pub trait BitField {
 impl<T: std::convert::Into<u32>> BitField for T {
     /// Return certain bits of a integer as u32
     /// ```
-    /// assert_eq!(0xaabbccdd.bits(15, 8), 0xcc);
+    /// use util::BitField;
+    /// assert_eq!(0xaabbccddu32.bits(15, 8), 0xcc);
     /// ```
     #[inline]
     fn bits(self, hi: u32, lo: u32) -> u32 {
@@ -17,7 +18,8 @@ impl<T: std::convert::Into<u32>> BitField for T {
 
     /// Test certains bit of a integer, return true if set
     /// ```
-    /// assert_eq!(0b10.bit(1), true)
+    /// use util::BitField;
+    /// assert_eq!(0b10u32.bit(1), true)
     /// ```
     #[inline]
     fn bit(self, b: u32) -> bool {
