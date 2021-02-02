@@ -1,6 +1,6 @@
 use crate::timer::Timer;
 use crate::timer::PRESCALER;
-use crate::util::*;
+use util::*;
 
 impl Timer {
     #[inline]

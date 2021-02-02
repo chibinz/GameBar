@@ -8,6 +8,7 @@ use std::convert::TryInto;
 use std::fs::File;
 use std::io::Read;
 
+use cpu::Bus;
 use crate::Console;
 
 pub struct Memory {
@@ -20,8 +21,8 @@ pub struct Memory {
     pub console: *mut Console,
 }
 
-impl Memory {
-    /// Initializes memory to zeroes
+impl Bus for Memory {
+        /// Initializes memory to zeroes
     pub fn new() -> Self {
         Memory {
             bios: vec![0; 0x00004000 - 0x00000000],
@@ -34,11 +35,6 @@ impl Memory {
             // sram : vec![0; 0x0e010000 - 0x0e000000],
             console: 0 as *mut Console,
         }
-    }
-
-    /// Return reference to containing console
-    pub fn c(&self) -> &mut Console {
-        unsafe { &mut *self.console }
     }
 
     /// Load a byte from memory
@@ -165,6 +161,15 @@ impl Memory {
             0x07 => self.oam_store32(offset, value),
             _ => Self::unhandled(false, 4, address),
         };
+    }
+}
+
+impl Memory {
+
+
+    /// Return reference to containing console
+    pub fn c(&self) -> &mut Console {
+        unsafe { &mut *self.console }
     }
 
     /// Load rom from file, take name as a parameter

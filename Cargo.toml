@@ -2,7 +2,9 @@
 
 members = [
     "bin",
+    "cpu",
     "console",
+    "util",
 ]
 
 [profile.dev]

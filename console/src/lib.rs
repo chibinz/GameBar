@@ -7,9 +7,7 @@ mod memory;
 mod ppu;
 mod timer;
 
-pub mod util;
-
-use crate::cpu::CPU;
+use cpu::CPU;
 use crate::dma::DMA;
 use crate::interrupt::IRQController;
 use crate::keypad::Keypad;

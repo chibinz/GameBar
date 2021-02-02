@@ -1,6 +1,6 @@
 use crate::ppu::layer::Layer;
 use crate::ppu::TRANSPARENT;
-use crate::util::*;
+use util::*;
 use std::marker::Copy;
 
 #[derive(Clone, Copy)]

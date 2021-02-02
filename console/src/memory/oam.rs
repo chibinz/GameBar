@@ -1,6 +1,6 @@
 use crate::ppu::sprite::Sprite;
 use crate::ppu::PPU;
-use crate::util::*;
+use util::*;
 
 use super::Memory;
 

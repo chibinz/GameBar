@@ -1,5 +1,5 @@
 use crate::dma::DMAChannel;
-use crate::util::*;
+use util::*;
 
 impl DMAChannel {
     #[inline]

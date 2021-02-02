@@ -1,5 +1,5 @@
-use crate::cpu::CPU;
-use crate::util::*;
+use crate::CPU;
+use util::*;
 
 #[allow(dead_code)]
 #[derive(Clone, Copy)]

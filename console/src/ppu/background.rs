@@ -1,4 +1,4 @@
-use crate::util::*;
+use util::*;
 
 use super::PPU;
 

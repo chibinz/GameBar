@@ -2,7 +2,7 @@ use crate::ppu::background::Background;
 use crate::ppu::background::DIMENSION;
 use crate::ppu::window::Window;
 use crate::ppu::PPU;
-use crate::util::*;
+use util::*;
 
 impl PPU {
     pub fn get_dispcnt(&self) -> u16 {

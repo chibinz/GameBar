@@ -5,7 +5,7 @@ pub mod window;
 
 use crate::interrupt::IRQController;
 use crate::interrupt::Interrupt::*;
-use crate::util::*;
+use util::*;
 
 use background::Background;
 use layer::Layer;

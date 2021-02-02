@@ -1,11 +1,10 @@
 [package]
-name = "console"
+name = "cpu"
 version = "0.1.0"
-authors = ["chibinz <chibinzhang@hotmail.com>"]
+authors = ["Chibin Zhang <chibinzhang@hotmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cpu = { path = "../cpu" }
 util = { path = "../util" }

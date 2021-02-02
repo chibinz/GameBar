@@ -1,6 +1,6 @@
 use crate::interrupt::IRQController;
 use crate::interrupt::Interrupt::*;
-use crate::util::*;
+use util::*;
 
 pub struct Keypad {
     pub keyinput: u16,
