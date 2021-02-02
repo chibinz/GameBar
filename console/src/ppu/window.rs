@@ -1,7 +1,7 @@
 use crate::ppu::layer::Layer;
 use crate::ppu::TRANSPARENT;
-use util::*;
 use std::marker::Copy;
+use util::*;
 
 #[derive(Clone, Copy)]
 pub struct Window {

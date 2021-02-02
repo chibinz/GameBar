@@ -1,9 +1,9 @@
 pub mod block_data_transfer;
 
-mod disassemble;
 mod branch_exchange;
 mod branch_long;
 mod data_processing;
+mod disassemble;
 mod halfword_data_transfer;
 mod multiply_accumulate;
 mod multiply_long_accumulate;

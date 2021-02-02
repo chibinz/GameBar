@@ -1,4 +1,3 @@
-mod cpu;
 mod dma;
 mod event;
 mod interrupt;
@@ -7,13 +6,13 @@ mod memory;
 mod ppu;
 mod timer;
 
-use cpu::CPU;
 use crate::dma::DMA;
 use crate::interrupt::IRQController;
 use crate::keypad::Keypad;
 use crate::memory::Memory;
 use crate::ppu::PPU;
 use crate::timer::Timers;
+use cpu::CPU;
 
 pub struct Console {
     pub cpu: CPU,
@@ -60,13 +59,13 @@ impl Console {
         for _ in 0..160 {
             ppu.increment_vcount(irqcnt);
             ppu.hdraw();
-            cpu.run(960, dma, irqcnt, memory);
+            cpu.run(960, memory);
             timers.run(960, irqcnt);
 
             dma.request_hblank();
 
             ppu.hblank(irqcnt);
-            cpu.run(272, dma, irqcnt, memory);
+            cpu.run(272, memory);
             timers.run(272, irqcnt);
         }
 
@@ -75,7 +74,7 @@ impl Console {
         for _ in 0..68 {
             ppu.increment_vcount(irqcnt);
             ppu.vblank(irqcnt);
-            cpu.run(1232, dma, irqcnt, memory);
+            cpu.run(1232, memory);
             timers.run(1232, irqcnt);
         }
     }

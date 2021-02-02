@@ -8,8 +8,8 @@ use std::convert::TryInto;
 use std::fs::File;
 use std::io::Read;
 
-use cpu::Bus;
 use crate::Console;
+use cpu::Bus;
 
 pub struct Memory {
     bios: Vec<u8>,
@@ -22,7 +22,31 @@ pub struct Memory {
 }
 
 impl Bus for Memory {
-        /// Initializes memory to zeroes
+    fn new() -> Self {
+        Memory::new()
+    }
+    fn load8(&self, address: u32) -> u8 {
+        self.load8(address)
+    }
+    fn load16(&self, address: u32) -> u16 {
+        self.load16(address)
+    }
+    fn load32(&self, address: u32) -> u32 {
+        self.load32(address)
+    }
+    fn store8(&mut self, address: u32, value: u8) {
+        self.store8(address, value)
+    }
+    fn store16(&mut self, address: u32, value: u16) {
+        self.store16(address, value)
+    }
+    fn store32(&mut self, address: u32, value: u32) {
+        self.store32(address, value)
+    }
+}
+
+impl Memory {
+    /// Initializes memory to zeroes
     pub fn new() -> Self {
         Memory {
             bios: vec![0; 0x00004000 - 0x00000000],
@@ -162,10 +186,6 @@ impl Bus for Memory {
             _ => Self::unhandled(false, 4, address),
         };
     }
-}
-
-impl Memory {
-
 
     /// Return reference to containing console
     pub fn c(&self) -> &mut Console {

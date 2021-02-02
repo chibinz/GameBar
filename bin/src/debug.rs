@@ -2,10 +2,9 @@ use std::collections::HashSet;
 use std::io::prelude::*;
 use std::process::exit;
 
-use minifb::Window;
-
-use console::util::*;
 use console::Console;
+use minifb::Window;
+use util::*;
 
 static WIDTH: usize = 8;
 static HEIGHT: usize = 8;

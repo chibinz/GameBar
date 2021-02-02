@@ -25,8 +25,8 @@ pub fn execute(cpu: &mut CPU, memory: &mut impl Bus, (b, rn, rd, rm): (bool, u32
         memory.store8(address, cpu.r[rm as usize] as u8);
         cpu.r[rd as usize] = temp as u32;
 
-        // One internal cycle plus one load and one store
-        // cpu.cycles += 1 + 2 * Bus::access_timing(address, 0);
+    // One internal cycle plus one load and one store
+    // cpu.cycles += 1 + 2 * Bus::access_timing(address, 0);
     } else {
         let address = cpu.r[rn as usize];
         let temp = CPU::ldr(address, memory);

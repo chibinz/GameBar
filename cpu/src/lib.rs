@@ -63,11 +63,7 @@ impl CPU {
         cpu
     }
 
-    pub fn run(
-        &mut self,
-        cycles: i32,
-        bus: &mut impl Bus,
-    ) {
+    pub fn run(&mut self, cycles: i32, bus: &mut impl Bus) {
         self.remaining += cycles;
 
         while self.remaining > 0 {

@@ -1,6 +1,6 @@
 use crate::barrel_shifter::shift_register;
-use crate::Bus;
 use crate::register::PSRBit::C;
+use crate::Bus;
 use crate::CPU;
 use util::*;
 
@@ -98,11 +98,7 @@ mod tests {
         cpu.r[0] = 0x02000000;
 
         // Immediate offset, pre-indexing, up offset, write back, load byte
-        execute(
-            &mut cpu,
-            &mut bus,
-            (false, true, true, true, 0b11, 0, 1, 1),
-        );
+        execute(&mut cpu, &mut bus, (false, true, true, true, 0b11, 0, 1, 1));
         assert_eq!(cpu.r[1], 0xff);
         assert_eq!(cpu.r[0], 0x02000001);
 
