@@ -13,8 +13,8 @@ use cpu::Bus;
 
 pub struct Memory {
     bios: Vec<u8>,
-    ewram: Vec<u8>,
-    iwram: Vec<u8>,
+    ewram: [u8; 0x02040000 - 0x02000000],
+    iwram: [u8; 0x03008000 - 0x03000000],
     rom: Vec<u8>,
     // sram : Vec<u8>,
     /// Pointer to containing console struct
@@ -49,13 +49,13 @@ impl Memory {
     /// Initializes memory to zeroes
     pub fn new() -> Self {
         Memory {
-            bios: vec![0; 0x00004000 - 0x00000000],
-            ewram: vec![0; 0x02040000 - 0x02000000],
-            iwram: vec![0; 0x03008000 - 0x03000000],
+            bios: Vec::new(),
+            ewram: [0; 0x02040000 - 0x02000000],
+            iwram: [0; 0x03008000 - 0x03000000],
             // param:      0x05000400 - 0x05000000
             // vram :      0x06018000 - 0x06000000
             // oam  :      0x07000400 - 0x07000000
-            rom: vec![0; 0x0a000000 - 0x08000000],
+            rom: Vec::new(),
             // sram : vec![0; 0x0e010000 - 0x0e000000],
             console: 0 as *mut Console,
         }

@@ -27,12 +27,12 @@ pub struct CPU {
     // 21 - 23: R13_irq, R14_irq, SPSR_irq
     // 24 - 26: R13_und, R14_und, SPSR_und
     pub booted: bool,
-    pub cycles: i32,    // Ticks consumed for current instruction
+    pub cycles: i32, // Ticks consumed for current instruction
     pub remaining: i32, // Remaining ticks till run finish,
 
-    // The CPU halts when DMA is active.
-    // An unfortunate fact that I have to use an unsafe pointer
-    // to poll the current status of the DMA
+                     // The CPU halts when DMA is active.
+                     // An unfortunate fact that I have to use an unsafe pointer
+                     // to poll the current status of the DMA
 }
 
 impl CPU {
