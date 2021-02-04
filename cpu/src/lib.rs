@@ -10,7 +10,7 @@ pub use bus::Bus;
 
 use register::PSRBit::*;
 
-#[derive(Debug)]
+#[derive(Clone, Copy)]
 pub struct CPU {
     pub instruction: u32, // Next instruction to execute
     pub prefetched: u32,  // Prefetched instruction
@@ -36,7 +36,7 @@ pub struct CPU {
 }
 
 impl CPU {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         let mut cpu = Self {
             instruction: 0,
             prefetched: 0,
@@ -180,6 +180,38 @@ impl CPU {
             if self.get_cpsr_bit(F) { "F" } else { "." },
             if self.get_cpsr_bit(T) { "T" } else { "." },
         )
+    }
+
+    pub fn disassemble(&self) -> String {
+        if self.in_thumb_mode() {
+            thumb::disassemble(self.instruction as u16)
+        } else {
+            arm::disassemble(self.instruction)
+        }
+    }
+
+    pub fn backtrace_on_panic(&self) {
+        std::panic::set_hook(Box::new(|_| Self::panic_hook()));
+    }
+
+    fn panic_hook() {
+        unsafe {
+            for i in 0..LEN {
+                let c = &TRACE[(INDEX + i) % LEN];
+                println!("{}{}", c.trace(), c.disassemble());
+            }
+        }
+    }
+}
+
+const LEN: usize = 1024;
+static mut INDEX: usize = 0;
+static mut TRACE: [CPU; LEN] = [CPU::new(); 1024];
+fn push_cpu(c: CPU) {
+    unsafe {
+        TRACE[INDEX] = c;
+        INDEX += 1;
+        INDEX %= LEN;
     }
 }
 
