@@ -82,6 +82,6 @@ impl Console {
     /// Single step CPU, for debugging purpose
     pub fn step(&mut self) {
         self.cpu.step(&mut self.memory);
-        self.cpu.print(&mut self.memory);
+        // self.cpu.print(&mut self.memory);
     }
 }

@@ -146,46 +146,50 @@ impl CPU {
     }
 
     #[allow(dead_code)]
-    pub fn print(&self, bus: &mut impl Bus) {
-        let mut str = String::new();
+    pub fn trace(&self) -> String {
+        format!(
+            concat!(
+                "R0  = {:08x} R1  = {:08x} R2  = {:08x} R3  = {:08x}\n",
+                "R4  = {:08x} R5  = {:08x} R6  = {:08x} R7  = {:08x}\n",
+                "R8  = {:08x} R9  = {:08x} R10 = {:08x} R11 = {:08x}\n",
+                "R12 = {:08x} R13 = {:08x} R14 = {:08x} R15 = {:08x}\n",
+                "PSR = {:08x} [{}{}{}{}{}{}{}]\n"
+            ),
+            self.r[0],
+            self.r[1],
+            self.r[2],
+            self.r[3],
+            self.r[4],
+            self.r[5],
+            self.r[6],
+            self.r[7],
+            self.r[8],
+            self.r[9],
+            self.r[10],
+            self.r[11],
+            self.r[12],
+            self.r[13],
+            self.r[14],
+            self.r[15],
+            self.get_cpsr(),
+            if self.get_cpsr_bit(N) { "N" } else { "." },
+            if self.get_cpsr_bit(Z) { "Z" } else { "." },
+            if self.get_cpsr_bit(C) { "C" } else { "." },
+            if self.get_cpsr_bit(V) { "V" } else { "." },
+            if self.get_cpsr_bit(I) { "I" } else { "." },
+            if self.get_cpsr_bit(F) { "F" } else { "." },
+            if self.get_cpsr_bit(T) { "T" } else { "." },
+        )
+    }
+}
 
-        // Print general purpose registers R0 - R15
-        for i in 0..16 {
-            if i % 4 == 0 && i > 0 {
-                str += "\n";
-            }
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-            str += &format!("R{:<2} = {:08x} ", i, self.r[i as usize]);
-        }
-
-        // Print current program status register
-        str += "\n";
-        str += &format!("PSR = {:08x} ", self.get_cpsr());
-        str += "[";
-        str += if self.get_cpsr_bit(N) { "N" } else { "." };
-        str += if self.get_cpsr_bit(Z) { "Z" } else { "." };
-        str += if self.get_cpsr_bit(C) { "C" } else { "." };
-        str += if self.get_cpsr_bit(V) { "V" } else { "." };
-        str += if self.get_cpsr_bit(I) { "I" } else { "." };
-        str += if self.get_cpsr_bit(F) { "F" } else { "." };
-        str += if self.get_cpsr_bit(T) { "T" } else { "." };
-        str += "]";
-        str += "\n";
-
-        if self.in_thumb_mode() {
-            let address = self.r[15] - 2;
-            let instruction = bus.load16(address);
-            str += &format!("{:08x}: {:04x} ", address, instruction);
-            str += &format!("{}", thumb::disassemble(instruction as u16));
-        } else {
-            let address = self.r[15] - 4;
-            let instruction = bus.load32(address);
-            str += &format!("{:08x}: {:08x} ", address, instruction);
-            str += &format!("{}", arm::disassemble(instruction));
-        }
-
-        str += "\n";
-
-        println!("{}", str)
+    #[test]
+    fn test_trace() {
+        let cpu = CPU::new();
+        println!("{}", cpu.trace());
     }
 }
