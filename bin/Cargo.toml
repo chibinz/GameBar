@@ -10,3 +10,4 @@ edition = "2018"
 util = { path = "../util" }
 console = { path = "../console" }
 minifb = "0.15"
+env_logger = "0.8"

@@ -142,14 +142,14 @@ pub fn add(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32 {
 
 #[inline]
 pub fn adc(cpu: &mut CPU, op1: u32, op2: u32, carry: bool, s: bool) -> u32 {
-    let carry = carry as u32;
-    let result = op1.wrapping_add(op2.wrapping_add(carry));
+    let (opc, carry2) = op2.overflowing_add(carry as u32);
+    let result = op1.wrapping_add(opc);
 
     if s {
         cpu.set_cpsr_bit(N, negative(result));
         cpu.set_cpsr_bit(Z, zero(result));
-        cpu.set_cpsr_bit(C, add_carry(op1, op2.wrapping_add(carry)));
-        cpu.set_cpsr_bit(V, add_overflow(op1, op2.wrapping_add(carry)));
+        cpu.set_cpsr_bit(C, add_carry(op1, opc) || carry2);
+        cpu.set_cpsr_bit(V, add_overflow(op1, opc));
     }
 
     result
@@ -185,14 +185,14 @@ pub fn rsb(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32 {
 
 #[inline]
 pub fn sbc(cpu: &mut CPU, op1: u32, op2: u32, carry: bool, s: bool) -> u32 {
-    let opc = op2.wrapping_sub(carry as u32).wrapping_add(1);
-    let result = op1.wrapping_sub(opc);
+    let opc = (op2 as u64) - (carry as u64) + 1;
+    let result = op1.wrapping_sub(opc as u32);
 
     if s {
         cpu.set_cpsr_bit(N, negative(result));
         cpu.set_cpsr_bit(Z, zero(result));
-        cpu.set_cpsr_bit(C, sub_carry(op1, opc));
-        cpu.set_cpsr_bit(V, sub_overflow(op1, opc));
+        cpu.set_cpsr_bit(C, op1 as u64 >= opc);
+        cpu.set_cpsr_bit(V, sub_overflow(op1, opc as u32));
     }
 
     result
@@ -200,17 +200,7 @@ pub fn sbc(cpu: &mut CPU, op1: u32, op2: u32, carry: bool, s: bool) -> u32 {
 
 #[inline]
 pub fn rsc(cpu: &mut CPU, op1: u32, op2: u32, carry: bool, s: bool) -> u32 {
-    let opc = op1.wrapping_sub(carry as u32).wrapping_add(1);
-    let result = op2.wrapping_sub(opc);
-
-    if s {
-        cpu.set_cpsr_bit(N, negative(result));
-        cpu.set_cpsr_bit(Z, zero(result));
-        cpu.set_cpsr_bit(C, sub_carry(op2, opc));
-        cpu.set_cpsr_bit(V, sub_overflow(op2, opc));
-    }
-
-    result
+    sbc(cpu, op2, op1, carry, s)
 }
 
 #[inline]

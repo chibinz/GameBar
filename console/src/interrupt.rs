@@ -52,7 +52,7 @@ impl IRQController {
 
     pub fn check(&mut self) {
         if self.pending() {
-            log::info!("Pending hardware_interrupt triggered by irqcnt")
+            log::info!("Pending hardware_interrupt triggered by irqcnt");
             unsafe { (*self.cpu).hardware_interrupt() }
         }
     }
