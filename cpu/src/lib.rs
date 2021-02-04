@@ -99,6 +99,7 @@ impl CPU {
     }
 
     pub fn software_interrupt(&mut self) {
+        log::info!("Software interrupt!");
         let lr = self.r[15] - self.inst_width();
         let spsr = self.get_cpsr();
 
@@ -113,6 +114,7 @@ impl CPU {
     }
 
     pub fn hardware_interrupt(&mut self) {
+        log::info!("Hardware interrupt!");
         if self.get_cpsr_bit(I) {
             return;
         }

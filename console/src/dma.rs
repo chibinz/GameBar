@@ -154,6 +154,7 @@ impl DMAChannel {
         let irq = [DMA0, DMA1, DMA2, DMA3];
 
         if self.interrupt_f() {
+            log::info!("DMA {} generated interrupt", self.index);
             irqcnt.request(irq[self.index])
         }
 
