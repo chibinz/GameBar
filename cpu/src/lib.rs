@@ -82,6 +82,11 @@ impl CPU {
         return self.cycles;
     }
 
+    #[inline]
+    pub fn carry(&self) -> bool {
+        self.get_cpsr_bit(C)
+    }
+
     pub fn flush(&mut self) {
         // Instruction address are forcibly word / halfword aligned
         self.r[15] &= !(self.inst_width() - 1);

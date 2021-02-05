@@ -1,5 +1,6 @@
 use crate::barrel_shifter::rotate_immediate;
 use crate::CPU;
+use crate::register::PSRBit::C;
 use util::*;
 
 #[inline]
@@ -19,7 +20,7 @@ pub fn interpret(cpu: &mut CPU, instr: u32) {
         let operand2 = instr.bits(11, 0);
 
         let op = if i {
-            rotate_immediate(cpu, operand2)
+            rotate_immediate(operand2, cpu.get_cpsr_bit(C)).0
         } else {
             debug_assert_eq!(operand2.bits(11, 4), 0);
 

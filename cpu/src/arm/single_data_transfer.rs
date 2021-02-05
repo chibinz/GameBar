@@ -40,7 +40,7 @@ pub fn execute(
     let noffset = if !i {
         offset
     } else {
-        shift_register(cpu, offset)
+        0// shift_register(cpu, offset)
     };
     cpu.set_cpsr_bit(C, carry);
 

@@ -1,6 +1,7 @@
 use crate::alu;
 use crate::barrel_shifter::shift;
 use crate::CPU;
+use crate::register::PSRBit::C;
 use util::*;
 
 #[inline]
@@ -20,7 +21,7 @@ fn decode(instr: u16) -> (u32, u32, u32, u32) {
 
 #[inline]
 fn execute(cpu: &mut CPU, (op, offset5, rs, rd): (u32, u32, u32, u32)) {
-    let shifted = shift(cpu, cpu.r[rs as usize], offset5, op, true);
+    let shifted = 0 ;//shift(cpu, cpu.r[rs as usize], offset5, cpu.get_cpsr_bit(C), op);
 
     // Use alu's mov instead of direct assignment to set flags
     cpu.r[rd as usize] = alu::mov(cpu, shifted, shifted, true);

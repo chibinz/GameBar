@@ -27,9 +27,9 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
 
     let mut op1 = cpu.r[rn as usize];
     let mut op2 = if i {
-        rotate_immediate(cpu, operand2)
+        rotate_immediate(operand2, carry).0
     } else {
-        shift_register(cpu, operand2)
+        0 // shift_register(operand2, carry).0
     };
 
     if !s {

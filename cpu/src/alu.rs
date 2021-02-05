@@ -235,7 +235,7 @@ pub fn mul(cpu: &mut CPU, op1: u32, op2: u32, s: bool) -> u32 {
 
 #[inline]
 pub fn lsl(cpu: &mut CPU, op1: u32, op2: u32) -> u32 {
-    let result = barrel_shifter::logical_left(cpu, op1, op2, false);
+    let result = barrel_shifter::logical_left(op1, op2, false, false).0;
 
     cpu.set_cpsr_bit(N, negative(result));
     cpu.set_cpsr_bit(Z, zero(result));
@@ -245,7 +245,7 @@ pub fn lsl(cpu: &mut CPU, op1: u32, op2: u32) -> u32 {
 
 #[inline]
 pub fn lsr(cpu: &mut CPU, op1: u32, op2: u32) -> u32 {
-    let result = barrel_shifter::logical_right(cpu, op1, op2, false);
+    let result = barrel_shifter::logical_right( op1, op2, false, false).0;
 
     cpu.set_cpsr_bit(N, negative(result));
     cpu.set_cpsr_bit(Z, zero(result));
@@ -255,7 +255,7 @@ pub fn lsr(cpu: &mut CPU, op1: u32, op2: u32) -> u32 {
 
 #[inline]
 pub fn asr(cpu: &mut CPU, op1: u32, op2: u32) -> u32 {
-    let result = barrel_shifter::arithmetic_right(cpu, op1, op2, false);
+    let result = barrel_shifter::arithmetic_right( op1, op2, false, false).0;
 
     cpu.set_cpsr_bit(N, negative(result));
     cpu.set_cpsr_bit(Z, zero(result));
@@ -265,7 +265,7 @@ pub fn asr(cpu: &mut CPU, op1: u32, op2: u32) -> u32 {
 
 #[inline]
 pub fn ror(cpu: &mut CPU, op1: u32, op2: u32) -> u32 {
-    let result = barrel_shifter::rotate_right(cpu, op1, op2, false);
+    let result = barrel_shifter::rotate_right( op1, op2, false, false).0;
 
     cpu.set_cpsr_bit(N, negative(result));
     cpu.set_cpsr_bit(Z, zero(result));
