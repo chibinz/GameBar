@@ -23,16 +23,14 @@ pub fn decode(instr: u32) -> (bool, u32, bool, u32, u32, u32) {
 
 #[inline]
 pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32)) {
-    let carry = cpu.get_cpsr_bit(C);
-
     let mut op1 = cpu.r[rn as usize];
-    let mut op2 = if i {
-        rotate_immediate(operand2, carry).0
+    let (mut op2, carry) = if i {
+        rotate_immediate(operand2, cpu.carry())
     } else {
-        0 // shift_register(operand2, carry).0
+        shift_register(cpu, operand2)
     };
 
-    if !s {
+    if s {
         cpu.set_cpsr_bit(C, carry)
     }
 

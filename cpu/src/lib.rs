@@ -1,9 +1,9 @@
-mod arm;
-mod thumb;
 mod alu;
+mod arm;
 mod barrel_shifter;
 mod bus;
 mod register;
+mod thumb;
 
 pub use bus::Bus;
 
@@ -85,6 +85,11 @@ impl CPU {
     #[inline]
     pub fn carry(&self) -> bool {
         self.get_cpsr_bit(C)
+    }
+
+    #[inline]
+    pub fn set_carry(&mut self, carry: bool) {
+        self.set_cpsr_bit(C, carry)
     }
 
     pub fn flush(&mut self) {

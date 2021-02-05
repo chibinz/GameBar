@@ -7,27 +7,26 @@ use util::*;
 /// Perform shift on a register, return shifted result.
 /// Note that this function may change the C flag of CPSR.
 #[inline]
-pub fn shift_register(operand2: u32, rs: u32, rm: u32, carry: bool) -> (u32, bool) {
-    // let rm = operand2.bits(3, 0);
+pub fn shift_register(cpu: &crate::CPU, operand2: u32) -> (u32, bool) {
+    let rm = operand2.bits(3, 0);
     let stype = operand2.bits(6, 5);
     // Register specified shift operates differently when shift amount
     // equals to zero, thus a flag is needed.
     let r = operand2.bit(4);
     let amount = if r {
-        // let rs = operand2.bits(11, 8);
+        let rs = operand2.bits(11, 8);
 
-        // debug_assert_ne!(rs, 15);
-        // debug_assert_eq!(operand2.bit(7), false);
+        debug_assert_ne!(rs, 15);
+        debug_assert_eq!(operand2.bit(7), false);
 
-        // cpu.r[rs as usize] & 0xff
-        rs & 0xff
+        cpu.r[rs as usize] & 0xff
     } else {
         operand2.bits(11, 7)
     };
 
     // One internal cycle for register specified shift
 
-    shift(rm, amount, stype, carry, !r)
+    shift(cpu.r[rm as usize], amount, stype, cpu.carry(), !r)
 }
 
 /// Perform rotate on an immediate, return rotated result.
@@ -40,7 +39,7 @@ pub fn rotate_immediate(operand2: u32, carry: bool) -> (u32, bool) {
     let carry = if amount == 0 {
         carry
     } else {
-       immediate.bit(amount - 1)
+        immediate.bit(amount - 1)
     };
 
     (immediate.rotate_right(amount), carry)
@@ -112,13 +111,19 @@ pub fn arithmetic_right(operand: u32, amount: u32, carry: bool, i: bool) -> (u32
 pub fn rotate_right(operand: u32, amount: u32, carry: bool, i: bool) -> (u32, bool) {
     if amount == 0 {
         if i {
-            ((carry as u32).rotate_right(1) | (operand >> 1), operand.bit(0))
+            (
+                (carry as u32).rotate_right(1) | (operand >> 1),
+                operand.bit(0),
+            )
         } else {
             (operand, carry)
         }
     } else {
         // Rotate amount larger than 31 is same as their least significant 5 bits
-        (operand.rotate_right(amount), operand.bit((amount - 1) & 0x1f))
+        (
+            operand.rotate_right(amount),
+            operand.bit((amount - 1) & 0x1f),
+        )
     }
 }
 
@@ -158,21 +163,36 @@ mod tests {
 
     #[test]
     fn shift_logical_right() {
-        assert_eq!(logical_right(0x80000000, 0, false, true), (0,true));
+        assert_eq!(logical_right(0x80000000, 0, false, true), (0, true));
         assert_eq!(logical_right(0x80000000, 63, false, true), (0, false));
     }
 
     #[test]
     fn shift_arithmetic_right() {
-        assert_eq!(arithmetic_right(0x80000000, 31, false, true), (0xffffffff, false));
-        assert_eq!(arithmetic_right(0x80000000, 0, false, true), (0xffffffff, true));
-        assert_eq!(arithmetic_right(0x80000000, 99, false, true), (0xffffffff, true));
+        assert_eq!(
+            arithmetic_right(0x80000000, 31, false, true),
+            (0xffffffff, false)
+        );
+        assert_eq!(
+            arithmetic_right(0x80000000, 0, false, true),
+            (0xffffffff, true)
+        );
+        assert_eq!(
+            arithmetic_right(0x80000000, 99, false, true),
+            (0xffffffff, true)
+        );
     }
 
     #[test]
     fn shift_rotate_right() {
         assert_eq!(rotate_right(1, 0, true, true), (0x80000000, true)); // RRX
-        assert_eq!(rotate_right(0xf0f0f0f0, 4, false, true), (0x0f0f0f0f, false));
-        assert_eq!(rotate_right(0xf0f0f0f0, 64, false, true), (0xf0f0f0f0, true));
+        assert_eq!(
+            rotate_right(0xf0f0f0f0, 4, false, true),
+            (0x0f0f0f0f, false)
+        );
+        assert_eq!(
+            rotate_right(0xf0f0f0f0, 64, false, true),
+            (0xf0f0f0f0, true)
+        );
     }
 }

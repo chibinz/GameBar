@@ -1,7 +1,6 @@
 use crate::alu;
 use crate::barrel_shifter::shift;
 use crate::CPU;
-use crate::register::PSRBit::C;
 use util::*;
 
 #[inline]
@@ -21,7 +20,8 @@ fn decode(instr: u16) -> (u32, u32, u32, u32) {
 
 #[inline]
 fn execute(cpu: &mut CPU, (op, offset5, rs, rd): (u32, u32, u32, u32)) {
-    let shifted = 0 ;//shift(cpu, cpu.r[rs as usize], offset5, cpu.get_cpsr_bit(C), op);
+    let (shifted, carry) = shift(cpu.r[rs as usize], offset5, op, cpu.carry(), true);
+    cpu.set_carry(carry);
 
     // Use alu's mov instead of direct assignment to set flags
     cpu.r[rd as usize] = alu::mov(cpu, shifted, shifted, true);
@@ -30,7 +30,6 @@ fn execute(cpu: &mut CPU, (op, offset5, rs, rd): (u32, u32, u32, u32)) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::register::PSRBit::*;
 
     #[test]
     fn logical_left() {
@@ -39,12 +38,12 @@ mod tests {
         cpu.r[0] = 1;
         execute(&mut cpu, (0b00, 0b11111, 0, 1));
         assert_eq!(cpu.r[1], 0x80000000);
-        assert_eq!(cpu.get_cpsr_bit(C), false);
+        assert_eq!(cpu.carry(), false);
 
         cpu.r[0] = 0b10;
         execute(&mut cpu, (0b00, 0b11111, 0, 1));
         assert_eq!(cpu.r[1], 0);
-        assert_eq!(cpu.get_cpsr_bit(C), true);
+        assert_eq!(cpu.carry(), true);
     }
 
     #[test]
@@ -54,12 +53,12 @@ mod tests {
         cpu.r[0] = 0x80000000;
         execute(&mut cpu, (0b01, 0b11111, 0, 1));
         assert_eq!(cpu.r[1], 1);
-        assert_eq!(cpu.get_cpsr_bit(C), false);
+        assert_eq!(cpu.carry(), false);
 
         cpu.r[0] = 0x40000000;
         execute(&mut cpu, (0b01, 0b11111, 0, 1));
         assert_eq!(cpu.r[1], 0);
-        assert_eq!(cpu.get_cpsr_bit(C), true);
+        assert_eq!(cpu.carry(), true);
     }
 
     #[test]
@@ -69,11 +68,11 @@ mod tests {
         cpu.r[0] = 0x80000000;
         execute(&mut cpu, (0b10, 0b11111, 0, 1));
         assert_eq!(cpu.r[1], 0xffffffff);
-        assert_eq!(cpu.get_cpsr_bit(C), false);
+        assert_eq!(cpu.carry(), false);
 
         cpu.r[0] = 0x40000000;
         execute(&mut cpu, (0b10, 0b11111, 0, 1));
         assert_eq!(cpu.r[1], 0);
-        assert_eq!(cpu.get_cpsr_bit(C), true);
+        assert_eq!(cpu.carry(), true);
     }
 }

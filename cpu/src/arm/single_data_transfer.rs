@@ -1,5 +1,4 @@
 use crate::barrel_shifter::shift_register;
-use crate::register::PSRBit::C;
 use crate::Bus;
 use crate::CPU;
 use util::*;
@@ -33,16 +32,13 @@ pub fn execute(
     bus: &mut impl Bus,
     (i, p, u, w, lb, rn, rd, offset): (bool, bool, bool, bool, u32, u32, u32, u32),
 ) {
-    // Shifts does not set CPSR C flag
-    let carry = cpu.get_cpsr_bit(C);
-
     // 0 for i means immediate
     let noffset = if !i {
         offset
     } else {
-        0// shift_register(cpu, offset)
+        // Shifts does not set CPSR C flag
+        shift_register(cpu, offset).0
     };
-    cpu.set_cpsr_bit(C, carry);
 
     let post = cpu.r[rn as usize];
     let pre = if u {
