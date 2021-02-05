@@ -26,7 +26,6 @@ pub struct CPU {
     // 18 - 20: R13_abt, R14_abt, SPSR_abt
     // 21 - 23: R13_irq, R14_irq, SPSR_irq
     // 24 - 26: R13_und, R14_und, SPSR_und
-    pub booted: bool,
     pub cycles: i32, // Ticks consumed for current instruction
     pub remaining: i32, // Remaining ticks till run finish,
 
@@ -48,7 +47,6 @@ impl CPU {
             spsr: 0,
             bank: [0; 27],
 
-            booted: false,
             cycles: 0,
             remaining: 0,
         };
@@ -73,7 +71,6 @@ impl CPU {
     }
 
     pub fn step(&mut self, bus: &mut impl Bus) -> i32 {
-        self.booted = self.booted || (self.r[15] >= 0x08000000);
         // if self.booted {self.print(memory)}
 
         // At least one sequential cycle for any instruction

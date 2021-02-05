@@ -14,7 +14,7 @@ pub enum PSRBit {
     I = 7, // IRQ Disable
     F = 6, // FIQ Disable
     T = 5, // State Bit, Thumb/Arm
-           // Bits 4 - 0 are mode bits
+    // Bits 4 - 0 are mode bits
 }
 
 /// Operating Mode

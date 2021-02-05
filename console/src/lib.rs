@@ -59,14 +59,17 @@ impl Console {
         for _ in 0..160 {
             ppu.increment_vcount(irqcnt);
             ppu.hdraw();
-            cpu.run(960, memory);
-            timers.run(960, irqcnt);
+
+            for _ in 0..960 {
+                Self::step_dma_cpu_timer(dma, cpu, memory, timers, irqcnt);
+            }
 
             dma.request_hblank();
-
             ppu.hblank(irqcnt);
-            cpu.run(272, memory);
-            timers.run(272, irqcnt);
+
+            for _ in 0..272 {
+                Self::step_dma_cpu_timer(dma, cpu, memory, timers, irqcnt);
+            }
         }
 
         dma.request_vblank();
@@ -74,9 +77,27 @@ impl Console {
         for _ in 0..68 {
             ppu.increment_vcount(irqcnt);
             ppu.vblank(irqcnt);
-            cpu.run(1232, memory);
-            timers.run(1232, irqcnt);
+
+            for _ in 0..1272 {
+                Self::step_dma_cpu_timer(dma, cpu, memory, timers, irqcnt);
+            }
         }
+    }
+
+    pub fn step_dma_cpu_timer(
+        dma: &mut DMA,
+        cpu: &mut CPU,
+        memory: &mut Memory,
+        timers: &mut Timers,
+        irqcnt: &mut IRQController,
+    ) {
+        let t = if dma.is_active() {
+            dma.step(irqcnt, memory)
+        } else {
+            cpu.step(memory)
+        };
+
+        timers.run(t, irqcnt);
     }
 
     /// Single step CPU, for debugging purpose

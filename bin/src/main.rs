@@ -37,6 +37,8 @@ fn main() {
             .update_with_buffer(&console.ppu.buffer, 240, 160)
             .unwrap();
     }
+
+    unreachable!();
 }
 
 fn usage() {
