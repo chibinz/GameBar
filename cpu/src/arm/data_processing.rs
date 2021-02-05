@@ -105,4 +105,34 @@ mod tests {
         assert_eq!(cpu.r[1], 2);
         assert_eq!(cpu.get_cpsr_bit(C), true);
     }
+
+    #[test]
+    fn fuzzarm_adc() {
+        let mut cpu = CPU::new();
+
+        cpu.r[0] = 0x1fffffff;
+        cpu.r[1] = 0xe8888888;
+        cpu.r[2] = 0x0000001f;
+        cpu.set_cpsr(0xf0000000, true);
+
+        execute(&mut cpu, (false, 0b0101, true, 0, 4, 0b0010_0_10_1_0001));
+
+        assert_eq!(cpu.r[4], cpu.r[0]);
+        assert_eq!(cpu.get_cpsr() >> 28, 0x2); // Carry bit should be set
+    }
+
+    #[test]
+    fn fuzzarm_sbc() {
+        let mut cpu = CPU::new();
+
+        cpu.r[0] = 0x61111111;
+        cpu.r[1] = 0xb3333333;
+        cpu.r[2] = 0x00000020;
+        cpu.set_cpsr(0x10000000, true);
+
+        execute(&mut cpu, (false, 0b0110, true, 0, 4, 0b0010_0_10_1_0001));
+
+        assert_eq!(cpu.r[4], cpu.r[0]);
+        assert_eq!(cpu.get_cpsr() >> 28, 0); // Carry bit should be clear
+    }
 }
