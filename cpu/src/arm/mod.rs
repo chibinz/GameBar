@@ -21,7 +21,7 @@ use util::*;
 pub fn step(cpu: &mut CPU, memory: &mut impl Bus) {
     fetch(cpu, memory);
 
-    log::trace!("\n{}{}", cpu.trace(), disassemble(cpu.instruction));
+    log::trace!("\n{}{}", cpu.trace(), disassemble(cpu.ir));
     push_cpu(cpu.clone());
 
     increment_pc(cpu);
@@ -31,8 +31,7 @@ pub fn step(cpu: &mut CPU, memory: &mut impl Bus) {
 
 #[inline]
 pub fn fetch(cpu: &mut CPU, memory: &mut impl Bus) {
-    cpu.instruction = memory.load32(cpu.r[15] - 4);
-    cpu.prefetched = memory.load32(cpu.r[15]);
+    cpu.ir = memory.load32(cpu.r[15] - 4);
 }
 
 #[inline]
@@ -42,7 +41,7 @@ pub fn increment_pc(cpu: &mut CPU) {
 
 #[inline]
 pub fn interpret(cpu: &mut CPU, memory: &mut impl Bus) -> u32 {
-    let cond = cpu.instruction.bits(31, 28);
+    let cond = cpu.ir.bits(31, 28);
     if cpu.check_condition(cond) {
         dispatch(cpu, memory);
     }
@@ -52,7 +51,7 @@ pub fn interpret(cpu: &mut CPU, memory: &mut impl Bus) -> u32 {
 
 #[inline]
 pub fn dispatch(cpu: &mut CPU, memory: &mut impl Bus) {
-    let instr = cpu.instruction;
+    let instr = cpu.ir;
 
     let b74 = || instr >> 6 & 0b10 | instr >> 4 & 0b01;
 

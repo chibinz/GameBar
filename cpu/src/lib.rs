@@ -1,6 +1,5 @@
-pub mod arm;
-pub mod thumb;
-
+mod arm;
+mod thumb;
 mod alu;
 mod barrel_shifter;
 mod bus;
@@ -12,9 +11,8 @@ use register::PSRBit::*;
 
 #[derive(Clone, Copy)]
 pub struct CPU {
-    pub instruction: u32, // Next instruction to execute
-    pub prefetched: u32,  // Prefetched instruction
-    pub r: [u32; 16],     // General purpose registers
+    pub ir: u32,      // Next instruction to execute
+    pub r: [u32; 16], // General purpose registers
 
     cpsr: u32,       // Current Program Status Register
     spsr: u32,       // Saved Program Status Register (of current mode)
@@ -37,8 +35,7 @@ pub struct CPU {
 impl CPU {
     pub const fn new() -> Self {
         let mut cpu = Self {
-            instruction: 0,
-            prefetched: 0,
+            ir: 0,
             r: [0; 16],
 
             // On reset, CPSR is forced to supervisor mode
@@ -179,11 +176,11 @@ impl CPU {
         )
     }
 
-    pub fn disassemble(&self) -> String {
-        if self.in_thumb_mode() {
-            thumb::disassemble(self.instruction as u16)
+    pub fn disassemble(instr: u32, thumb: bool) -> String {
+        if thumb {
+            thumb::disassemble(instr as u16)
         } else {
-            arm::disassemble(self.instruction)
+            arm::disassemble(instr)
         }
     }
 
@@ -195,7 +192,11 @@ impl CPU {
         unsafe {
             for i in 0..LEN {
                 let c = &TRACE[(INDEX + i) % LEN];
-                println!("{}{}", c.trace(), c.disassemble());
+                println!(
+                    "{}{}",
+                    c.trace(),
+                    Self::disassemble(c.ir, c.in_thumb_mode())
+                );
             }
         }
     }
