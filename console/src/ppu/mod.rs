@@ -33,7 +33,7 @@ pub struct PPU {
     pub window: Window,
 
     pub layer: Vec<Layer>, // Layer 0 - 3, and an extra layer for backdrop
-    pub buffer: Vec<u32>,  // Frame buffer, 240 * 160
+    pub buffer: Vec<u16>,  // Frame buffer, 240 * 160
 
     pub state: PPUState,
 }
@@ -162,7 +162,7 @@ impl PPU {
 
                 // Render the topmost opaque color
                 if pixel != TRANSPARENT {
-                    line[i] = pixel.to_rgb24();
+                    line[i] = pixel;
                     break;
                 }
             }
@@ -264,7 +264,7 @@ impl PPU {
     pub fn force_blank(&mut self) {
         for i in self.buffer.iter_mut() {
             // Use grey to distinguish force blanking color
-            *i = 0x00808080;
+            *i = 0x7fff;
         }
     }
 }

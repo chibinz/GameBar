@@ -26,6 +26,7 @@ fn main() {
     console.cpu.backtrace_on_panic();
 
     let mut window = init_window();
+    let mut converted = vec![0; console.ppu.buffer.len()];
 
     // debug(&mut console as *mut console::Console);
 
@@ -33,12 +34,20 @@ fn main() {
         let input = keyboard::input(&window);
         console.keypad.set_input(input, &mut console.irqcnt);
         console.step_frame();
+        convert_buffer(&console.ppu.buffer, &mut converted);
         window
-            .update_with_buffer(&console.ppu.buffer, 240, 160)
+            .update_with_buffer(&converted, 240, 160)
             .unwrap();
     }
 
     unreachable!();
+}
+
+fn convert_buffer(orig: &[u16], new: &mut [u32]) {
+    use util::Color;
+    for (n, o) in new.iter_mut().zip(orig) {
+        *n = o.to_rgb24();
+    }
 }
 
 fn usage() {
