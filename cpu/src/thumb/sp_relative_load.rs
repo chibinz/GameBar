@@ -18,12 +18,12 @@ fn decode(instr: u16) -> (bool, u32, u32) {
 
 #[inline]
 fn execute(cpu: &mut CPU, bus: &mut impl Bus, (l, rd, word8): (bool, u32, u32)) {
-    let address = cpu.r[13] + (word8 << 2);
+    let address = cpu.r(13) + (word8 << 2);
 
     if l {
-        cpu.r[rd as usize] = CPU::ldr(address, bus);
+        cpu.set_r(rd, CPU::ldr(address, bus));
     } else {
-        CPU::str(address, cpu.r[rd as usize], bus);
+        CPU::str(address, cpu.r(rd), bus);
     }
 
     // cpu.cycles += 1 + Bus::access_timing(address, 2);

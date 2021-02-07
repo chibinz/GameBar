@@ -18,7 +18,7 @@ fn decode(instr: u16) -> (u32, u32, u32) {
 
 #[inline]
 fn execute(cpu: &mut CPU, (op, rd, offset8): (u32, u32, u32)) {
-    let op1 = cpu.r[rd as usize];
+    let op1 = cpu.r(rd);
     let op2 = offset8;
     let (c, v) = alu::get_cv(cpu);
 
@@ -32,7 +32,7 @@ fn execute(cpu: &mut CPU, (op, rd, offset8): (u32, u32, u32)) {
     alu::set_flags(cpu, flags);
 
     if op != 0b01 {
-        cpu.r[rd as usize] = result;
+        cpu.set_r(rd, result);
     }
 }
 
@@ -45,21 +45,21 @@ mod tests {
     fn move_compare() {
         let mut cpu = CPU::new();
 
-        cpu.r[1] = 0xffffffff;
+        cpu.set_r(1, 0xffffffff);
         execute(&mut cpu, (0b10, 1, 1));
-        assert_eq!(cpu.r[1], 0);
+        assert_eq!(cpu.r(1), 0);
         assert_eq!(cpu.get_cpsr_bit(C), true);
 
-        cpu.r[1] = 0x7fffffff;
+        cpu.set_r(1, 0x7fffffff);
         execute(&mut cpu, (0b10, 1, 1));
-        assert_eq!(cpu.r[1], 0x80000000);
+        assert_eq!(cpu.r(1), 0x80000000);
         assert_eq!(cpu.get_cpsr_bit(V), true);
         assert_eq!(cpu.get_cpsr_bit(C), false);
         assert_eq!(cpu.get_cpsr_bit(N), true);
 
-        cpu.r[1] = 1;
+        cpu.set_r(1, 1);
         execute(&mut cpu, (0b01, 1, 2));
-        assert_eq!(cpu.r[1], 1);
+        assert_eq!(cpu.r(1), 1);
         assert_eq!(cpu.get_cpsr_bit(V), false);
         assert_eq!(cpu.get_cpsr_bit(C), false);
         assert_eq!(cpu.get_cpsr_bit(N), true);

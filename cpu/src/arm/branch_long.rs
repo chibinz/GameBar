@@ -11,10 +11,8 @@ pub fn interpret(cpu: &mut CPU, instr: u32) {
     let offset: i32 = sign_extend(instr.bits(23, 0) << 2, 25);
 
     if l {
-        cpu.r[14] = cpu.r[15] - 4;
+        cpu.set_r(14, cpu.r(15) - 4);
     }
 
-    cpu.r[15] = cpu.r[15].wrapping_add(offset as u32);
-
-    cpu.flush();
+    cpu.set_r(15, cpu.r(15).wrapping_add(offset as u32));
 }

@@ -19,14 +19,14 @@ pub fn shift_register(cpu: &crate::CPU, operand2: u32) -> (u32, bool) {
         debug_assert_ne!(rs, 15);
         debug_assert_eq!(operand2.bit(7), false);
 
-        cpu.r[rs as usize] & 0xff
+        cpu.r(rs) & 0xff
     } else {
         operand2.bits(11, 7)
     };
 
     // One internal cycle for register specified shift
 
-    shift(cpu.r[rm as usize], amount, stype, cpu.carry(), !r)
+    shift(cpu.r(rm), amount, stype, cpu.carry(), !r)
 }
 
 /// Perform rotate on an immediate, return rotated result.
@@ -138,13 +138,13 @@ mod tests {
 
         // ASR 32
         operand2 = 0b11111_10_0_0100;
-        cpu.r[4] = 0x80000000;
+        cpu.set_r(4, 0x80000000);
         assert_eq!(shift_register(&cpu, operand2), (0xffffffff, false));
 
         // LSR 32
         operand2 = 0b0001_0_01_1_0100;
-        cpu.r[1] = 32;
-        cpu.r[4] = 0x80000000;
+        cpu.set_r(1, 32);
+        cpu.set_r(4, 0x80000000);
         assert_eq!(shift_register(&cpu, operand2), (0, true));
     }
 

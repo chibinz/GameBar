@@ -17,7 +17,6 @@ pub fn decode(instr: u16) -> (u32, u32) {
 #[inline]
 pub fn execute(cpu: &mut CPU, (cond, soffset8): (u32, u32)) {
     if cpu.check_condition(cond) {
-        cpu.r[15] = (cpu.r[15] as i32 + sign_extend(soffset8 << 1, 8)) as u32;
-        cpu.flush();
+        cpu.set_r(15, (cpu.r(15) as i32 + sign_extend(soffset8 << 1, 8)) as u32);
     }
 }

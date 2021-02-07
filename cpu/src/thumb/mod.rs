@@ -37,7 +37,7 @@ pub fn step(cpu: &mut CPU, bus: &mut impl Bus) {
 
 #[inline]
 pub fn fetch(cpu: &mut CPU, bus: &mut impl Bus) {
-    cpu.ir = bus.load16(cpu.r[15] - 2) as u32;
+    cpu.ir = CPU::ldrh(cpu.r(15) - 2, bus);
 }
 
 #[inline]
@@ -46,10 +46,8 @@ pub fn increment_pc(cpu: &mut CPU) {
 }
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus) -> u32 {
+pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus) {
     dispatch(cpu, bus);
-
-    0
 }
 
 #[inline]

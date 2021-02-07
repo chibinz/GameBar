@@ -36,33 +36,32 @@ pub fn execute(
     bus: &mut impl Bus,
     (p, u, i, w, lsh, rn, rd, offset): (bool, bool, bool, bool, u32, u32, u32, u32),
 ) {
-    let noffset = if i { offset } else { cpu.r[offset as usize] };
+    let noffset = if i { offset } else { cpu.r(offset) };
 
-    let post = cpu.r[rn as usize];
+    let post = cpu.r(rn);
     let pre = if u {
-        cpu.r[rn as usize] + noffset
+        cpu.r(rn) + noffset
     } else {
-        cpu.r[rn as usize] - noffset
+        cpu.r(rn) - noffset
     };
 
     // When R15 is the source register, the stored value will be
     // address of the instruction plus 12
     let address = if p { pre } else { post };
-    let adjust = if rd == 15 {4} else {0};
-    let value = cpu.r[rd as usize] + adjust;
+    let value = cpu.r(rd) + if rd == 15 { 4 } else { 0 };
 
     // Writeback may be overwritten if rn = rd
     if w || !p {
-        cpu.r[rn as usize] = pre;
+        cpu.set_r(rn, pre);
     }
 
     match lsh {
         0b001 => CPU::strh(address, value, bus),
         0b010 => CPU::strb(address, value, bus),
         0b011 => CPU::strh(address, value, bus),
-        0b101 => cpu.r[rd as usize] = CPU::ldrh(address, bus) + adjust,
-        0b110 => cpu.r[rd as usize] = CPU::ldrsb(address, bus) + adjust,
-        0b111 => cpu.r[rd as usize] = CPU::ldrsh(address, bus) + adjust,
+        0b101 => cpu.set_r(rd, CPU::ldrh(address, bus)),
+        0b110 => cpu.set_r(rd, CPU::ldrsb(address, bus)),
+        0b111 => cpu.set_r(rd, CPU::ldrsh(address, bus)),
         _ => unreachable!(),
     }
 
@@ -90,7 +89,7 @@ mod tests {
         let mut bus = DummyBus::new();
 
         bus.store16(0x02000000, 0xdead);
-        cpu.r[0] = 0x02000000;
+        cpu.set_r(0, 0x02000000);
 
         // Post-indexing, up offset, write back, load unsigned halfword
         // base = r0, dst = r1, offset = 2
@@ -99,8 +98,8 @@ mod tests {
             &mut bus,
             (false, true, true, true, 0b101, 0, 1, 2),
         );
-        assert_eq!(cpu.r[1], 0xdead);
-        assert_eq!(cpu.r[0], 0x02000002);
+        assert_eq!(cpu.r(1), 0xdead);
+        assert_eq!(cpu.r(0), 0x02000002);
 
         bus.store8(0x02000001, 0xff);
         // Pre-indexing, down offset, write back, load signed byte
@@ -110,7 +109,7 @@ mod tests {
             &mut bus,
             (true, false, true, true, 0b110, 0, 1, 1),
         );
-        assert_eq!(cpu.r[1], 0xffffffff);
-        assert_eq!(cpu.r[0], 0x02000001);
+        assert_eq!(cpu.r(1), 0xffffffff);
+        assert_eq!(cpu.r(0), 0x02000001);
     }
 }

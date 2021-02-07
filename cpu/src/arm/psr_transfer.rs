@@ -1,6 +1,5 @@
 use crate::barrel_shifter::rotate_immediate;
 use crate::CPU;
-use crate::register::PSRBit::C;
 use util::*;
 
 #[inline]
@@ -20,12 +19,10 @@ pub fn interpret(cpu: &mut CPU, instr: u32) {
         let operand2 = instr.bits(11, 0);
 
         let op = if i {
-            rotate_immediate(operand2, cpu.get_cpsr_bit(C)).0
+            rotate_immediate(operand2, cpu.carry()).0
         } else {
             debug_assert_eq!(operand2.bits(11, 4), 0);
-
-            let rm = operand2.bits(3, 0);
-            cpu.r[rm as usize]
+            cpu.r(operand2.bits(3, 0))
         };
 
         if pd {
@@ -42,7 +39,7 @@ pub fn interpret(cpu: &mut CPU, instr: u32) {
         let rd = instr.bits(15, 12);
         let psr = if pd { cpu.get_spsr() } else { cpu.get_cpsr() };
 
-        cpu.r[rd as usize] = psr;
+        cpu.set_r(rd, psr);
     }
 }
 
@@ -55,7 +52,7 @@ mod tests {
         let mut cpu = CPU::new();
 
         // MSR CPSR
-        cpu.r[0] = 0xf00000f1;
+        cpu.set_r(0, 0xf00000f1);
         interpret(&mut cpu, 0b0000_00010_0_10100_1_1111_00000000_0000);
         assert_eq!(cpu.get_cpsr(), 0xf00000f1);
 

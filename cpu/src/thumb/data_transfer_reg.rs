@@ -21,18 +21,18 @@ fn decode(instr: u16) -> (u32, u32, u32, u32) {
 
 #[inline]
 fn execute(cpu: &mut CPU, bus: &mut impl Bus, (lbh, ro, rb, rd): (u32, u32, u32, u32)) {
-    let address = cpu.r[rb as usize].wrapping_add(cpu.r[ro as usize]);
+    let address = cpu.r(rb).wrapping_add(cpu.r(ro));
 
     // Misaligned halfword access is not handled
     match lbh {
-        0b000 => CPU::str(address, cpu.r[rd as usize], bus),
-        0b001 => CPU::strh(address, cpu.r[rd as usize], bus),
-        0b010 => CPU::strb(address, cpu.r[rd as usize], bus),
-        0b011 => cpu.r[rd as usize] = CPU::ldrsb(address, bus),
-        0b100 => cpu.r[rd as usize] = CPU::ldr(address, bus),
-        0b101 => cpu.r[rd as usize] = CPU::ldrh(address, bus),
-        0b110 => cpu.r[rd as usize] = CPU::ldrb(address, bus),
-        0b111 => cpu.r[rd as usize] = CPU::ldrsh(address, bus),
+        0b000 => CPU::str(address, cpu.r(rd), bus),
+        0b001 => CPU::strh(address, cpu.r(rd), bus),
+        0b010 => CPU::strb(address, cpu.r(rd), bus),
+        0b011 => cpu.set_r(rd , CPU::ldrsb(address, bus)),
+        0b100 => cpu.set_r(rd , CPU::ldr(address, bus)),
+        0b101 => cpu.set_r(rd , CPU::ldrh(address, bus)),
+        0b110 => cpu.set_r(rd , CPU::ldrb(address, bus)),
+        0b111 => cpu.set_r(rd , CPU::ldrsh(address, bus)),
         _ => unreachable!(),
     };
 

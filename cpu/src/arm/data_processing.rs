@@ -22,7 +22,7 @@ pub fn decode(instr: u32) -> (bool, u32, bool, u32, u32, u32) {
 
 #[inline]
 pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32)) {
-    let mut op1 = cpu.r[rn as usize];
+    let mut op1 = cpu.r(rn);
     let (mut op2, carry) = if i {
         rotate_immediate(operand2, cpu.carry())
     } else {
@@ -76,18 +76,14 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
 
     // Write result to register, if needed
     if opcode < 0b1000 || opcode > 0b1011 {
-        cpu.r[rd as usize] = result;
+        cpu.set_r(rd, result);
 
-        if rd == 15 {
+        if rd == 15 && s{
             // Direct manipulation of pc will result in a pipeline flush.
             // The next instruction will be fetched from memory address
             // at pc. pc is further incremented by 4 to maintain offset 8
             // from the currently executed instruction.
-            cpu.flush();
-
-            if s {
-                cpu.restore_cpsr();
-            }
+            cpu.restore_cpsr();
         }
     }
 }
@@ -101,12 +97,12 @@ mod tests {
         let mut cpu = CPU::new();
 
         // AND R1, R2, R4 LSL R1
-        cpu.r[1] = 1;
-        cpu.r[2] = 2;
-        cpu.r[3] = 1;
-        cpu.r[4] = 0xffffffff;
+        cpu.set_r(1, 1);
+        cpu.set_r(2, 2);
+        cpu.set_r(3, 1);
+        cpu.set_r(4, 0xffffffff);
         execute(&mut cpu, (false, 0b0000, true, 2, 1, 0b0011_0_00_1_0100));
-        assert_eq!(cpu.r[1], 2);
+        assert_eq!(cpu.r(1), 2);
         assert_eq!(cpu.carry(), true);
     }
 
@@ -114,14 +110,14 @@ mod tests {
     fn fuzzarm_adc() {
         let mut cpu = CPU::new();
 
-        cpu.r[0] = 0x1fffffff;
-        cpu.r[1] = 0xe8888888;
-        cpu.r[2] = 0x0000001f;
+        cpu.set_r(0, 0x1fffffff);
+        cpu.set_r(1, 0xe8888888);
+        cpu.set_r(2, 0x0000001f);
         cpu.set_cpsr(0xf0000000, true);
 
         execute(&mut cpu, (false, 0b0101, true, 0, 4, 0b0010_0_10_1_0001));
 
-        assert_eq!(cpu.r[4], cpu.r[0]);
+        assert_eq!(cpu.r(4), cpu.r(0));
         assert_eq!(cpu.carry(), true); // Carry bit should be set
     }
 
@@ -129,14 +125,14 @@ mod tests {
     fn fuzzarm_sbc() {
         let mut cpu = CPU::new();
 
-        cpu.r[0] = 0x61111111;
-        cpu.r[1] = 0xb3333333;
-        cpu.r[2] = 0x00000020;
+        cpu.set_r(0, 0x61111111);
+        cpu.set_r(1, 0xb3333333);
+        cpu.set_r(2, 0x00000020);
         cpu.set_cpsr(0x10000000, true);
 
         execute(&mut cpu, (false, 0b0110, false, 0, 4, 0b0010_0_10_1_0001));
 
-        assert_eq!(cpu.r[4], cpu.r[0]);
+        assert_eq!(cpu.r(4), cpu.r(0));
         assert_eq!(cpu.carry(), false); // Carry bit should be clear
     }
 }

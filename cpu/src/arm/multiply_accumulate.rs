@@ -32,13 +32,13 @@ pub fn decode(instr: u32) -> (bool, bool, u32, u32, u32, u32) {
 
 #[inline]
 pub fn execute(cpu: &mut CPU, (a, s, rd, rn, rs, rm): (bool, bool, u32, u32, u32, u32)) {
-    let op0 = cpu.r[rm as usize];
-    let op1 = cpu.r[rs as usize];
+    let op0 = cpu.r(rm);
+    let op1 = cpu.r(rs);
     let mut result = op0.wrapping_mul(op1);
 
     // If accumulate bit is set, add rn to result
     if a {
-        result = result.wrapping_add(cpu.r[rn as usize]);
+        result = result.wrapping_add(cpu.r(rn));
 
         // One extra cycle for accumulation
         cpu.cycles += 1;
@@ -55,7 +55,7 @@ pub fn execute(cpu: &mut CPU, (a, s, rd, rn, rs, rm): (bool, bool, u32, u32, u32
         // And the V (Overflow) flag is unaffected.
     }
 
-    cpu.r[rd as usize] = result;
+    cpu.set_r(rd, result);
 
     // Internal cycles depending on size of operand
     cpu.cycles += count_cycles(op0, op1);
@@ -81,15 +81,15 @@ mod tests {
     fn mul_execute() {
         let mut cpu = CPU::new();
 
-        cpu.r[0] = 0xfffffff6;
-        cpu.r[1] = 0x00000014;
+        cpu.set_r(0, 0xfffffff6);
+        cpu.set_r(1, 0x00000014);
         execute(&mut cpu, (false, false, 3, 0, 0, 1));
-        assert_eq!(cpu.r[3], 0xffffff38);
+        assert_eq!(cpu.r(3), 0xffffff38);
 
-        cpu.r[0] = 0x10;
-        cpu.r[1] = 0x10000000;
+        cpu.set_r(0, 0x10);
+        cpu.set_r(1, 0x10000000);
         execute(&mut cpu, (false, true, 3, 0, 0, 1));
-        assert_eq!(cpu.r[3], 0);
+        assert_eq!(cpu.r(3), 0);
         assert_eq!(cpu.get_cpsr_bit(Z), true);
         assert_eq!(cpu.get_cpsr_bit(N), false);
     }

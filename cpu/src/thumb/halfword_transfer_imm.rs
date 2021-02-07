@@ -21,12 +21,12 @@ fn decode(instr: u16) -> (bool, u32, u32, u32) {
 
 #[inline]
 fn execute(cpu: &mut CPU, bus: &mut impl Bus, (l, offset5, rb, rd): (bool, u32, u32, u32)) {
-    let address = cpu.r[rb as usize] + (offset5 << 1);
+    let address = cpu.r(rb) + (offset5 << 1);
 
     if l {
-        cpu.r[rd as usize] = CPU::ldrh(address, bus);
+        cpu.set_r(rd, CPU::ldrh(address, bus));
     } else {
-        CPU::strh(address, cpu.r[rd as usize], bus);
+        CPU::strh(address, cpu.r(rd), bus);
     }
 
     // cpu.cycles += 1 + Bus::access_timing(address, 1);

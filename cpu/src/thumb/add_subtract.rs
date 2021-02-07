@@ -20,11 +20,11 @@ fn decode(instruction: u16) -> (bool, bool, u32, u32, u32) {
 
 #[inline]
 fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32)) {
-    let op1 = cpu.r[rs as usize];
+    let op1 = cpu.r(rs);
     let op2 = if i {
         operand2
     } else {
-        cpu.r[operand2 as usize]
+        cpu.r(operand2)
     };
 
     let (c, v) = alu::get_cv(cpu);
@@ -35,7 +35,7 @@ fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32)
     };
     alu::set_flags(cpu, flags);
 
-    cpu.r[rd as usize] = result;
+    cpu.set_r(rd, result);
 }
 
 #[cfg(test)]
@@ -47,15 +47,15 @@ mod tests {
     fn add_subtract() {
         let mut cpu = CPU::new();
 
-        cpu.r[1] = 0xffffffff;
+        cpu.set_r(1, 0xffffffff);
         execute(&mut cpu, (true, false, 0b111, 1, 1));
-        assert_eq!(cpu.r[1], 0b110);
+        assert_eq!(cpu.r(1), 0b110);
         assert_eq!(cpu.get_cpsr_bit(C), true);
 
-        cpu.r[0] = 0x10000000;
-        cpu.r[1] = 1;
+        cpu.set_r(0, 0x10000000);
+        cpu.set_r(1, 1);
         execute(&mut cpu, (false, true, 1, 0, 1));
-        assert_eq!(cpu.r[1], 0x0fffffff);
+        assert_eq!(cpu.r(1), 0x0fffffff);
         assert_eq!(cpu.get_cpsr_bit(V), false);
         assert_eq!(cpu.get_cpsr_bit(C), true);
     }

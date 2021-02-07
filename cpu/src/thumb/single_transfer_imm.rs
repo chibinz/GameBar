@@ -21,14 +21,14 @@ fn decode(instr: u16) -> (u32, u32, u32, u32) {
 
 #[inline]
 fn execute(cpu: &mut CPU, bus: &mut impl Bus, (bl, offset5, rb, rd): (u32, u32, u32, u32)) {
-    let base = cpu.r[rb as usize];
+    let base = cpu.r(rb);
     let address = base + (offset5 << if bl.bit(1) { 0 } else { 2 });
 
     match bl {
-        0b00 => CPU::str(address, cpu.r[rd as usize], bus),
-        0b01 => cpu.r[rd as usize] = CPU::ldr(address, bus),
-        0b10 => CPU::strb(address, cpu.r[rd as usize], bus),
-        0b11 => cpu.r[rd as usize] = CPU::ldrb(address, bus),
+        0b00 => CPU::str(address, cpu.r(rd), bus),
+        0b01 => cpu.set_r(rd, CPU::ldr(address, bus)),
+        0b10 => CPU::strb(address, cpu.r(rd), bus),
+        0b11 => cpu.set_r(rd, CPU::ldrb(address, bus)),
         _ => unreachable!(),
     }
 

@@ -33,7 +33,7 @@ pub fn execute(
     assert_ne!(rlist, 0);
 
     // Misaligned address not handled
-    let mut address = cpu.r[rn as usize];
+    let mut address = cpu.r(rn);
     let original = address;
 
     let saved_cpsr = cpu.get_cpsr();
@@ -49,9 +49,9 @@ pub fn execute(
     // should be the same.
     if w {
         if u {
-            cpu.r[rn as usize] = address + 4 * rlist.count_ones();
+            cpu.set_r(rn, address + 4 * rlist.count_ones());
         } else {
-            cpu.r[rn as usize] = address - 4 * rlist.count_ones();
+            cpu.set_r(rn, address - 4 * rlist.count_ones());
         }
     }
 
@@ -64,16 +64,12 @@ pub fn execute(
         let j = if u { i } else { 15 - i };
         if rlist.bit(j) {
             if l {
-                cpu.r[j as usize] = bus.load32(address);
-
-                if j == 15 {
-                    cpu.flush();
-                }
+                cpu.set_r(j, bus.load32(address));
             } else {
-                bus.store32(address, cpu.r[j as usize]);
+                bus.store32(address, cpu.r(j));
 
                 if j == 15 {
-                    bus.store32(address, cpu.r[15] + 4);
+                    bus.store32(address, cpu.r(15) + 4);
                 }
 
                 // The first register to be stored will store the
@@ -121,7 +117,7 @@ mod tests {
         for i in 0..16 {
             bus.store32(0x02000000 + i * 4, i);
         }
-        cpu.r[0] = 0x02000000;
+        cpu.set_r(0, 0x02000000);
 
         // Write back bit is redundant because R0 is overwritten
         execute(
@@ -130,11 +126,11 @@ mod tests {
             (false, true, true, true, true, 0, 0xffff),
         );
         for i in 0..15 {
-            assert_eq!(cpu.r[i as usize], i);
+            assert_eq!(cpu.r(i), i);
         }
 
         // PC should be word aligned
-        assert_eq!(cpu.r[15], 16);
+        assert_eq!(cpu.r(15), 16);
     }
 
     #[test]
@@ -145,17 +141,17 @@ mod tests {
         bus.store32(0x02000004, 1);
         bus.store32(0x02000008, 2);
         bus.store32(0x0200000c, 3);
-        cpu.r[0] = 0x02000000;
+        cpu.set_r(0, 0x02000000);
 
         execute(
             &mut cpu,
             &mut bus,
             (true, true, true, true, true, 0, 0x000e),
         );
-        assert_eq!(cpu.r[1], 1);
-        assert_eq!(cpu.r[2], 2);
-        assert_eq!(cpu.r[3], 3);
-        assert_eq!(cpu.r[0], 0x0200000c);
+        assert_eq!(cpu.r(1), 1);
+        assert_eq!(cpu.r(2), 2);
+        assert_eq!(cpu.r(3), 3);
+        assert_eq!(cpu.r(0), 0x0200000c);
     }
 
     #[test]
@@ -166,17 +162,17 @@ mod tests {
         bus.store32(0x02000004, 1);
         bus.store32(0x02000008, 2);
         bus.store32(0x0200000c, 3);
-        cpu.r[0] = 0x0200000c;
+        cpu.set_r(0, 0x0200000c);
 
         execute(
             &mut cpu,
             &mut bus,
             (false, false, true, true, true, 0, 0x000e),
         );
-        assert_eq!(cpu.r[1], 1);
-        assert_eq!(cpu.r[2], 2);
-        assert_eq!(cpu.r[3], 3);
-        assert_eq!(cpu.r[0], 0x02000000);
+        assert_eq!(cpu.r(1), 1);
+        assert_eq!(cpu.r(2), 2);
+        assert_eq!(cpu.r(3), 3);
+        assert_eq!(cpu.r(0), 0x02000000);
     }
 
     #[test]
@@ -187,16 +183,16 @@ mod tests {
         bus.store32(0x02000000, 1);
         bus.store32(0x02000004, 2);
         bus.store32(0x02000008, 3);
-        cpu.r[0] = 0x0200000c;
+        cpu.set_r(0, 0x0200000c);
 
         execute(
             &mut cpu,
             &mut bus,
             (true, false, true, true, true, 0, 0x1110),
         );
-        assert_eq!(cpu.r[4], 1);
-        assert_eq!(cpu.r[8], 2);
-        assert_eq!(cpu.r[12], 3);
-        assert_eq!(cpu.r[0], 0x02000000);
+        assert_eq!(cpu.r(4), 1);
+        assert_eq!(cpu.r(8), 2);
+        assert_eq!(cpu.r(12), 3);
+        assert_eq!(cpu.r(0), 0x02000000);
     }
 }

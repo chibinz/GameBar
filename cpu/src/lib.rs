@@ -11,8 +11,8 @@ use register::PSRBit::*;
 
 #[derive(Clone, Copy)]
 pub struct CPU {
-    pub ir: u32,      // Next instruction to execute
-    pub r: [u32; 16], // General purpose registers
+    ir: u32,      // Next instruction to execute
+    r: [u32; 16], // General purpose registers
 
     cpsr: u32,       // Current Program Status Register
     spsr: u32,       // Saved Program Status Register (of current mode)
@@ -80,6 +80,19 @@ impl CPU {
         }
 
         return self.cycles;
+    }
+
+    #[inline]
+    pub fn r(&self, n: u32) -> u32 {
+        self.r[n as usize]
+    }
+
+    #[inline]
+    pub fn set_r(&mut self, n: u32, value: u32) {
+        self.r[n as usize] = value;
+        if n == 15 {
+            self.flush();
+        }
     }
 
     #[inline]

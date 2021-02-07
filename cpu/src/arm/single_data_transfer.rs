@@ -40,40 +40,30 @@ pub fn execute(
         shift_register(cpu, offset).0
     };
 
-    let post = cpu.r[rn as usize];
+    let post = cpu.r(rn);
     let pre = if u {
-        cpu.r[rn as usize].wrapping_add(noffset)
+        cpu.r(rn).wrapping_add(noffset)
     } else {
-        cpu.r[rn as usize].wrapping_sub(noffset)
+        cpu.r(rn).wrapping_sub(noffset)
     };
 
     let address = if p { pre } else { post };
 
     // When R15 is the source register, the stored value will be
     // address of the instruction plus 12
-    let value = cpu.r[rd as usize] + if rd == 15 { 4 } else { 0 };
+    let value = cpu.r(rd) + if rd == 15 { 4 } else { 0 };
 
     // Privileged write back bit not handled
     if w || !p {
-        cpu.r[rn as usize] = pre;
+        cpu.set_r(rn, pre);
     }
 
     // Misaligned word access handled in `memory.rs`
     match lb {
         0b00 => bus.store32(address, value),
         0b01 => bus.store8(address, value as u8),
-        0b10 => {
-            cpu.r[rd as usize] = CPU::ldr(address, bus);
-            if rd == 15 {
-                cpu.flush()
-            }
-        }
-        0b11 => {
-            cpu.r[rd as usize] = CPU::ldrb(address, bus);
-            if rd == 15 {
-                cpu.flush()
-            }
-        }
+        0b10 => cpu.set_r(rd, CPU::ldr(address, bus)),
+        0b11 => cpu.set_r(rd, CPU::ldrb(address, bus)),
         _ => unreachable!(),
     }
 
@@ -91,12 +81,12 @@ mod tests {
         let mut bus = DummyBus::new();
 
         bus.store8(0x02000001, 0xff);
-        cpu.r[0] = 0x02000000;
+        cpu.set_r(0, 0x02000000);
 
         // Immediate offset, pre-indexing, up offset, write back, load byte
         execute(&mut cpu, &mut bus, (false, true, true, true, 0b11, 0, 1, 1));
-        assert_eq!(cpu.r[1], 0xff);
-        assert_eq!(cpu.r[0], 0x02000001);
+        assert_eq!(cpu.r(1), 0xff);
+        assert_eq!(cpu.r(0), 0x02000001);
 
         // Immediate offset, pre-indexing, down offset, no write back, store byte
         execute(
@@ -104,7 +94,7 @@ mod tests {
             &mut bus,
             (false, true, false, false, 0b01, 0, 1, 1),
         );
-        assert_eq!(bus.load8(0x02000000), 0xff);
+        assert_eq!(CPU::ldrb(0x02000000, &bus), 0xff);
     }
 
     #[test]
@@ -113,7 +103,7 @@ mod tests {
         let mut bus = DummyBus::new();
 
         bus.store32(0x02000000, 0xdeadbeef);
-        cpu.r[0] = 0x02000000;
+        cpu.set_r(0, 0x02000000);
 
         // Immediate offset, post-indexing, up offset, write back, load word
         execute(
@@ -121,17 +111,17 @@ mod tests {
             &mut bus,
             (false, false, true, true, 0b10, 0, 1, 4),
         );
-        assert_eq!(cpu.r[1], 0xdeadbeef);
-        assert_eq!(cpu.r[0], 0x02000004);
+        assert_eq!(cpu.r(1), 0xdeadbeef);
+        assert_eq!(cpu.r(0), 0x02000004);
 
-        cpu.r[1] = 0;
+        cpu.set_r(1, 0);
         // Immediate offset, pre-indexing, down offset, write back, store word
         execute(
             &mut cpu,
             &mut bus,
             (false, true, false, true, 0b00, 0, 1, 4),
         );
-        assert_eq!(bus.load32(0x02000000), 0);
-        assert_eq!(cpu.r[0], 0x02000000);
+        assert_eq!(CPU::ldr(0x02000000, &bus), 0);
+        assert_eq!(cpu.r(0), 0x02000000);
     }
 }
