@@ -9,8 +9,6 @@ impl IRQController {
     #[inline]
     pub fn set_ime(&mut self, value: u16) {
         self.ime = value;
-
-        self.check();
     }
 
     #[inline]
@@ -21,8 +19,6 @@ impl IRQController {
     #[inline]
     pub fn set_ie(&mut self, value: u16) {
         self.ie = value;
-
-        self.check();
     }
 
     #[inline]

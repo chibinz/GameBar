@@ -43,7 +43,6 @@ impl Console {
 
     pub fn init(&mut self) {
         self.memory.console = self as *mut Self;
-        self.irqcnt.cpu = &mut self.cpu as *mut cpu::CPU;
     }
 
     /// Render a frame
@@ -96,6 +95,7 @@ impl Console {
         } else {
             cpu.step(memory)
         };
+        irqcnt.check(cpu);
 
         timers.run(t, irqcnt);
     }

@@ -123,7 +123,7 @@ pub fn rsb(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
 
 #[inline]
 pub fn sbc(op1: u32, op2: u32, c: bool, _v: bool) -> (u32, Flags) {
-    let opc = (op2 as u64) - (c as u64) + 1;
+    let opc = (op2 as u64).wrapping_sub(c as u64).wrapping_add(1);
     let result = op1.wrapping_sub(opc as u32);
 
     with_flags(result, op1 as u64 >= opc, sub_overflow(op1, opc as u32))
