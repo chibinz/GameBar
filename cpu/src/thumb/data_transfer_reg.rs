@@ -3,8 +3,8 @@ use crate::CPU;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, memory: &mut impl Bus, instr: u16) {
-    execute(cpu, memory, decode(instr));
+pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus, instr: u16) {
+    execute(cpu, bus, decode(instr));
 }
 
 #[inline]
@@ -25,38 +25,14 @@ fn execute(cpu: &mut CPU, bus: &mut impl Bus, (lbh, ro, rb, rd): (u32, u32, u32,
 
     // Misaligned halfword access is not handled
     match lbh {
-        0b000 => {
-            bus.store32(address, cpu.r[rd as usize]);
-            2
-        }
-        0b001 => {
-            bus.store16(address, cpu.r[rd as usize] as u16);
-            1
-        }
-        0b010 => {
-            bus.store8(address, cpu.r[rd as usize] as u8);
-            0
-        }
-        0b011 => {
-            cpu.r[rd as usize] = bus.load8(address) as i8 as i32 as u32;
-            0
-        }
-        0b100 => {
-            cpu.r[rd as usize] = CPU::ldr(address, bus);
-            2
-        }
-        0b101 => {
-            cpu.r[rd as usize] = CPU::ldrh(address, bus);
-            1
-        }
-        0b110 => {
-            cpu.r[rd as usize] = bus.load8(address) as u32;
-            0
-        }
-        0b111 => {
-            cpu.r[rd as usize] = CPU::ldrsh(address, bus);
-            1
-        }
+        0b000 => CPU::str(address, cpu.r[rd as usize], bus),
+        0b001 => CPU::strh(address, cpu.r[rd as usize], bus),
+        0b010 => CPU::strb(address, cpu.r[rd as usize], bus),
+        0b011 => cpu.r[rd as usize] = CPU::ldrsb(address, bus),
+        0b100 => cpu.r[rd as usize] = CPU::ldr(address, bus),
+        0b101 => cpu.r[rd as usize] = CPU::ldrh(address, bus),
+        0b110 => cpu.r[rd as usize] = CPU::ldrb(address, bus),
+        0b111 => cpu.r[rd as usize] = CPU::ldrsh(address, bus),
         _ => unreachable!(),
     };
 

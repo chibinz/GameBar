@@ -3,8 +3,8 @@ use crate::CPU;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, memory: &mut impl Bus, instr: u16) {
-    execute(cpu, memory, decode(instr));
+pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus, instr: u16) {
+    execute(cpu, bus, decode(instr));
 }
 
 #[inline]
@@ -17,13 +17,13 @@ fn decode(instr: u16) -> (bool, u32, u32) {
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, memory: &mut impl Bus, (l, rd, word8): (bool, u32, u32)) {
+fn execute(cpu: &mut CPU, bus: &mut impl Bus, (l, rd, word8): (bool, u32, u32)) {
     let address = cpu.r[13] + (word8 << 2);
 
     if l {
-        cpu.r[rd as usize] = CPU::ldr(address, memory);
+        cpu.r[rd as usize] = CPU::ldr(address, bus);
     } else {
-        memory.store32(address, cpu.r[rd as usize]);
+        CPU::str(address, cpu.r[rd as usize], bus);
     }
 
     // cpu.cycles += 1 + Bus::access_timing(address, 2);

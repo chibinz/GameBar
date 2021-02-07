@@ -26,7 +26,7 @@ fn execute(cpu: &mut CPU, bus: &mut impl Bus, (l, offset5, rb, rd): (bool, u32, 
     if l {
         cpu.r[rd as usize] = CPU::ldrh(address, bus);
     } else {
-        bus.store16(address, cpu.r[rd as usize] as u16);
+        CPU::strh(address, cpu.r[rd as usize], bus);
     }
 
     // cpu.cycles += 1 + Bus::access_timing(address, 1);

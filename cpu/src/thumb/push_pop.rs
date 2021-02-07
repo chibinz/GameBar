@@ -5,8 +5,8 @@ use util::*;
 use crate::arm::block_data_transfer;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, memory: &mut impl Bus, instr: u16) {
-    execute(cpu, memory, decode(instr));
+pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus, instr: u16) {
+    execute(cpu, bus, decode(instr));
 }
 
 #[inline]
@@ -21,22 +21,22 @@ fn decode(instr: u16) -> (bool, bool, u32) {
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, memory: &mut impl Bus, (l, r, rlist): (bool, bool, u32)) {
+fn execute(cpu: &mut CPU, bus: &mut impl Bus, (l, r, rlist): (bool, bool, u32)) {
     // Push the link register, and then registers specified by rlist
     // onto the stack
     if r && !l {
         cpu.r[13] -= 4;
-        memory.store32(cpu.r[13], cpu.r[14]);
+        CPU::str(cpu.r[13], cpu.r[14], bus);
     }
 
     if rlist != 0 {
-        block_data_transfer::execute(cpu, memory, (!l, l, false, true, l, 13, rlist))
+        block_data_transfer::execute(cpu, bus, (!l, l, false, true, l, 13, rlist))
     }
 
     // Pop values off the stack into registers specified by rlist,
     // and then Pop PC off the stack
     if r && l {
-        cpu.r[15] = CPU::ldr(cpu.r[13], memory);
+        cpu.r[15] = CPU::ldr(cpu.r[13], bus);
         cpu.flush();
 
         cpu.r[13] += 4;

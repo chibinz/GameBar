@@ -3,8 +3,8 @@ use crate::CPU;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, memory: &mut impl Bus, instr: u16) {
-    execute(cpu, memory, decode(instr));
+pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus, instr: u16) {
+    execute(cpu, bus, decode(instr));
 }
 
 #[inline]
@@ -16,11 +16,11 @@ fn decode(instr: u16) -> (u32, u32) {
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, memory: &mut impl Bus, (rd, word8): (u32, u32)) {
+fn execute(cpu: &mut CPU, bus: &mut impl Bus, (rd, word8): (u32, u32)) {
     // Bit 1 of PC is forced to 0 to ensure it is word aligned.
     let address = (cpu.r[15] & 0xfffffffc) + (word8 << 2);
 
-    cpu.r[rd as usize] = CPU::ldr(address, memory);
+    cpu.r[rd as usize] = CPU::ldr(address, bus);
 
     // cpu.cycles += 1 + Bus::access_timing(address, 2);
 }

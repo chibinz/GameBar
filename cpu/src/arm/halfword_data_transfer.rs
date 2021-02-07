@@ -3,8 +3,8 @@ use crate::CPU;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, memory: &mut impl Bus, instr: u32) {
-    execute(cpu, memory, decode(instr));
+pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus, instr: u32) {
+    execute(cpu, bus, decode(instr));
 }
 
 #[inline]
@@ -45,11 +45,11 @@ pub fn execute(
         cpu.r[rn as usize] - noffset
     };
 
-    let address = if p { pre } else { post };
-
     // When R15 is the source register, the stored value will be
     // address of the instruction plus 12
-    let value = cpu.r[rd as usize] + if rd == 15 { 4 } else { 0 };
+    let address = if p { pre } else { post };
+    let adjust = if rd == 15 {4} else {0};
+    let value = cpu.r[rd as usize] + adjust;
 
     // Writeback may be overwritten if rn = rd
     if w || !p {
@@ -57,15 +57,12 @@ pub fn execute(
     }
 
     match lsh {
-        0b001 => bus.store16(address, value as u16),
-        0b010 => bus.store8(address, value as u8),
-        0b011 => bus.store16(address, value as u16),
-        0b101 => cpu.r[rd as usize] = CPU::ldrh(address, bus) + if rd == 15 { 4 } else { 0 },
-        0b110 => {
-            cpu.r[rd as usize] =
-                bus.load8(address) as i8 as i32 as u32 + if rd == 15 { 4 } else { 0 }
-        }
-        0b111 => cpu.r[rd as usize] = CPU::ldrsh(address, bus) + if rd == 15 { 4 } else { 0 },
+        0b001 => CPU::strh(address, value, bus),
+        0b010 => CPU::strb(address, value, bus),
+        0b011 => CPU::strh(address, value, bus),
+        0b101 => cpu.r[rd as usize] = CPU::ldrh(address, bus) + adjust,
+        0b110 => cpu.r[rd as usize] = CPU::ldrsb(address, bus) + adjust,
+        0b111 => cpu.r[rd as usize] = CPU::ldrsh(address, bus) + adjust,
         _ => unreachable!(),
     }
 

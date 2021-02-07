@@ -62,7 +62,7 @@ impl Bus for DummyBus {
 
 impl CPU {
     #[inline]
-    pub fn ldr(address: u32, bus: &mut impl Bus) -> u32 {
+    pub fn ldr(address: u32, bus: &impl Bus) -> u32 {
         let rotation = (address & 0b11) * 8;
 
         // Memory loads are forcibly aligned
@@ -72,7 +72,12 @@ impl CPU {
     }
 
     #[inline]
-    pub fn ldrh(address: u32, bus: &mut impl Bus) -> u32 {
+    pub fn ldrb(address: u32, bus: &impl Bus) -> u32 {
+        bus.load8(address) as u32
+    }
+
+    #[inline]
+    pub fn ldrh(address: u32, bus: &impl Bus) -> u32 {
         let rotation = (address & 1) * 8;
 
         let value = bus.load16(address) as u32;
@@ -81,12 +86,32 @@ impl CPU {
     }
 
     #[inline]
-    pub fn ldrsh(address: u32, bus: &mut impl Bus) -> u32 {
+    pub fn ldrsb(address: u32, bus: &impl Bus) -> u32 {
+        bus.load8(address) as i8 as i32 as u32
+    }
+
+    #[inline]
+    pub fn ldrsh(address: u32, bus: &impl Bus) -> u32 {
         if address.bit(0) {
             // Misaligned LDRSH is effectively LDRSB
             bus.load8(address) as i8 as i32 as u32
         } else {
             bus.load16(address) as i16 as i32 as u32
         }
+    }
+
+    #[inline]
+    pub fn str(address: u32, value: u32, bus: &mut impl Bus) {
+        bus.store32(address, value)
+    }
+
+    #[inline]
+    pub fn strb(address: u32, value: u32, bus: &mut impl Bus) {
+        bus.store8(address, value as u8)
+    }
+
+    #[inline]
+    pub fn strh(address: u32, value: u32, bus: &mut impl Bus) {
+        bus.store16(address, value as u16)
     }
 }

@@ -69,7 +69,7 @@ pub fn execute(
             }
         }
         0b11 => {
-            cpu.r[rd as usize] = bus.load8(address) as u32;
+            cpu.r[rd as usize] = CPU::ldrb(address, bus);
             if rd == 15 {
                 cpu.flush()
             }
