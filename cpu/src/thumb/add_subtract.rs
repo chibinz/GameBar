@@ -26,12 +26,14 @@ fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32)
     } else {
         cpu.r[operand2 as usize]
     };
+    let (c, v) = alu::get_cv(cpu);
 
-    let result = if op {
-        alu::sub(cpu, op1, op2, true)
+    let (result, flags) = if op {
+        alu::sub(op1, op2, c, v)
     } else {
-        alu::add(cpu, op1, op2, true)
+        alu::add(op1, op2, c, v)
     };
+    alu::set_flags(cpu, flags);
 
     cpu.r[rd as usize] = result;
 }

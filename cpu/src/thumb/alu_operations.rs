@@ -1,5 +1,4 @@
 use crate::alu;
-use crate::register::PSRBit::C;
 use crate::CPU;
 use util::*;
 
@@ -19,29 +18,30 @@ fn decode(instruction: u16) -> (u32, u32, u32) {
 
 #[inline]
 fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32)) {
-    let carry = cpu.get_cpsr_bit(C);
     let op1 = cpu.r[rd as usize];
     let op2 = cpu.r[rs as usize];
+    let (c, v) = alu::get_cv(cpu);
 
-    let result = match op {
-        0b0000 => alu::and(cpu, op1, op2, true),
-        0b0001 => alu::eor(cpu, op1, op2, true),
-        0b0010 => alu::lsl(cpu, op1, op2),
-        0b0011 => alu::lsr(cpu, op1, op2),
-        0b0100 => alu::asr(cpu, op1, op2),
-        0b0101 => alu::adc(cpu, op1, op2, carry, true),
-        0b0110 => alu::sbc(cpu, op1, op2, carry, true),
-        0b0111 => alu::ror(cpu, op1, op2),
-        0b1000 => alu::tst(cpu, op1, op2),
-        0b1001 => alu::neg(cpu, op1, op2),
-        0b1010 => alu::cmp(cpu, op1, op2),
-        0b1011 => alu::cmn(cpu, op1, op2),
-        0b1100 => alu::orr(cpu, op1, op2, true),
-        0b1101 => alu::mul(cpu, op1, op2, true),
-        0b1110 => alu::bic(cpu, op1, op2, true),
-        0b1111 => alu::mvn(cpu, op1, op2, true),
+    let (result, flags) = match op {
+        0b0000 => alu::and(op1, op2, c, v),
+        0b0001 => alu::eor(op1, op2, c, v),
+        0b0010 => alu::lsl(op1, op2, c, v),
+        0b0011 => alu::lsr(op1, op2, c, v),
+        0b0100 => alu::asr(op1, op2, c, v),
+        0b0101 => alu::adc(op1, op2, c, v),
+        0b0110 => alu::sbc(op1, op2, c, v),
+        0b0111 => alu::ror(op1, op2, c, v),
+        0b1000 => alu::tst(op1, op2, c, v),
+        0b1001 => alu::neg(op1, op2, c, v),
+        0b1010 => alu::cmp(op1, op2, c, v),
+        0b1011 => alu::cmn(op1, op2, c, v),
+        0b1100 => alu::orr(op1, op2, c, v),
+        0b1101 => alu::mul(op1, op2, c, v),
+        0b1110 => alu::bic(op1, op2, c, v),
+        0b1111 => alu::mvn(op1, op2, c, v),
         _ => unreachable!(),
     };
+    alu::set_flags(cpu, flags);
 
     if op != 0b1000 && op != 0b1010 && op != 0b1011 {
         cpu.r[rd as usize] = result;

@@ -7,21 +7,23 @@ use crate::barrel_shifter;
 use crate::register::PSRBit::*;
 use util::*;
 
+type Flags = (bool, bool, bool, bool);
+
 // CPSR flag manipulation
+pub fn set_flags(cpu: &mut crate::CPU, (n, z, c, v): Flags) {
+    cpu.set_cpsr_bit(N, n);
+    cpu.set_cpsr_bit(Z, z);
+    cpu.set_cpsr_bit(C, c);
+    cpu.set_cpsr_bit(V, v);
+}
 
-#[inline]
-pub fn zero(result: u32) -> bool {
-    result == 0
+pub fn get_cv(cpu: &crate::CPU) -> (bool, bool) {
+    (cpu.get_cpsr_bit(C), cpu.get_cpsr_bit(V))
 }
 
 #[inline]
-pub fn negative(result: u32) -> bool {
-    result.bit(31)
-}
-
-#[inline]
-pub fn with_flags(result: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
-    (result, (negative(result), zero(result), c, v))
+pub fn with_flags(result: u32, c: bool, v: bool) -> (u32, Flags) {
+    (result, (result.bit(31), result == 0, c, v))
 }
 
 #[inline]
@@ -47,49 +49,49 @@ fn sub_overflow(op1: u32, op2: u32) -> bool {
 // Logical operations
 
 #[inline]
-pub fn and(op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
+pub fn and(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
     with_flags(op1 & op2, c, v)
 }
 
 #[inline]
-pub fn eor(op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
+pub fn eor(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
     with_flags(op1 ^ op2, c, v)
 }
 
 #[inline]
-pub fn orr(op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
+pub fn orr(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
     with_flags(op1 | op2, c, v)
 }
 
 #[inline]
-pub fn bic(op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
+pub fn bic(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
     with_flags(op1 & !op2, c, v)
 }
 
 #[inline]
-pub fn mov(_op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
+pub fn mov(_op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
     with_flags(op2, c, v)
 }
 
 #[inline]
-pub fn mvn(_op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
+pub fn mvn(_op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
     with_flags(!op2, c, v)
 }
 
 #[inline]
-pub fn tst(op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
+pub fn tst(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
     and(op1, op2, c, v)
 }
 
 #[inline]
-pub fn teq(op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
+pub fn teq(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
     eor(op1, op2, c, v)
 }
 
 // Arithemetic operations
 
 #[inline]
-pub fn add(op1: u32, op2: u32, _c: bool, _v: bool) -> (u32, (bool, bool, bool, bool)) {
+pub fn add(op1: u32, op2: u32, _c: bool, _v: bool) -> (u32, Flags) {
     with_flags(
         op1.wrapping_add(op2),
         add_carry(op1, op2),
@@ -98,22 +100,15 @@ pub fn add(op1: u32, op2: u32, _c: bool, _v: bool) -> (u32, (bool, bool, bool, b
 }
 
 #[inline]
-pub fn adc(op1: u32, op2: u32, carry: bool, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
-    let (opc, carry2) = op2.overflowing_add(carry as u32);
+pub fn adc(op1: u32, op2: u32, c: bool, _v: bool) -> (u32, Flags) {
+    let (opc, carry2) = op2.overflowing_add(c as u32);
     let result = op1.wrapping_add(opc);
 
-    if s {
-        cpu.set_cpsr_bit(N, negative(result));
-        cpu.set_cpsr_bit(Z, zero(result));
-        cpu.set_cpsr_bit(C, add_carry(op1, opc) || carry2);
-        cpu.set_cpsr_bit(V, add_overflow(op1, opc));
-    }
-
-    result
+    with_flags(result, add_carry(op1, opc) || carry2, add_overflow(op1, opc))
 }
 
 #[inline]
-pub fn sub(op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
+pub fn sub(op1: u32, op2: u32, _c: bool, _v: bool) -> (u32, Flags) {
     with_flags(
         op1.wrapping_sub(op2),
         sub_carry(op1, op2),
@@ -122,105 +117,70 @@ pub fn sub(op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, boo
 }
 
 #[inline]
-pub fn rsb(op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
-    let result = op2.wrapping_sub(op1);
-
-    if s {
-        cpu.set_cpsr_bit(N, negative(result));
-        cpu.set_cpsr_bit(Z, zero(result));
-        cpu.set_cpsr_bit(C, sub_carry(op2, op1));
-        cpu.set_cpsr_bit(V, sub_overflow(op2, op1));
-    }
-
-    result
+pub fn rsb(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
+    sub(op2, op1, c, v)
 }
 
 #[inline]
-pub fn sbc(op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
-    let opc = (op2 as u64) - (carry as u64) + 1;
+pub fn sbc(op1: u32, op2: u32, c: bool, _v: bool) -> (u32, Flags) {
+    let opc = (op2 as u64) - (c as u64) + 1;
     let result = op1.wrapping_sub(opc as u32);
 
-    if s {
-        cpu.set_cpsr_bit(N, negative(result));
-        cpu.set_cpsr_bit(Z, zero(result));
-        cpu.set_cpsr_bit(C, op1 as u64 >= opc);
-        cpu.set_cpsr_bit(V, sub_overflow(op1, opc as u32));
-    }
-
-    result
+    with_flags(result, op1 as u64 >= opc, sub_overflow(op1, opc as u32))
 }
 
 #[inline]
-pub fn rsc(op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
+pub fn rsc(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
     sbc(op2, op1, c, v)
 }
 
 #[inline]
-pub fn neg(_op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
-    rsb(_op1, op2, c, v)
+pub fn neg(_op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
+    with_flags(op2.wrapping_neg(), c, v)
 }
 
 #[inline]
-pub fn cmp(op1: u32, op2: u32) -> (u32, (bool, bool, bool, bool)) {
-    sub(cpu, op1, op2, true)
+pub fn cmp(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
+    sub(op1, op2, c, v)
 }
 
 #[inline]
-pub fn cmn(op1: u32, op2: u32) -> (u32, (bool, bool, bool, bool)) {
-    add(cpu, op1, op2, true)
+pub fn cmn(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
+    add(op1, op2, c, v)
 }
 
 // Multiplication
 
-pub fn mul(op1: u32, op2: u32, c: bool, v: bool) -> (u32, (bool, bool, bool, bool)) {
-    let result = op2.wrapping_mul(op1);
-
-    if s {
-        cpu.set_cpsr_bit(N, negative(result));
-        cpu.set_cpsr_bit(Z, zero(result));
-    }
-
-    result
+pub fn mul(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
+    with_flags(op2.wrapping_mul(op1), c, v)
 }
 
 // Shift operations (for thumb)
 
 #[inline]
-pub fn lsl(op1: u32, op2: u32) -> (u32, (bool, bool, bool, bool)) {
-    let result = barrel_shifter::logical_left(op1, op2, false, false).0;
+pub fn lsl(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
+    let (result, c) = barrel_shifter::logical_left(op1, op2, c, false);
 
-    cpu.set_cpsr_bit(N, negative(result));
-    cpu.set_cpsr_bit(Z, zero(result));
-
-    result
+    with_flags(result, c, v)
 }
 
 #[inline]
-pub fn lsr(op1: u32, op2: u32) -> (u32, (bool, bool, bool, bool)) {
-    let result = barrel_shifter::logical_right(op1, op2, false, false).0;
+pub fn lsr(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
+    let (result, c) = barrel_shifter::logical_right(op1, op2, c, false);
 
-    cpu.set_cpsr_bit(N, negative(result));
-    cpu.set_cpsr_bit(Z, zero(result));
-
-    result
+    with_flags(result, c, v)
 }
 
 #[inline]
-pub fn asr(op1: u32, op2: u32) -> (u32, (bool, bool, bool, bool)) {
-    let result = barrel_shifter::arithmetic_right(op1, op2, false, false).0;
+pub fn asr(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
+    let (result, c) = barrel_shifter::arithmetic_right(op1, op2, c, false);
 
-    cpu.set_cpsr_bit(N, negative(result));
-    cpu.set_cpsr_bit(Z, zero(result));
-
-    result
+    with_flags(result, c, v)
 }
 
 #[inline]
-pub fn ror(op1: u32, op2: u32) -> (u32, (bool, bool, bool, bool)) {
-    let result = barrel_shifter::rotate_right(op1, op2, false, false).0;
+pub fn ror(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
+    let (result, c) = barrel_shifter::rotate_right(op1, op2, c, false);
 
-    cpu.set_cpsr_bit(N, negative(result));
-    cpu.set_cpsr_bit(Z, zero(result));
-
-    result
+    with_flags(result, c, v)
 }

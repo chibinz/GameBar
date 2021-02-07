@@ -130,23 +130,23 @@ pub fn rotate_right(operand: u32, amount: u32, carry: bool, i: bool) -> (u32, bo
 #[cfg(test)]
 mod tests {
     use super::*;
-    // #[test]
-    // fn test_shift_register() {
-    //     let mut cpu = CPU::new();
+    #[test]
+    fn test_shift_register() {
+        let mut cpu = crate::CPU::new();
 
-    //     let mut operand2;
+        let mut operand2;
 
-    //     // ASR 32
-    //     operand2 = 0b11111_10_0_0100;
-    //     cpu.r[4] = 0x80000000;
-    //     assert_eq!(shift_register(operand2, false), (0xffffffff, false));
+        // ASR 32
+        operand2 = 0b11111_10_0_0100;
+        cpu.r[4] = 0x80000000;
+        assert_eq!(shift_register(&cpu, operand2), (0xffffffff, false));
 
-    //     // LSR 32
-    //     operand2 = 0b0001_0_01_1_0100;
-    //     cpu.r[1] = 32;
-    //     cpu.r[4] = 0x80000000;
-    //     assert_eq!(shift_register(operand2, false), (0, true));
-    // }
+        // LSR 32
+        operand2 = 0b0001_0_01_1_0100;
+        cpu.r[1] = 32;
+        cpu.r[4] = 0x80000000;
+        assert_eq!(shift_register(&cpu, operand2), (0, true));
+    }
 
     #[test]
     fn test_rotate_immediate() {

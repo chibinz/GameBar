@@ -1,6 +1,5 @@
 use crate::alu;
 use crate::barrel_shifter::{rotate_immediate, shift_register};
-use crate::register::PSRBit::C;
 use crate::CPU;
 use util::*;
 
@@ -31,8 +30,11 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
     };
 
     if s {
-        cpu.set_cpsr_bit(C, carry)
+        cpu.set_carry(carry)
     }
+
+    let (c, v) = alu::get_cv(cpu);
+
 
     // If a register is used to specify shift amount, the value of pc
     // will be 12 head of the address of the currently executed instruction.
@@ -48,25 +50,29 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
     }
 
     // adc, sbc, rsc use old carry flag
-    let result = match opcode {
-        0b0000 => alu::and(cpu, op1, op2, s),
-        0b0001 => alu::eor(cpu, op1, op2, s),
-        0b0010 => alu::sub(cpu, op1, op2, s),
-        0b0011 => alu::rsb(cpu, op1, op2, s),
-        0b0100 => alu::add(cpu, op1, op2, s),
-        0b0101 => alu::adc(cpu, op1, op2, carry, s),
-        0b0110 => alu::sbc(cpu, op1, op2, carry, s),
-        0b0111 => alu::rsc(cpu, op1, op2, carry, s),
-        0b1000 => alu::tst(cpu, op1, op2),
-        0b1001 => alu::teq(cpu, op1, op2),
-        0b1010 => alu::cmp(cpu, op1, op2),
-        0b1011 => alu::cmn(cpu, op1, op2),
-        0b1100 => alu::orr(cpu, op1, op2, s),
-        0b1101 => alu::mov(cpu, op1, op2, s),
-        0b1110 => alu::bic(cpu, op1, op2, s),
-        0b1111 => alu::mvn(cpu, op1, op2, s),
+    let (result, flags) = match opcode {
+        0b0000 => alu::and(op1, op2, c, v),
+        0b0001 => alu::eor(op1, op2, c, v),
+        0b0010 => alu::sub(op1, op2, c, v),
+        0b0011 => alu::rsb(op1, op2, c, v),
+        0b0100 => alu::add(op1, op2, c, v),
+        0b0101 => alu::adc(op1, op2, c, v),
+        0b0110 => alu::sbc(op1, op2, c, v),
+        0b0111 => alu::rsc(op1, op2, c, v),
+        0b1000 => alu::tst(op1, op2, c, v),
+        0b1001 => alu::teq(op1, op2, c, v),
+        0b1010 => alu::cmp(op1, op2, c, v),
+        0b1011 => alu::cmn(op1, op2, c, v),
+        0b1100 => alu::orr(op1, op2, c, v),
+        0b1101 => alu::mov(op1, op2, c, v),
+        0b1110 => alu::bic(op1, op2, c, v),
+        0b1111 => alu::mvn(op1, op2, c, v),
         _ => unreachable!(),
     };
+
+    if s {
+        alu::set_flags(cpu, flags);
+    }
 
     // Write result to register, if needed
     if opcode < 0b1000 || opcode > 0b1011 {
@@ -101,7 +107,7 @@ mod tests {
         cpu.r[4] = 0xffffffff;
         execute(&mut cpu, (false, 0b0000, true, 2, 1, 0b0011_0_00_1_0100));
         assert_eq!(cpu.r[1], 2);
-        assert_eq!(cpu.get_cpsr_bit(C), true);
+        assert_eq!(cpu.carry(), true);
     }
 
     #[test]
@@ -116,7 +122,7 @@ mod tests {
         execute(&mut cpu, (false, 0b0101, true, 0, 4, 0b0010_0_10_1_0001));
 
         assert_eq!(cpu.r[4], cpu.r[0]);
-        assert_eq!(cpu.get_cpsr() >> 28, 0x2); // Carry bit should be set
+        assert_eq!(cpu.carry(), true); // Carry bit should be set
     }
 
     #[test]
@@ -128,9 +134,9 @@ mod tests {
         cpu.r[2] = 0x00000020;
         cpu.set_cpsr(0x10000000, true);
 
-        execute(&mut cpu, (false, 0b0110, true, 0, 4, 0b0010_0_10_1_0001));
+        execute(&mut cpu, (false, 0b0110, false, 0, 4, 0b0010_0_10_1_0001));
 
         assert_eq!(cpu.r[4], cpu.r[0]);
-        assert_eq!(cpu.get_cpsr() >> 28, 0); // Carry bit should be clear
+        assert_eq!(cpu.carry(), false); // Carry bit should be clear
     }
 }

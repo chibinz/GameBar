@@ -24,20 +24,21 @@ fn decode(instr: u16) -> (u32, u32, u32) {
 fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32)) {
     let op1 = cpu.r[rd as usize];
     let op2 = cpu.r[rs as usize];
+    let (c, v) = alu::get_cv(cpu);
 
     match op {
         0b00 => {
-            cpu.r[rd as usize] = alu::add(cpu, op1, op2, false);
+            cpu.r[rd as usize] = alu::add(op1, op2, c, v).0;
 
             if rd == 15 {
                 cpu.flush()
             }
         }
         0b01 => {
-            alu::cmp(cpu, op1, op2);
+            alu::set_flags(cpu, alu::cmp(op1, op2, c, v).1);
         }
         0b10 => {
-            cpu.r[rd as usize] = alu::mov(cpu, op1, op2, false);
+            cpu.r[rd as usize] = alu::mov(op1, op2, c, v).0;
 
             if rd == 15 {
                 cpu.flush()

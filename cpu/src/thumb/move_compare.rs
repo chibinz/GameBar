@@ -20,14 +20,16 @@ fn decode(instr: u16) -> (u32, u32, u32) {
 fn execute(cpu: &mut CPU, (op, rd, offset8): (u32, u32, u32)) {
     let op1 = cpu.r[rd as usize];
     let op2 = offset8;
+    let (c, v) = alu::get_cv(cpu);
 
-    let result = match op {
-        0b00 => alu::mov(cpu, op1, op2, true),
-        0b01 => alu::cmp(cpu, op1, op2),
-        0b10 => alu::add(cpu, op1, op2, true),
-        0b11 => alu::sub(cpu, op1, op2, true),
+    let (result , flags)= match op {
+        0b00 => alu::mov(op1, op2, c, v),
+        0b01 => alu::cmp(op1, op2, c, v),
+        0b10 => alu::add(op1, op2, c, v),
+        0b11 => alu::sub(op1, op2, c, v),
         _ => unreachable!(),
     };
+    alu::set_flags(cpu, flags);
 
     if op != 0b01 {
         cpu.r[rd as usize] = result;
