@@ -22,7 +22,7 @@ fn execute(cpu: &mut CPU, (op, rd, offset8): (u32, u32, u32)) {
     let op2 = offset8;
     let (c, v) = alu::get_cv(cpu);
 
-    let (result , flags)= match op {
+    let (result, flags) = match op {
         0b00 => alu::mov(op1, op2, c, v),
         0b01 => alu::cmp(op1, op2, c, v),
         0b10 => alu::add(op1, op2, c, v),

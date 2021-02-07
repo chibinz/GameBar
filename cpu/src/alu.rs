@@ -104,7 +104,11 @@ pub fn adc(op1: u32, op2: u32, c: bool, _v: bool) -> (u32, Flags) {
     let (opc, carry2) = op2.overflowing_add(c as u32);
     let result = op1.wrapping_add(opc);
 
-    with_flags(result, add_carry(op1, opc) || carry2, add_overflow(op1, opc))
+    with_flags(
+        result,
+        add_carry(op1, opc) || carry2,
+        add_overflow(op1, opc),
+    )
 }
 
 #[inline]

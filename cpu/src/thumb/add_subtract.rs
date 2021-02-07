@@ -21,11 +21,7 @@ fn decode(instruction: u16) -> (bool, bool, u32, u32, u32) {
 #[inline]
 fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32)) {
     let op1 = cpu.r(rs);
-    let op2 = if i {
-        operand2
-    } else {
-        cpu.r(operand2)
-    };
+    let op2 = if i { operand2 } else { cpu.r(operand2) };
 
     let (c, v) = alu::get_cv(cpu);
     let (result, flags) = if op {

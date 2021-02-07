@@ -21,6 +21,10 @@ fn execute(cpu: &mut CPU, (h, offset): (bool, u32)) {
         cpu.set_r(15, cpu.r(14).wrapping_add(offset << 1));
         cpu.set_r(14, temp | 1);
     } else {
-        cpu.set_r(14, cpu.r(15).wrapping_add((sign_extend(offset, 10) as u32) << 12));
+        cpu.set_r(
+            14,
+            cpu.r(15)
+                .wrapping_add((sign_extend(offset, 10) as u32) << 12),
+        );
     }
 }

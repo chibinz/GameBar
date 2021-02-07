@@ -35,7 +35,6 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
 
     let (c, v) = alu::get_cv(cpu);
 
-
     // If a register is used to specify shift amount, the value of pc
     // will be 12 head of the address of the currently executed instruction.
     if !i && operand2.bit(4) {
@@ -78,7 +77,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
     if opcode < 0b1000 || opcode > 0b1011 {
         cpu.set_r(rd, result);
 
-        if rd == 15 && s{
+        if rd == 15 && s {
             // Direct manipulation of pc will result in a pipeline flush.
             // The next instruction will be fetched from memory address
             // at pc. pc is further incremented by 4 to maintain offset 8

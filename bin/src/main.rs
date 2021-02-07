@@ -35,9 +35,7 @@ fn main() {
         console.keypad.set_input(input, &mut console.irqcnt);
         console.step_frame();
         convert_buffer(&console.ppu.buffer, &mut converted);
-        window
-            .update_with_buffer(&converted, 240, 160)
-            .unwrap();
+        window.update_with_buffer(&converted, 240, 160).unwrap();
     }
 
     unreachable!();
