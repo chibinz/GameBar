@@ -18,5 +18,5 @@ fn decode(instruction: u16) -> (bool, u32) {
 fn execute(cpu: &mut CPU, (s, sword7): (bool, u32)) {
     let shifted = sword7 << 2;
     let offset = if s { shifted.wrapping_neg() } else { shifted };
-    cpu.set_r(13, cpu.r(13) + offset);
+    cpu.set_r(13, cpu.r(13).wrapping_add(offset));
 }
