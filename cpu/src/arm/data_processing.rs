@@ -22,19 +22,14 @@ pub fn decode(instr: u32) -> (bool, u32, bool, u32, u32, u32) {
 
 #[inline]
 pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32)) {
-    let oldc = cpu.carry();
+    let v = cpu.get_cpsr_bit(crate::register::PSRBit::V);
+    let oldc = cpu.carry(); // Old carry
     let mut op1 = cpu.r(rn);
-    let (mut op2, carry) = if i {
+    let (mut op2, c) = if i {
         rotate_immediate(operand2, cpu.carry())
     } else {
         shift_register(cpu, operand2)
     };
-
-    if s {
-        cpu.set_carry(carry)
-    }
-
-    let (c, v) = alu::get_cv(cpu);
 
     // If a register is used to specify shift amount, the value of pc
     // will be 12 head of the address of the currently executed instruction.
@@ -70,7 +65,8 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         _ => unreachable!(),
     };
 
-    if s {
+    if s && rd != 15 {
+        cpu.set_carry(c);
         alu::set_flags(cpu, flags);
     }
 
