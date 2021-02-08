@@ -28,6 +28,7 @@ impl IRQController {
 
     #[inline]
     pub fn ack_irf(&mut self, value: u16) {
+        log::info!("{:b}", value);
         self.irf &= !value;
     }
 }

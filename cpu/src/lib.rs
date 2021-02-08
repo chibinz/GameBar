@@ -136,8 +136,9 @@ impl CPU {
         }
 
         log::info!("Hardware interrupt!");
+        log::info!("\n{}", self.trace());
 
-        let lr = self.r[15] - self.inst_width();
+        let lr = self.r[15]; // Not sure!
         let spsr = self.get_cpsr();
 
         self.set_cpsr(register::PSRMode::IRQ as u32, false);

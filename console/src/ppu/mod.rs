@@ -34,20 +34,6 @@ pub struct PPU {
 
     pub layer: Vec<Layer>, // Layer 0 - 3, and an extra layer for backdrop
     pub buffer: Vec<u16>,  // Frame buffer, 240 * 160
-
-    pub state: PPUState,
-}
-
-#[derive(Debug)]
-pub enum PPUState {
-    HDraw,       // HDraw interval
-    HBlank,      // HBlank interval
-    HBlankStart, // Transition to HBlank, (instant)
-    VBlank,      // VBlank interval
-    VBlankStart, // Transition to VBlank,
-    EndOfLine,   // Scanline Complete
-                 // VCount match is not considered as a state because it
-                 // may occur simultaneously with other states
 }
 
 impl PPU {
@@ -59,7 +45,7 @@ impl PPU {
             flip: false,
             sequential: false,
             fblank: false,
-            vcount: 227, // VCount is incremented at beginning of each newline
+            vcount: 0,
 
             palette: vec![0; 0x200],
             vram: vec![0; 0x18000],
@@ -71,7 +57,6 @@ impl PPU {
 
             layer: vec![Layer::new(); 5],
             buffer: vec![0; 240 * 160],
-            state: PPUState::HDraw,
         };
 
         for i in 0..4 {
@@ -86,8 +71,6 @@ impl PPU {
     }
 
     pub fn hdraw(&mut self) {
-        self.dispstat &= !0b11;
-
         if self.fblank {
             self.force_blank()
         }
@@ -110,13 +93,10 @@ impl PPU {
         self.draw_sprites();
 
         self.combine_layers();
-
-        self.state = PPUState::HBlankStart;
     }
 
     pub fn hblank(&mut self, irqcnt: &mut IRQController) {
         self.dispstat |= 0b10;
-        self.state = PPUState::HBlank;
 
         if self.dispstat.bit(4) {
             irqcnt.request(HBlank)
@@ -125,24 +105,20 @@ impl PPU {
 
     pub fn vblank(&mut self, irqcnt: &mut IRQController) {
         self.dispstat |= 0b01;
-        self.state = PPUState::VBlank;
 
-        if self.dispstat.bit(3) && self.vcount == 160 {
+        if self.dispstat.bit(3) {
             irqcnt.request(VBlank)
         }
     }
 
     pub fn increment_vcount(&mut self, irqcnt: &mut IRQController) {
         self.vcount += 1;
+        self.dispstat &= !0b11;
 
         if self.vcount > 227 {
             self.vcount = 0
         }
-        self.state = if self.vcount < 160 {
-            PPUState::HDraw
-        } else {
-            PPUState::VBlankStart
-        };
+
         self.check_vmatch(irqcnt);
     }
 

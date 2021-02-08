@@ -23,7 +23,7 @@ fn main() {
 
     console.memory.load_rom(&args[1]);
     console.memory.load_bios(&"rom/gba_bios.bin".to_string());
-    // console.cpu.backtrace_on_panic();
+    console.cpu.backtrace_on_panic();
 
     let mut window = init_window();
     let mut converted = vec![0; console.ppu.buffer.len()];

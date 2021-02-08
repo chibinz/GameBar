@@ -1,5 +1,5 @@
 mod dma;
-mod event;
+// mod event;
 mod interrupt;
 mod keypad;
 mod memory;
@@ -56,7 +56,6 @@ impl Console {
         let irqcnt = &mut self.irqcnt;
 
         for _ in 0..160 {
-            ppu.increment_vcount(irqcnt);
             ppu.hdraw();
 
             for _ in 0..960 {
@@ -69,17 +68,18 @@ impl Console {
             for _ in 0..272 {
                 Self::step_dma_cpu_timer(dma, cpu, memory, timers, irqcnt);
             }
+            ppu.increment_vcount(irqcnt);
         }
 
         dma.request_vblank();
+        ppu.vblank(irqcnt);
+        ppu.dispstat &= !0b10;
 
         for _ in 0..68 {
-            ppu.increment_vcount(irqcnt);
-            ppu.vblank(irqcnt);
-
             for _ in 0..1272 {
                 Self::step_dma_cpu_timer(dma, cpu, memory, timers, irqcnt);
             }
+            ppu.increment_vcount(irqcnt);
         }
     }
 
@@ -93,9 +93,9 @@ impl Console {
         let t = if dma.is_active() {
             dma.step(irqcnt, memory)
         } else {
+            irqcnt.check(cpu);
             cpu.step(memory)
         };
-        irqcnt.check(cpu);
 
         timers.run(t, irqcnt);
     }
