@@ -22,6 +22,7 @@ pub fn decode(instr: u32) -> (bool, u32, bool, u32, u32, u32) {
 
 #[inline]
 pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32)) {
+    let oldc = cpu.carry();
     let mut op1 = cpu.r(rn);
     let (mut op2, carry) = if i {
         rotate_immediate(operand2, cpu.carry())
@@ -55,9 +56,9 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         0b0010 => alu::sub(op1, op2, c, v),
         0b0011 => alu::rsb(op1, op2, c, v),
         0b0100 => alu::add(op1, op2, c, v),
-        0b0101 => alu::adc(op1, op2, c, v),
-        0b0110 => alu::sbc(op1, op2, c, v),
-        0b0111 => alu::rsc(op1, op2, c, v),
+        0b0101 => alu::adc(op1, op2, oldc, v),
+        0b0110 => alu::sbc(op1, op2, oldc, v),
+        0b0111 => alu::rsc(op1, op2, oldc, v),
         0b1000 => alu::tst(op1, op2, c, v),
         0b1001 => alu::teq(op1, op2, c, v),
         0b1010 => alu::cmp(op1, op2, c, v),

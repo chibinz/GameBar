@@ -48,7 +48,7 @@ impl CPU {
             remaining: 0,
         };
 
-        cpu.r[15] = 0x00000004;
+        cpu.r[15] = 0x08000004;
         cpu.r[13] = 0x03007f00;
 
         cpu.bank[5] = 0x03007f00; // User SP
@@ -72,6 +72,10 @@ impl CPU {
 
         // At least one sequential cycle for any instruction
         self.cycles = 1;
+
+        if self.r[15] == 0x08001ec0 {
+            return 0;
+        }
 
         if self.in_thumb_mode() {
             thumb::step(self, bus);
