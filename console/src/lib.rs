@@ -73,7 +73,6 @@ impl Console {
 
         dma.request_vblank();
         ppu.vblank(irqcnt);
-        ppu.dispstat &= !0b10;
 
         for _ in 0..68 {
             for _ in 0..1272 {
@@ -81,6 +80,8 @@ impl Console {
             }
             ppu.increment_vcount(irqcnt);
         }
+
+        ppu.rewind();
     }
 
     pub fn step_dma_cpu_timer(

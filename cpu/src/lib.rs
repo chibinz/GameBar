@@ -73,10 +73,6 @@ impl CPU {
         // At least one sequential cycle for any instruction
         self.cycles = 1;
 
-        if self.r[15] == 0x08001ec0 {
-            return 0;
-        }
-
         if self.in_thumb_mode() {
             thumb::step(self, bus);
         } else {

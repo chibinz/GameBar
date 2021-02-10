@@ -113,11 +113,7 @@ impl PPU {
 
     pub fn increment_vcount(&mut self, irqcnt: &mut IRQController) {
         self.vcount += 1;
-        self.dispstat &= !0b11;
-
-        if self.vcount > 227 {
-            self.vcount = 0
-        }
+        self.dispstat &= !1;
 
         self.check_vmatch(irqcnt);
     }
@@ -126,6 +122,12 @@ impl PPU {
         if self.dispstat.bit(5) && self.vcount == self.dispstat >> 8 {
             irqcnt.request(VCount)
         }
+    }
+
+    pub fn rewind(&mut self) {
+        assert_eq!(self.vcount, 228);
+        self.dispstat &= !0b11;
+        self.vcount = 0;
     }
 
     pub fn combine_layers(&mut self) {
