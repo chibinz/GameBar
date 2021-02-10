@@ -84,6 +84,7 @@ impl Console {
         ppu.rewind();
     }
 
+    #[inline]
     pub fn step_dma_cpu_timer(
         dma: &mut DMA,
         cpu: &mut CPU,

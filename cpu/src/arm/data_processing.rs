@@ -72,14 +72,19 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
 
     // Write result to register, if needed
     if opcode < 0b1000 || opcode > 0b1011 {
-        cpu.set_r(rd, result);
+        cpu.r[rd as usize] = result;
 
-        if rd == 15 && s {
-            // Direct manipulation of pc will result in a pipeline flush.
-            // The next instruction will be fetched from memory address
-            // at pc. pc is further incremented by 4 to maintain offset 8
-            // from the currently executed instruction.
-            cpu.restore_cpsr();
+        // Direct manipulation of pc will result in a pipeline flush.
+        // The next instruction will be fetched from memory address
+        // at pc. pc is further incremented by 4 to maintain offset 8
+        // from the currently executed instruction.
+        if rd == 15 {
+            if s {
+                cpu.restore_cpsr();
+            }
+            // Pipeline flush happens after cpsr mode change
+            // Add 2 to r[15] in thumb mode, 4 in arm mode
+            cpu.flush();
         }
     }
 }

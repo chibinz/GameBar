@@ -125,9 +125,8 @@ impl CPU {
         self.set_cpsr_bit(I, true);
         self.set_spsr(spsr, false);
 
-        self.r[14] = lr;
-        self.r[15] = 0x08;
-        self.flush();
+        self.set_r(14, lr);
+        self.set_r(15, 0x8);
     }
 
     pub fn hardware_interrupt(&mut self) {
@@ -138,16 +137,15 @@ impl CPU {
         log::info!("Hardware interrupt!");
         log::info!("\n{}", self.trace());
 
-        let lr = self.r[15]; // Not sure!
+        let lr = self.r[15] + if self.in_thumb_mode() {2} else {0}; // Not sure!
         let spsr = self.get_cpsr();
 
         self.set_cpsr(register::PSRMode::IRQ as u32, false);
         self.set_cpsr_bit(I, true);
         self.set_spsr(spsr, false);
 
-        self.r[14] = lr;
-        self.r[15] = 0x18;
-        self.flush();
+        self.set_r(14, lr);
+        self.set_r(15, 0x18);
     }
 
     #[inline]
