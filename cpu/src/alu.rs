@@ -107,7 +107,7 @@ pub fn adc(op1: u32, op2: u32, c: bool, _v: bool) -> (u32, Flags) {
     with_flags(
         result,
         add_carry(op1, opc) || carry2,
-        add_overflow(op1, opc),
+        ((!op1 ^ op2) & (op1 ^ result)).bit(31),
     )
 }
 
