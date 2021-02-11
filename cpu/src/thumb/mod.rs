@@ -27,7 +27,8 @@ use util::*;
 pub fn step(cpu: &mut CPU, bus: &mut impl Bus) {
     fetch(cpu, bus);
 
-    log::trace!("\n{}{}", cpu.trace(), disassemble(cpu.ir as u16));
+    log::trace!("{:?}", cpu);
+
     push_cpu(cpu.clone());
 
     increment_pc(cpu);

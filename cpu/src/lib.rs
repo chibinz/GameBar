@@ -115,6 +115,7 @@ impl CPU {
 
     pub fn software_interrupt(&mut self) {
         log::info!("Software interrupt!");
+        log::info!("{:#?}", self);
 
         let lr = self.r[15] - self.inst_width();
         self.interrupt(PSRMode::Supervisor, lr, 0x8);
@@ -126,7 +127,7 @@ impl CPU {
         }
 
         log::info!("Hardware interrupt!");
-        log::info!("\n{}", self.trace());
+        log::info!("{:#?}", self);
 
         let lr = self.r[15] + if self.in_thumb_mode() { 2 } else { 0 };
         self.interrupt(PSRMode::IRQ, lr, 0x18);
@@ -146,15 +147,41 @@ impl CPU {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn trace(&self) -> String {
-        format!(
+    pub fn disassemble(instr: u32, thumb: bool) -> String {
+        if thumb {
+            thumb::disassemble(instr as u16)
+        } else {
+            arm::disassemble(instr)
+        }
+    }
+
+    pub fn backtrace_on_panic(&self) {
+        std::panic::set_hook(Box::new(|_| Self::panic_hook()));
+    }
+
+    fn panic_hook() {
+        unsafe {
+            for i in 0..LEN {
+                let c = &TRACE[(INDEX + i) % LEN];
+                log::debug!("{:?}", c,);
+            }
+        }
+    }
+}
+
+use std::fmt::*;
+impl Debug for CPU {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(
+            f,
             concat!(
+                "\n",
                 "R0  = {:08x} R1  = {:08x} R2  = {:08x} R3  = {:08x}\n",
                 "R4  = {:08x} R5  = {:08x} R6  = {:08x} R7  = {:08x}\n",
                 "R8  = {:08x} R9  = {:08x} R10 = {:08x} R11 = {:08x}\n",
                 "R12 = {:08x} R13 = {:08x} R14 = {:08x} R15 = {:08x}\n",
-                "PSR = {:08x} [{}{}{}{}{}{}{}]\n"
+                "PSR = {:?}\n",
+                "IR  = {:08x} {}\n"
             ),
             self.r[0],
             self.r[1],
@@ -172,40 +199,10 @@ impl CPU {
             self.r[13],
             self.r[14],
             self.r[15],
-            self.get_cpsr(),
-            if self.cpsr.n { "N" } else { "." },
-            if self.cpsr.z { "Z" } else { "." },
-            if self.cpsr.c { "C" } else { "." },
-            if self.cpsr.v { "V" } else { "." },
-            if self.cpsr.i { "I" } else { "." },
-            if self.cpsr.f { "F" } else { "." },
-            if self.cpsr.t { "T" } else { "." },
+            self.cpsr,
+            self.ir,
+            Self::disassemble(self.ir, self.in_thumb_mode())
         )
-    }
-
-    pub fn disassemble(instr: u32, thumb: bool) -> String {
-        if thumb {
-            thumb::disassemble(instr as u16)
-        } else {
-            arm::disassemble(instr)
-        }
-    }
-
-    pub fn backtrace_on_panic(&self) {
-        std::panic::set_hook(Box::new(|_| Self::panic_hook()));
-    }
-
-    fn panic_hook() {
-        unsafe {
-            for i in 0..LEN {
-                let c = &TRACE[(INDEX + i) % LEN];
-                println!(
-                    "{}{}",
-                    c.trace(),
-                    Self::disassemble(c.ir, c.in_thumb_mode())
-                );
-            }
-        }
     }
 }
 
@@ -217,16 +214,5 @@ fn push_cpu(c: CPU) {
         TRACE[INDEX] = c;
         INDEX += 1;
         INDEX %= LEN;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_trace() {
-        let cpu = CPU::new();
-        println!("{}", cpu.trace());
     }
 }

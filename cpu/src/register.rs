@@ -1,3 +1,4 @@
+use std::fmt::*;
 use util::*;
 use PSRMode::*;
 
@@ -67,8 +68,27 @@ impl From<CPSR> for u32 {
     }
 }
 
+impl Debug for CPSR {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let raw: u32 = self.clone().into();
+        write!(
+            f,
+            "{:08x} [{}{}{}{}{}{}{}] {:?}",
+            raw,
+            if self.n { "N" } else { "." },
+            if self.z { "Z" } else { "." },
+            if self.c { "C" } else { "." },
+            if self.v { "V" } else { "." },
+            if self.i { "I" } else { "." },
+            if self.f { "F" } else { "." },
+            if self.t { "T" } else { "." },
+            self.mode,
+        )
+    }
+}
+
 /// Operating Mode
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum PSRMode {
     User = 0b10000,
     FIQ = 0b10001,
