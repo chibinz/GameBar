@@ -3,16 +3,15 @@ mod dma;
 mod interrupt;
 mod keypad;
 mod memory;
-mod ppu;
 mod timer;
 
-use crate::dma::DMA;
-use crate::interrupt::IRQController;
-use crate::keypad::Keypad;
-use crate::memory::Memory;
-use crate::ppu::PPU;
-use crate::timer::Timers;
 use cpu::CPU;
+use dma::DMA;
+use interrupt::IRQController;
+use keypad::Keypad;
+use memory::Memory;
+use ppu::PPU;
+use timer::Timers;
 
 pub struct Console {
     pub cpu: CPU,
@@ -47,6 +46,7 @@ impl Console {
 
     /// Render a frame
     pub fn step_frame(&mut self) {
+        use interrupt::Interrupt::*;
         // self.schedule();
         let cpu = &mut self.cpu;
         let ppu = &mut self.ppu;
@@ -63,22 +63,32 @@ impl Console {
             }
 
             dma.request_hblank();
-            ppu.hblank(irqcnt);
+            if ppu.hblank() {
+                irqcnt.request(HBlank);
+            }
 
             for _ in 0..272 {
                 Self::step_dma_cpu_timer(dma, cpu, memory, timers, irqcnt);
             }
-            ppu.increment_vcount(irqcnt);
+
+            if ppu.increment_vcount() {
+                irqcnt.request(VCount);
+            }
         }
 
         dma.request_vblank();
-        ppu.vblank(irqcnt);
+        if ppu.vblank() {
+            irqcnt.request(VBlank);
+        }
 
         for _ in 0..68 {
             for _ in 0..1272 {
                 Self::step_dma_cpu_timer(dma, cpu, memory, timers, irqcnt);
             }
-            ppu.increment_vcount(irqcnt);
+
+            if ppu.increment_vcount() {
+                irqcnt.request(VCount);
+            }
         }
 
         ppu.rewind();

@@ -1,5 +1,5 @@
-use crate::ppu::layer::Layer;
-use crate::ppu::TRANSPARENT;
+use crate::layer::Layer;
+use crate::TRANSPARENT;
 use std::marker::Copy;
 use util::*;
 
@@ -85,5 +85,55 @@ impl Window {
         for c in self.cnt.iter_mut() {
             *c = 0xff;
         }
+    }
+}
+
+impl Window {
+    pub fn get_win0h(&self) -> u16 {
+        self.winh[0]
+    }
+
+    pub fn get_win1h(&self) -> u16 {
+        self.winh[1]
+    }
+
+    pub fn get_win0v(&self) -> u16 {
+        self.winv[0]
+    }
+
+    pub fn get_win1v(&self) -> u16 {
+        self.winv[1]
+    }
+
+    pub fn get_winin(&self) -> u16 {
+        self.winin
+    }
+
+    pub fn get_winout(&self) -> u16 {
+        self.winout
+    }
+
+    pub fn set_win0h(&mut self, value: u16) {
+        self.winh[0] = value;
+    }
+
+    pub fn set_win1h(&mut self, value: u16) {
+        self.winh[1] = value;
+    }
+
+    pub fn set_win0v(&mut self, value: u16) {
+        self.winv[0] = value;
+    }
+
+    pub fn set_win1v(&mut self, value: u16) {
+        self.winv[1] = value;
+    }
+
+    pub fn set_winin(&mut self, value: u16) {
+        self.winin = value;
+    }
+
+    pub fn set_winout(&mut self, value: u16) {
+        self.winout = value;
     }
 }

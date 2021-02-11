@@ -3,6 +3,7 @@
 members = [
     "bin",
     "cpu",
+    "ppu",
     "console",
     "util",
 ]

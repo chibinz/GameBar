@@ -1,10 +1,9 @@
-pub mod background;
-pub mod layer;
-pub mod sprite;
-pub mod window;
+mod background;
+mod io;
+mod layer;
+mod sprite;
+mod window;
 
-use crate::interrupt::IRQController;
-use crate::interrupt::Interrupt::*;
 use util::*;
 
 use background::Background;
@@ -95,33 +94,27 @@ impl PPU {
         self.combine_layers();
     }
 
-    pub fn hblank(&mut self, irqcnt: &mut IRQController) {
+    pub fn hblank(&mut self) -> bool {
         self.dispstat |= 0b10;
 
-        if self.dispstat.bit(4) {
-            irqcnt.request(HBlank)
-        }
+        self.dispstat.bit(4)
     }
 
-    pub fn vblank(&mut self, irqcnt: &mut IRQController) {
+    pub fn vblank(&mut self) -> bool {
         self.dispstat |= 0b01;
 
-        if self.dispstat.bit(3) {
-            irqcnt.request(VBlank)
-        }
+        self.dispstat.bit(3)
     }
 
-    pub fn increment_vcount(&mut self, irqcnt: &mut IRQController) {
+    pub fn increment_vcount(&mut self) -> bool {
         self.vcount += 1;
         self.dispstat &= !1;
 
-        self.check_vmatch(irqcnt);
+        self.check_vmatch()
     }
 
-    pub fn check_vmatch(&mut self, irqcnt: &mut IRQController) {
-        if self.dispstat.bit(5) && self.vcount == self.dispstat >> 8 {
-            irqcnt.request(VCount)
-        }
+    pub fn check_vmatch(&mut self) -> bool {
+        self.dispstat.bit(5) && self.vcount == self.dispstat >> 8
     }
 
     pub fn rewind(&mut self) {

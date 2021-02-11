@@ -1,4 +1,6 @@
 //! Helper functions for bitwise operations and extracting bitfields
+use std::convert::TryInto;
+
 pub use log::*;
 
 pub trait BitField {
@@ -55,6 +57,16 @@ pub fn sign_extend(a: u32, s: u32) -> i32 {
     } else {
         a as i32
     }
+}
+
+#[inline]
+pub fn into16(a: &[u8]) -> u16 {
+    u16::from_le_bytes(a[0..2].try_into().unwrap())
+}
+
+#[inline]
+pub fn into32(a: &[u8]) -> u32 {
+    u32::from_le_bytes(a[0..4].try_into().unwrap())
 }
 
 #[cfg(test)]

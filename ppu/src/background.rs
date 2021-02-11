@@ -66,6 +66,68 @@ impl Background {
     }
 }
 
+impl Background {
+    pub fn get_control(&self) -> u16 {
+        self.bgcnt
+    }
+
+    pub fn set_control(&mut self, value: u16) {
+        self.bgcnt = value;
+        self.priority = value.bits(1, 0);
+        self.tile_b = value.bits(3, 2);
+        self.mosaic_f = value.bit(6);
+        self.palette_f = value.bit(7);
+        self.map_b = value.bits(12, 8);
+        self.wrap_f = value.bit(13);
+        self.size_r = value.bits(15, 14);
+
+        self.width = DIMENSION[self.affine_f as usize][self.size_r as usize].0;
+        self.height = DIMENSION[self.affine_f as usize][self.size_r as usize].1;
+    }
+
+    pub fn set_hofs(&mut self, value: u16) {
+        self.hscroll = value;
+    }
+
+    pub fn set_vofs(&mut self, value: u16) {
+        self.vscroll = value;
+    }
+
+    pub fn set_pa(&mut self, value: u16) {
+        self.matrix.0 = value as i16 as i32;
+    }
+
+    pub fn set_pb(&mut self, value: u16) {
+        self.matrix.1 = value as i16 as i32;
+    }
+
+    pub fn set_pc(&mut self, value: u16) {
+        self.matrix.2 = value as i16 as i32;
+    }
+
+    pub fn set_pd(&mut self, value: u16) {
+        self.matrix.3 = value as i16 as i32;
+    }
+
+    pub fn set_x_l(&mut self, value: u16) {
+        self.coord.0 = ((self.coord.0 as u32) & 0xffff0000) as i32;
+        self.coord.0 |= value as i32;
+    }
+
+    pub fn set_x_h(&mut self, value: u16) {
+        self.coord.0 &= 0x0000ffff;
+        self.coord.0 |= ((value as u32) << 16) as i32;
+    }
+    pub fn set_y_l(&mut self, value: u16) {
+        self.coord.1 = ((self.coord.0 as u32) & 0xffff0000) as i32;
+        self.coord.1 |= value as i32;
+    }
+    pub fn set_y_h(&mut self, value: u16) {
+        self.coord.1 &= 0x0000ffff;
+        self.coord.1 |= ((value as u32) << 16) as i32;
+    }
+}
+
 impl PPU {
     pub fn draw_text_background(&mut self, index: usize) {
         let bg = &self.background[index];

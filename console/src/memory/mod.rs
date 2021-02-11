@@ -4,7 +4,6 @@ mod param;
 mod timing;
 mod vram;
 
-use std::convert::TryInto;
 use std::fs::File;
 use std::io::Read;
 
@@ -86,7 +85,7 @@ impl Memory {
     pub fn load16(&self, address: u32) -> u16 {
         let offset = Self::mirror(address) & !0b1;
 
-        let ldh = |mem: &[u8]| Self::into16(&mem[offset..offset + 2]);
+        let ldh = |mem: &[u8]| util::into16(&mem[offset..offset + 2]);
 
         match Self::region(address) {
             0x00 => ldh(&self.bios),
@@ -109,7 +108,7 @@ impl Memory {
     pub fn load32(&self, address: u32) -> u32 {
         let offset = Self::mirror(address) & !0b11;
 
-        let ld = |mem: &[u8]| Self::into32(&mem[offset..offset + 4]);
+        let ld = |mem: &[u8]| util::into32(&mem[offset..offset + 4]);
 
         match Self::region(address) {
             0x00 => ld(&self.bios),
@@ -249,15 +248,5 @@ impl Memory {
         };
 
         a as usize
-    }
-
-    #[inline]
-    pub fn into16(a: &[u8]) -> u16 {
-        u16::from_le_bytes(a[0..2].try_into().unwrap())
-    }
-
-    #[inline]
-    pub fn into32(a: &[u8]) -> u32 {
-        u32::from_le_bytes(a[0..4].try_into().unwrap())
     }
 }

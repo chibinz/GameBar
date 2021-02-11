@@ -1,7 +1,6 @@
 mod dma;
 mod interrupt;
 mod keypad;
-mod ppu;
 mod timer;
 
 use super::Memory;

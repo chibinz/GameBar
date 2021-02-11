@@ -1,4 +1,5 @@
-use super::PPU;
+use crate::PPU;
+use util::*;
 
 /// Sprite dimension in pixels
 pub static DIMENSION: [[(u32, u32); 4]; 3] = [
@@ -102,6 +103,41 @@ impl Sprite {
         }
 
         x < 240 && x + w >= 0 && y <= v as i32 && y + h > v as i32
+    }
+}
+
+impl Sprite {
+    #[inline]
+    pub fn set_attr0(&mut self, value: u16) {
+        self.attr[0] = value;
+
+        self.ycoord = value.bits(7, 0);
+        self.affine_f = value.bit(8);
+        self.double_f = value.bit(9);
+        self.mode = value.bits(11, 10);
+        self.mosaic_f = value.bit(12);
+        self.palette_f = value.bit(13);
+        self.shape = value.bits(15, 14);
+    }
+
+    #[inline]
+    pub fn set_attr1(&mut self, value: u16) {
+        self.attr[1] = value;
+
+        self.xcoord = value.bits(8, 0);
+        self.hflip = value.bit(12);
+        self.vflip = value.bit(13);
+        self.affine_i = value.bits(13, 9);
+        self.size = value.bits(15, 14);
+    }
+
+    #[inline]
+    pub fn set_attr2(&mut self, value: u16) {
+        self.attr[2] = value;
+
+        self.tile_n = value.bits(9, 0);
+        self.priority = value.bits(11, 10);
+        self.palette_n = value.bits(15, 12);
     }
 }
 
