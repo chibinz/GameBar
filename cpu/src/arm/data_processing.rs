@@ -22,11 +22,11 @@ pub fn decode(instr: u32) -> (bool, u32, bool, u32, u32, u32) {
 
 #[inline]
 pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32)) {
-    let v = cpu.get_cpsr_bit(crate::register::PSRBit::V);
-    let oldc = cpu.carry(); // Old carry
+    let v = cpu.cpsr.v;
+    let oldc = cpu.cpsr.c; // Old carry
     let mut op1 = cpu.r(rn);
     let (mut op2, c) = if i {
-        rotate_immediate(operand2, cpu.carry())
+        rotate_immediate(operand2, oldc)
     } else {
         shift_register(cpu, operand2)
     };
@@ -66,8 +66,8 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
     };
 
     if s && rd != 15 {
-        cpu.set_carry(c);
-        alu::set_flags(cpu, flags);
+        cpu.cpsr.c = c;
+        cpu.set_flags(flags);
     }
 
     // Write result to register, if needed
@@ -104,7 +104,7 @@ mod tests {
         cpu.set_r(4, 0xffffffff);
         execute(&mut cpu, (false, 0b0000, true, 2, 1, 0b0011_0_00_1_0100));
         assert_eq!(cpu.r(1), 2);
-        assert_eq!(cpu.carry(), true);
+        assert_eq!(cpu.cpsr.c, true);
     }
 
     #[test]
@@ -119,7 +119,7 @@ mod tests {
         execute(&mut cpu, (false, 0b0101, true, 0, 4, 0b0010_0_10_1_0001));
 
         assert_eq!(cpu.r(4), cpu.r(0));
-        assert_eq!(cpu.carry(), true); // Carry bit should be set
+        assert_eq!(cpu.cpsr.c, true); // Carry bit should be set
     }
 
     #[test]
@@ -134,6 +134,6 @@ mod tests {
         execute(&mut cpu, (false, 0b0110, false, 0, 4, 0b0010_0_10_1_0001));
 
         assert_eq!(cpu.r(4), cpu.r(0));
-        assert_eq!(cpu.carry(), false); // Carry bit should be clear
+        assert_eq!(cpu.cpsr.c, false); // Carry bit should be clear
     }
 }

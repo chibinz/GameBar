@@ -19,7 +19,7 @@ pub fn interpret(cpu: &mut CPU, instr: u32) {
         let operand2 = instr.bits(11, 0);
 
         let op = if i {
-            rotate_immediate(operand2, cpu.carry()).0
+            rotate_immediate(operand2, cpu.cpsr.c).0
         } else {
             debug_assert_eq!(operand2.bits(11, 4), 0);
             cpu.r(operand2.bits(3, 0))

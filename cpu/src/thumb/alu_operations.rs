@@ -20,7 +20,8 @@ fn decode(instruction: u16) -> (u32, u32, u32) {
 fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32)) {
     let op1 = cpu.r(rd);
     let op2 = cpu.r(rs);
-    let (c, v) = alu::get_cv(cpu);
+    let c = cpu.cpsr.c;
+    let v = cpu.cpsr.v;
 
     let (result, flags) = match op {
         0b0000 => alu::and(op1, op2, c, v),
@@ -41,7 +42,7 @@ fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32)) {
         0b1111 => alu::mvn(op1, op2, c, v),
         _ => unreachable!(),
     };
-    alu::set_flags(cpu, flags);
+    cpu.set_flags(flags);
 
     if op != 0b1000 && op != 0b1010 && op != 0b1011 {
         cpu.set_r(rd, result);
@@ -51,7 +52,7 @@ fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32)) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::register::PSRBit::*;
+
 
     #[test]
     fn alu_operations() {
@@ -62,18 +63,18 @@ mod tests {
         cpu.set_r(1, 0x80000000);
         execute(&mut cpu, (0b1101, 0, 1));
         assert_eq!(cpu.r(1), 0);
-        assert_eq!(cpu.get_cpsr_bit(Z), true);
+        assert_eq!(cpu.cpsr.z, true);
 
         // NEG 0xf0f0f0f0
         cpu.set_r(1, 0xf0f0f0f0);
         execute(&mut cpu, (0b1001, 1, 1));
         assert_eq!(cpu.r(1), 0x0f0f0f0f + 1);
-        assert_eq!(cpu.get_cpsr_bit(Z), false);
+        assert_eq!(cpu.cpsr.z, false);
 
         // BIC 0x0f0f0f0f, 0xffffffff
         cpu.set_r(0, 0xffffffff);
         execute(&mut cpu, (0b1110, 0, 1));
         assert_eq!(cpu.r(1), 0);
-        assert_eq!(cpu.get_cpsr_bit(Z), true);
+        assert_eq!(cpu.cpsr.z, true);
     }
 }

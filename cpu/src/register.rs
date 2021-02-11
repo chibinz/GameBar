@@ -1,23 +1,77 @@
 use crate::CPU;
 
-use PSRBit::*;
+use util::*;
+
 use PSRMode::*;
 
-/// Bits 31 - 28, 7 - 5 of Current Program Status Register
-#[allow(dead_code)]
-pub enum PSRBit {
-    N = 31, // Sign Flag
-    Z = 30, // Zero Flag
-    C = 29, // Carry Flag
-    V = 28, // Overflow Flag
-    // Bits 27 - 8 are reserved
-    I = 7, // IRQ Disable
-    F = 6, // FIQ Disable
-    T = 5, // State Bit, Thumb/Arm
-           // Bits 4 - 0 are mode bits
+#[derive(Clone, Copy)]
+pub struct CPSR {
+    pub n: bool,
+    pub z: bool,
+    pub c: bool,
+    pub v: bool,
+    pub i: bool,
+    pub f: bool,
+    pub t: bool,
+    pub mode: PSRMode,
+}
+
+impl CPSR {
+    pub const fn new() -> Self {
+        Self {
+            n: false,
+            z: false,
+            c: false,
+            v: false,
+            i: true,
+            f: true,
+            t: false,
+            mode: Supervisor,
+        }
+    }
+}
+
+impl From<u32> for CPSR {
+    fn from(word: u32) -> Self {
+        Self {
+            n: word.bit(31),
+            z: word.bit(30),
+            c: word.bit(29),
+            v: word.bit(28),
+            i: word.bit(7),
+            f: word.bit(6),
+            t: word.bit(5),
+            mode: PSRMode::from(word.bits(4, 0)),
+        }
+    }
+}
+
+impl From<CPSR> for u32 {
+    fn from(
+        CPSR {
+            n,
+            z,
+            c,
+            v,
+            i,
+            f,
+            t,
+            mode,
+        }: CPSR,
+    ) -> Self {
+        (n as u32) << 31
+            | (z as u32) << 30
+            | (c as u32) << 29
+            | (v as u32) << 28
+            | (i as u32) << 7
+            | (f as u32) << 6
+            | (t as u32) << 5
+            | (mode as u32)
+    }
 }
 
 /// Operating Mode
+#[derive(Clone, Copy)]
 pub enum PSRMode {
     User = 0b10000,
     FIQ = 0b10001,
@@ -28,10 +82,31 @@ pub enum PSRMode {
     System = 0b11111,
 }
 
+impl From<u32> for PSRMode {
+    fn from(mbits: u32) -> Self {
+        match mbits {
+            0b10000 => User,
+            0b10001 => FIQ,
+            0b10010 => IRQ,
+            0b10011 => Supervisor,
+            0b10111 => Abort,
+            0b11011 => Undefined,
+            0b11111 => System,
+            _ => panic!("Invalid PSR Mode: {:05b}!", mbits),
+        }
+    }
+}
+
+impl From<PSRMode> for u32 {
+    fn from(mode: PSRMode) -> Self {
+        mode as u32
+    }
+}
+
 impl CPU {
     #[inline]
     pub fn get_cpsr(&self) -> u32 {
-        self.cpsr
+        self.cpsr.into()
     }
 
     /// Set defined bits of CPSR.
@@ -41,36 +116,34 @@ impl CPU {
     pub fn set_cpsr(&mut self, r: u32, f: bool) {
         if f {
             // Set condition code flags only
-            let mask = 0xf0000000;
-            self.cpsr &= !mask;
-            self.cpsr |= r & mask;
+            self.cpsr = CPSR {
+                n: r.bit(31),
+                z: r.bit(30),
+                c: r.bit(29),
+                v: r.bit(28),
+                ..self.cpsr
+            };
         } else {
             // Save state and switch mode
-            let mode = CPU::get_mode(r & 0b11111);
-            self.save_state();
-            self.switch_bank(mode);
+            let psr: CPSR = r.into();
+            self.switch_mode(psr.mode);
 
             // Change control bits
-            self.cpsr = r;
+            self.cpsr = psr;
         };
+    }
+
+    #[inline]
+    pub fn switch_mode(&mut self, mode: PSRMode) {
+        self.save_state();
+        self.switch_bank(mode);
+
+        self.cpsr = (mode as u32).into();
     }
 
     #[inline]
     pub fn restore_cpsr(&mut self) {
         self.set_cpsr(self.spsr, false);
-    }
-
-    #[inline]
-    pub fn get_cpsr_bit(&self, bit: PSRBit) -> bool {
-        self.cpsr >> (bit as u32) & 1 == 1
-    }
-
-    #[inline]
-    pub fn set_cpsr_bit(&mut self, bit: PSRBit, t: bool) {
-        let b = bit as u32;
-
-        self.cpsr &= !(1 << b);
-        self.cpsr |= (t as u32) << b;
     }
 
     /// Get SPSR of current mode
@@ -91,23 +164,8 @@ impl CPU {
     }
 
     #[inline]
-    pub fn get_mode(mbits: u32) -> PSRMode {
-        match mbits {
-            0b10000 => User,
-            0b10001 => FIQ,
-            0b10010 => IRQ,
-            0b10011 => Supervisor,
-            0b10111 => Abort,
-            0b11011 => Undefined,
-            0b11111 => System,
-            _ => panic!("Invalid PSR Mode\n"),
-        }
-    }
-
     pub fn save_state(&mut self) {
-        let mode = CPU::get_mode(self.cpsr & 0b11111);
-
-        match mode {
+        match self.cpsr.mode {
             User => {
                 self.bank[5] = self.r[13];
                 self.bank[6] = self.r[14]
@@ -143,7 +201,7 @@ impl CPU {
             }
         };
 
-        if let FIQ = mode {
+        if let FIQ = self.cpsr.mode {
             for i in 0..5 {
                 self.bank[i + 7] = self.r[i + 8];
             }
@@ -204,21 +262,22 @@ impl CPU {
 
     /// Return true if condition is satified
     pub fn check_condition(&self, condition: u32) -> bool {
+        let cpsr = self.cpsr;
         match condition {
-            0b0000 => self.get_cpsr_bit(Z),                          // EQ
-            0b0001 => !self.get_cpsr_bit(Z),                         // NE
-            0b0010 => self.get_cpsr_bit(C),                          // CS
-            0b0011 => !self.get_cpsr_bit(C),                         // CC
-            0b0100 => self.get_cpsr_bit(N),                          // MI
-            0b0101 => !self.get_cpsr_bit(N),                         // PL
-            0b0110 => self.get_cpsr_bit(V),                          // VS
-            0b0111 => !self.get_cpsr_bit(V),                         // VC
-            0b1000 => self.get_cpsr_bit(C) && !self.get_cpsr_bit(Z), // HI
-            0b1001 => !self.get_cpsr_bit(C) || self.get_cpsr_bit(Z), // LS
-            0b1010 => self.get_cpsr_bit(N) == self.get_cpsr_bit(V),  // GE
-            0b1011 => self.get_cpsr_bit(N) != self.get_cpsr_bit(V),  // LT
-            0b1100 => !self.get_cpsr_bit(Z) && (self.get_cpsr_bit(N) == self.get_cpsr_bit(V)), // GT
-            0b1101 => self.get_cpsr_bit(Z) || (self.get_cpsr_bit(N) != self.get_cpsr_bit(V)), // LE
+            0b0000 => cpsr.z,                        // EQ
+            0b0001 => !cpsr.z,                       // NE
+            0b0010 => cpsr.c,                        // CS
+            0b0011 => !cpsr.c,                       // CC
+            0b0100 => cpsr.n,                        // MI
+            0b0101 => !cpsr.n,                       // PL
+            0b0110 => cpsr.v,                        // VS
+            0b0111 => !cpsr.v,                       // VC
+            0b1000 => cpsr.c && !cpsr.z,             // HI
+            0b1001 => !cpsr.c || cpsr.z,             // LS
+            0b1010 => cpsr.n == cpsr.v,              // GE
+            0b1011 => cpsr.n != cpsr.v,              // LT
+            0b1100 => !cpsr.z && (cpsr.n == cpsr.v), // GT
+            0b1101 => cpsr.z || (cpsr.n != cpsr.v),  // LE
             0b1110 => true,
             _ => panic!("Invalid Condition Field!"),
         }
@@ -228,45 +287,42 @@ impl CPU {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use util::*;
 
     #[test]
     fn get_cpsr_bit() {
         let mut cpu = CPU::new();
-        cpu.cpsr = 0b100000;
+        cpu.cpsr = 0b1_11111.into();
 
-        assert_eq!(cpu.get_cpsr_bit(PSRBit::T), true);
+        assert_eq!(cpu.cpsr.t, true);
     }
 
     #[test]
     fn set_cpsr_bit() {
         let mut cpu = CPU::new();
-        cpu.set_cpsr_bit(PSRBit::F, true);
+        cpu.cpsr.f = true;
 
         assert_eq!(cpu.cpsr.bit(6), true);
     }
 
     #[test]
     fn check_condition() {
-        use PSRBit::*;
-
         let mut cpu = CPU::new();
 
-        cpu.set_cpsr_bit(Z, true);
+        cpu.cpsr.z = true;
         assert!(cpu.check_condition(0b0000));
 
-        cpu.set_cpsr_bit(C, true);
+        cpu.cpsr.c = true;
         assert!(cpu.check_condition(0b0010));
 
-        cpu.set_cpsr_bit(N, true);
+        cpu.cpsr.n = true;
         assert!(cpu.check_condition(0b0100));
 
-        cpu.set_cpsr_bit(V, true);
+        cpu.cpsr.v = true;
         assert!(cpu.check_condition(0b0110));
 
         assert!(cpu.check_condition(0b1010));
 
-        cpu.set_cpsr_bit(Z, false);
+        cpu.cpsr.z = false;
         assert!(cpu.check_condition(0b1100));
     }
 }

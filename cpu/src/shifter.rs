@@ -26,18 +26,18 @@ pub fn shift_register(cpu: &crate::CPU, operand2: u32) -> (u32, bool) {
 
     // One internal cycle for register specified shift
 
-    shift(cpu.r(rm), amount, stype, cpu.carry(), !r)
+    shift(cpu.r(rm), amount, stype, cpu.cpsr.c, !r)
 }
 
 /// Perform rotate on an immediate, return rotated result.
 /// While not listed on the data sheet, immediate operand rotates
 /// do manipulate CPSR flags.
 #[inline]
-pub fn rotate_immediate(operand2: u32, carry: bool) -> (u32, bool) {
+pub fn rotate_immediate(operand2: u32, c: bool) -> (u32, bool) {
     let amount = operand2.bits(11, 8) * 2;
     let immediate = operand2.bits(7, 0);
     let carry = if amount == 0 {
-        carry
+        c
     } else {
         immediate.bit(amount - 1)
     };
@@ -46,23 +46,23 @@ pub fn rotate_immediate(operand2: u32, carry: bool) -> (u32, bool) {
 }
 
 /// Shift a value according to shift amount and type and return the shifted result.
-/// Set carry bits of CPSR accordingly.
+/// Set c bits of CPSR accordingly.
 #[inline]
-pub fn shift(operand: u32, amount: u32, stype: u32, carry: bool, i: bool) -> (u32, bool) {
+pub fn shift(operand: u32, amount: u32, stype: u32, c: bool, i: bool) -> (u32, bool) {
     match stype {
-        0b00 => logical_left(operand, amount, carry, i),
-        0b01 => logical_right(operand, amount, carry, i),
-        0b10 => arithmetic_right(operand, amount, carry, i),
-        0b11 => rotate_right(operand, amount, carry, i),
+        0b00 => logical_left(operand, amount, c, i),
+        0b01 => logical_right(operand, amount, c, i),
+        0b10 => arithmetic_right(operand, amount, c, i),
+        0b11 => rotate_right(operand, amount, c, i),
         _ => unreachable!("Invalid shift type!"),
     }
 }
 
 /// LSL #0 maintains the old CPSR C flag
 #[inline]
-pub fn logical_left(operand: u32, amount: u32, carry: bool, _i: bool) -> (u32, bool) {
+pub fn logical_left(operand: u32, amount: u32, c: bool, _i: bool) -> (u32, bool) {
     if amount == 0 {
-        (operand, carry)
+        (operand, c)
     } else if amount < 32 {
         (operand << amount, operand.bit(32 - amount))
     } else if amount == 32 {
@@ -74,12 +74,12 @@ pub fn logical_left(operand: u32, amount: u32, carry: bool, _i: bool) -> (u32, b
 
 /// Note that LSR #0 for immediate shift is equivalent to LSR #32
 #[inline]
-pub fn logical_right(operand: u32, amount: u32, carry: bool, i: bool) -> (u32, bool) {
+pub fn logical_right(operand: u32, amount: u32, c: bool, i: bool) -> (u32, bool) {
     if amount == 0 {
         if i {
             (0, operand.bit(31))
         } else {
-            (operand, carry)
+            (operand, c)
         }
     } else if amount < 32 {
         (operand >> amount, operand.bit(amount - 1))
@@ -92,12 +92,12 @@ pub fn logical_right(operand: u32, amount: u32, carry: bool, i: bool) -> (u32, b
 
 /// Note that ASR #0 for immediate shift is equivalent to ASR #32
 #[inline]
-pub fn arithmetic_right(operand: u32, amount: u32, carry: bool, i: bool) -> (u32, bool) {
+pub fn arithmetic_right(operand: u32, amount: u32, c: bool, i: bool) -> (u32, bool) {
     if amount == 0 {
         if i {
             ((operand as i32 >> 31) as u32, operand.bit(31))
         } else {
-            (operand, carry)
+            (operand, c)
         }
     } else if amount >= 32 {
         ((operand as i32 >> 31) as u32, operand.bit(31))
@@ -108,15 +108,15 @@ pub fn arithmetic_right(operand: u32, amount: u32, carry: bool, i: bool) -> (u32
 
 /// Note that ROR #0 for immediate shift is RRX, rotate right extended
 #[inline]
-pub fn rotate_right(operand: u32, amount: u32, carry: bool, i: bool) -> (u32, bool) {
+pub fn rotate_right(operand: u32, amount: u32, c: bool, i: bool) -> (u32, bool) {
     if amount == 0 {
         if i {
             (
-                (carry as u32).rotate_right(1) | (operand >> 1),
+                (c as u32).rotate_right(1) | (operand >> 1),
                 operand.bit(0),
             )
         } else {
-            (operand, carry)
+            (operand, c)
         }
     } else {
         // Rotate amount larger than 31 is same as their least significant 5 bits

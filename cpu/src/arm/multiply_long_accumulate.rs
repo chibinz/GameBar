@@ -1,4 +1,4 @@
-use crate::register::PSRBit::*;
+
 use crate::CPU;
 use util::*;
 
@@ -67,8 +67,8 @@ pub fn execute(
     }
 
     if s {
-        cpu.set_cpsr_bit(Z, result == 0);
-        cpu.set_cpsr_bit(N, result >> 63 == 1);
+        cpu.cpsr.z = result == 0;
+        cpu.cpsr.n = result >> 63 == 1;
 
         // Both the C and V flags are set to meaningless values
     }
@@ -101,6 +101,6 @@ mod tests {
         execute(&mut cpu, (true, false, true, 4, 3, 0, 1));
         assert_eq!(cpu.r(3), 1);
         assert_eq!(cpu.r(4), 0);
-        assert_eq!(cpu.get_cpsr_bit(N), false);
+        assert_eq!(cpu.cpsr.n, false);
     }
 }

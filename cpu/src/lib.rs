@@ -7,14 +7,14 @@ mod thumb;
 
 pub use bus::Bus;
 
-use register::PSRBit::*;
+use register::{CPSR, PSRMode};
 
 #[derive(Clone, Copy)]
 pub struct CPU {
     ir: u32,      // Next instruction to execute
     r: [u32; 16], // General purpose registers
 
-    cpsr: u32,       // Current Program Status Register
+    cpsr: CPSR,       // Current Program Status Register
     spsr: u32,       // Saved Program Status Register (of current mode)
     bank: [u32; 27], // Banked registers
 
@@ -40,7 +40,7 @@ impl CPU {
 
             // On reset, CPSR is forced to supervisor mode
             // and I and F bits in CPSR is set.
-            cpsr: 0b11011111,
+            cpsr: CPSR::new(),
             spsr: 0,
             bank: [0; 27],
 
@@ -95,16 +95,6 @@ impl CPU {
         }
     }
 
-    #[inline]
-    pub fn carry(&self) -> bool {
-        self.get_cpsr_bit(C)
-    }
-
-    #[inline]
-    pub fn set_carry(&mut self, carry: bool) {
-        self.set_cpsr_bit(C, carry)
-    }
-
     pub fn flush(&mut self) {
         // Instruction address are forcibly word / halfword aligned
         self.r[15] &= !(self.inst_width() - 1);
@@ -121,16 +111,16 @@ impl CPU {
         let spsr = self.get_cpsr();
 
         // Switch mode(register bank), disable interrupt, save CPSR
-        self.set_cpsr(register::PSRMode::Supervisor as u32, false);
-        self.set_cpsr_bit(I, true);
+        self.switch_mode(PSRMode::Supervisor);
         self.set_spsr(spsr, false);
+        self.cpsr.i = true;
 
         self.set_r(14, lr);
         self.set_r(15, 0x8);
     }
 
     pub fn hardware_interrupt(&mut self) {
-        if self.get_cpsr_bit(I) {
+        if self.cpsr.i {
             return;
         }
 
@@ -140,9 +130,9 @@ impl CPU {
         let lr = self.r[15] + if self.in_thumb_mode() { 2 } else { 0 }; // Not sure!
         let spsr = self.get_cpsr();
 
-        self.set_cpsr(register::PSRMode::IRQ as u32, false);
-        self.set_cpsr_bit(I, true);
+        self.switch_mode(PSRMode::IRQ);
         self.set_spsr(spsr, false);
+        self.cpsr.i = true;
 
         self.set_r(14, lr);
         self.set_r(15, 0x18);
@@ -150,7 +140,7 @@ impl CPU {
 
     #[inline]
     pub fn in_thumb_mode(&self) -> bool {
-        self.get_cpsr_bit(T)
+        self.cpsr.t
     }
 
     #[inline]
@@ -189,13 +179,13 @@ impl CPU {
             self.r[14],
             self.r[15],
             self.get_cpsr(),
-            if self.get_cpsr_bit(N) { "N" } else { "." },
-            if self.get_cpsr_bit(Z) { "Z" } else { "." },
-            if self.get_cpsr_bit(C) { "C" } else { "." },
-            if self.get_cpsr_bit(V) { "V" } else { "." },
-            if self.get_cpsr_bit(I) { "I" } else { "." },
-            if self.get_cpsr_bit(F) { "F" } else { "." },
-            if self.get_cpsr_bit(T) { "T" } else { "." },
+            if self.cpsr.n { "N" } else { "." },
+            if self.cpsr.z { "Z" } else { "." },
+            if self.cpsr.c { "C" } else { "." },
+            if self.cpsr.v { "V" } else { "." },
+            if self.cpsr.i { "I" } else { "." },
+            if self.cpsr.f { "F" } else { "." },
+            if self.cpsr.t { "T" } else { "." },
         )
     }
 

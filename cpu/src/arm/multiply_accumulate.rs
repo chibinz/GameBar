@@ -1,4 +1,4 @@
-use crate::register::PSRBit::*;
+
 use crate::CPU;
 use util::*;
 
@@ -48,8 +48,8 @@ pub fn execute(cpu: &mut CPU, (a, s, rd, rn, rs, rm): (bool, bool, u32, u32, u32
     }
 
     if s {
-        cpu.set_cpsr_bit(Z, result == 0);
-        cpu.set_cpsr_bit(N, result.bit(31));
+        cpu.cpsr.z = result == 0;
+        cpu.cpsr.n = result.bit(31);
 
         // The C (Carry) flag is set to a meaningless value.
         // And the V (Overflow) flag is unaffected.
@@ -90,7 +90,7 @@ mod tests {
         cpu.set_r(1, 0x10000000);
         execute(&mut cpu, (false, true, 3, 0, 0, 1));
         assert_eq!(cpu.r(3), 0);
-        assert_eq!(cpu.get_cpsr_bit(Z), true);
-        assert_eq!(cpu.get_cpsr_bit(N), false);
+        assert_eq!(cpu.cpsr.z, true);
+        assert_eq!(cpu.cpsr.n, false);
     }
 }

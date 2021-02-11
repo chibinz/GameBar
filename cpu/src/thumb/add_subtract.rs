@@ -23,21 +23,20 @@ fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32)
     let op1 = cpu.r(rs);
     let op2 = if i { operand2 } else { cpu.r(operand2) };
 
-    let (c, v) = alu::get_cv(cpu);
     let (result, flags) = if op {
-        alu::sub(op1, op2, c, v)
+        alu::sub(op1, op2, cpu.cpsr.c, cpu.cpsr.v)
     } else {
-        alu::add(op1, op2, c, v)
+        alu::add(op1, op2, cpu.cpsr.c, cpu.cpsr.v)
     };
-    alu::set_flags(cpu, flags);
 
+    cpu.set_flags(flags);
     cpu.set_r(rd, result);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::register::PSRBit::*;
+
 
     #[test]
     fn add_subtract() {
@@ -46,13 +45,13 @@ mod tests {
         cpu.set_r(1, 0xffffffff);
         execute(&mut cpu, (true, false, 0b111, 1, 1));
         assert_eq!(cpu.r(1), 0b110);
-        assert_eq!(cpu.get_cpsr_bit(C), true);
+        assert_eq!(cpu.cpsr.c, true);
 
         cpu.set_r(0, 0x10000000);
         cpu.set_r(1, 1);
         execute(&mut cpu, (false, true, 1, 0, 1));
         assert_eq!(cpu.r(1), 0x0fffffff);
-        assert_eq!(cpu.get_cpsr_bit(V), false);
-        assert_eq!(cpu.get_cpsr_bit(C), true);
+        assert_eq!(cpu.cpsr.v, false);
+        assert_eq!(cpu.cpsr.c, true);
     }
 }

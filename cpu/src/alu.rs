@@ -3,22 +3,19 @@
 //! ALU operations may change CPSR flags but not GPR contents.
 //! The result of the operation is passed back as return values.
 
-use crate::register::PSRBit::*;
 use crate::shifter::*;
 use util::*;
 
 type Flags = (bool, bool, bool, bool);
 
 // CPSR flag manipulation
-pub fn set_flags(cpu: &mut crate::CPU, (n, z, c, v): Flags) {
-    cpu.set_cpsr_bit(N, n);
-    cpu.set_cpsr_bit(Z, z);
-    cpu.set_cpsr_bit(C, c);
-    cpu.set_cpsr_bit(V, v);
-}
-
-pub fn get_cv(cpu: &crate::CPU) -> (bool, bool) {
-    (cpu.get_cpsr_bit(C), cpu.get_cpsr_bit(V))
+impl crate::CPU {
+    pub fn set_flags(&mut self, (n, z, c, v): Flags) {
+        self.cpsr.n = n;
+        self.cpsr.z = z;
+        self.cpsr.c = c;
+        self.cpsr.v = v;
+    }
 }
 
 #[inline]

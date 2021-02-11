@@ -20,7 +20,8 @@ fn decode(instr: u16) -> (u32, u32, u32) {
 fn execute(cpu: &mut CPU, (op, rd, offset8): (u32, u32, u32)) {
     let op1 = cpu.r(rd);
     let op2 = offset8;
-    let (c, v) = alu::get_cv(cpu);
+    let c = cpu.cpsr.c;
+    let v = cpu.cpsr.v;
 
     let (result, flags) = match op {
         0b00 => alu::mov(op1, op2, c, v),
@@ -29,7 +30,7 @@ fn execute(cpu: &mut CPU, (op, rd, offset8): (u32, u32, u32)) {
         0b11 => alu::sub(op1, op2, c, v),
         _ => unreachable!(),
     };
-    alu::set_flags(cpu, flags);
+    cpu.set_flags(flags);
 
     if op != 0b01 {
         cpu.set_r(rd, result);
@@ -39,7 +40,7 @@ fn execute(cpu: &mut CPU, (op, rd, offset8): (u32, u32, u32)) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::register::PSRBit::*;
+
 
     #[test]
     fn move_compare() {
@@ -48,21 +49,21 @@ mod tests {
         cpu.set_r(1, 0xffffffff);
         execute(&mut cpu, (0b10, 1, 1));
         assert_eq!(cpu.r(1), 0);
-        assert_eq!(cpu.get_cpsr_bit(C), true);
+        assert_eq!(cpu.cpsr.c, true);
 
         cpu.set_r(1, 0x7fffffff);
         execute(&mut cpu, (0b10, 1, 1));
         assert_eq!(cpu.r(1), 0x80000000);
-        assert_eq!(cpu.get_cpsr_bit(V), true);
-        assert_eq!(cpu.get_cpsr_bit(C), false);
-        assert_eq!(cpu.get_cpsr_bit(N), true);
+        assert_eq!(cpu.cpsr.v, true);
+        assert_eq!(cpu.cpsr.c, false);
+        assert_eq!(cpu.cpsr.n, true);
 
         cpu.set_r(1, 1);
         execute(&mut cpu, (0b01, 1, 2));
         assert_eq!(cpu.r(1), 1);
-        assert_eq!(cpu.get_cpsr_bit(V), false);
-        assert_eq!(cpu.get_cpsr_bit(C), false);
-        assert_eq!(cpu.get_cpsr_bit(N), true);
-        assert_eq!(cpu.get_cpsr_bit(Z), false);
+        assert_eq!(cpu.cpsr.v, false);
+        assert_eq!(cpu.cpsr.c, false);
+        assert_eq!(cpu.cpsr.n, true);
+        assert_eq!(cpu.cpsr.z, false);
     }
 }

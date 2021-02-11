@@ -19,12 +19,11 @@ fn decode(instr: u16) -> (u32, u32, u32, u32) {
 
 #[inline]
 fn execute(cpu: &mut CPU, (op, offset5, rs, rd): (u32, u32, u32, u32)) {
-    let (shifted, carry) = crate::shifter::shift(cpu.r(rs), offset5, op, cpu.carry(), true);
-    cpu.set_carry(carry);
+    let (shifted, carry) = crate::shifter::shift(cpu.r(rs), offset5, op, cpu.cpsr.c, true);
+    cpu.cpsr.c = carry;
 
-    let (c, v) = alu::get_cv(cpu);
-    let (result, flags) = alu::mov(shifted, shifted, c, v);
-    alu::set_flags(cpu, flags);
+    let (result, flags) = alu::mov(shifted, shifted, cpu.cpsr.c, cpu.cpsr.v);
+    cpu.set_flags(flags);
     cpu.set_r(rd, result);
 }
 
@@ -39,12 +38,12 @@ mod tests {
         cpu.set_r(0, 1);
         execute(&mut cpu, (0b00, 0b11111, 0, 1));
         assert_eq!(cpu.r(1), 0x80000000);
-        assert_eq!(cpu.carry(), false);
+        assert_eq!(cpu.cpsr.c, false);
 
         // cpu.set_r(0, 0b10);
         // execute(&mut cpu, (0b00, 0b11111, 0, 1));
         // assert_eq!(cpu.r(1), 0);
-        // assert_eq!(cpu.carry(), true);
+        // assert_eq!(cpu.cpsr.c, true);
     }
 
     #[test]
@@ -54,12 +53,12 @@ mod tests {
         cpu.set_r(0, 0x80000000);
         execute(&mut cpu, (0b01, 0b11111, 0, 1));
         assert_eq!(cpu.r(1), 1);
-        assert_eq!(cpu.carry(), false);
+        assert_eq!(cpu.cpsr.c, false);
 
         cpu.set_r(0, 0x40000000);
         execute(&mut cpu, (0b01, 0b11111, 0, 1));
         assert_eq!(cpu.r(1), 0);
-        assert_eq!(cpu.carry(), true);
+        assert_eq!(cpu.cpsr.c, true);
     }
 
     #[test]
@@ -69,11 +68,11 @@ mod tests {
         cpu.set_r(0, 0x80000000);
         execute(&mut cpu, (0b10, 0b11111, 0, 1));
         assert_eq!(cpu.r(1), 0xffffffff);
-        assert_eq!(cpu.carry(), false);
+        assert_eq!(cpu.cpsr.c, false);
 
         cpu.set_r(0, 0x40000000);
         execute(&mut cpu, (0b10, 0b11111, 0, 1));
         assert_eq!(cpu.r(1), 0);
-        assert_eq!(cpu.carry(), true);
+        assert_eq!(cpu.cpsr.c, true);
     }
 }
