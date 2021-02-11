@@ -1,5 +1,4 @@
 use crate::alu;
-use crate::barrel_shifter::shift;
 use crate::CPU;
 use util::*;
 
@@ -20,7 +19,7 @@ fn decode(instr: u16) -> (u32, u32, u32, u32) {
 
 #[inline]
 fn execute(cpu: &mut CPU, (op, offset5, rs, rd): (u32, u32, u32, u32)) {
-    let (shifted, carry) = shift(cpu.r(rs), offset5, op, cpu.carry(), true);
+    let (shifted, carry) = crate::shifter::shift(cpu.r(rs), offset5, op, cpu.carry(), true);
     cpu.set_carry(carry);
 
     let (c, v) = alu::get_cv(cpu);

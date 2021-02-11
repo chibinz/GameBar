@@ -3,8 +3,8 @@
 //! ALU operations may change CPSR flags but not GPR contents.
 //! The result of the operation is passed back as return values.
 
-use crate::barrel_shifter;
 use crate::register::PSRBit::*;
+use crate::shifter::*;
 use util::*;
 
 type Flags = (bool, bool, bool, bool);
@@ -84,11 +84,7 @@ pub fn adc(op1: u32, op2: u32, c: bool, _v: bool) -> (u32, Flags) {
     let (opc, c1) = op2.overflowing_add(c as u32);
     let (result, c2) = op1.overflowing_add(opc);
 
-    with_flags(
-        result,
-         c1 || c2,
-        ((!op1 ^ op2) & (op1 ^ result)).bit(31),
-    )
+    with_flags(result, c1 || c2, ((!op1 ^ op2) & (op1 ^ result)).bit(31))
 }
 
 #[inline]
@@ -147,28 +143,28 @@ pub fn mul(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
 
 #[inline]
 pub fn lsl(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
-    let (result, c) = barrel_shifter::logical_left(op1, op2, c, false);
+    let (result, c) = logical_left(op1, op2, c, false);
 
     with_flags(result, c, v)
 }
 
 #[inline]
 pub fn lsr(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
-    let (result, c) = barrel_shifter::logical_right(op1, op2, c, false);
+    let (result, c) = logical_right(op1, op2, c, false);
 
     with_flags(result, c, v)
 }
 
 #[inline]
 pub fn asr(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
-    let (result, c) = barrel_shifter::arithmetic_right(op1, op2, c, false);
+    let (result, c) = arithmetic_right(op1, op2, c, false);
 
     with_flags(result, c, v)
 }
 
 #[inline]
 pub fn ror(op1: u32, op2: u32, c: bool, v: bool) -> (u32, Flags) {
-    let (result, c) = barrel_shifter::rotate_right(op1, op2, c, false);
+    let (result, c) = rotate_right(op1, op2, c, false);
 
     with_flags(result, c, v)
 }

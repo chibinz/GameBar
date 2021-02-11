@@ -148,8 +148,7 @@ impl Memory {
 
         let sth = |mem: &mut [u8]| {
             let a = value.to_le_bytes();
-            mem[offset] = a[0];
-            mem[offset + 1] = a[1];
+            mem[offset..offset + 2].clone_from_slice(&a);
         };
 
         match Self::region(address) {

@@ -1,4 +1,4 @@
-use crate::barrel_shifter::shift_register;
+use crate::shifter::shift_register;
 use crate::Bus;
 use crate::CPU;
 use util::*;

@@ -1,8 +1,8 @@
 mod alu;
 mod arm;
-mod barrel_shifter;
 mod bus;
 mod register;
+mod shifter;
 mod thumb;
 
 pub use bus::Bus;
@@ -137,7 +137,7 @@ impl CPU {
         log::info!("Hardware interrupt!");
         log::info!("\n{}", self.trace());
 
-        let lr = self.r[15] + if self.in_thumb_mode() {2} else {0}; // Not sure!
+        let lr = self.r[15] + if self.in_thumb_mode() { 2 } else { 0 }; // Not sure!
         let spsr = self.get_cpsr();
 
         self.set_cpsr(register::PSRMode::IRQ as u32, false);

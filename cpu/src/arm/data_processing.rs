@@ -1,5 +1,5 @@
 use crate::alu;
-use crate::barrel_shifter::{rotate_immediate, shift_register};
+use crate::shifter::{rotate_immediate, shift_register};
 use crate::CPU;
 use util::*;
 

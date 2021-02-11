@@ -1,4 +1,4 @@
-use crate::barrel_shifter::rotate_immediate;
+use crate::shifter::rotate_immediate;
 use crate::CPU;
 use util::*;
 
