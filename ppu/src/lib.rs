@@ -23,16 +23,16 @@ pub struct PPU {
     pub sequential: bool, // Determine layout of sprites, 1 - 1d, 0 - 2d
     pub fblank: bool,     // Force blanking
 
-    pub palette: [u16;0x200],   // 16 bit colors
-    pub vram: [u8; 0x18000],       // Tile mapping
+    pub palette: [u16; 0x200],   // 16 bit colors
+    pub vram: [u8; 0x18000],     // Tile mapping
     pub obj_param: [u16; 0x100], // Affine sprite rotation / scaling parameter
 
     pub background: [Background; 4], // Background 0 - 3
-    pub sprite: [Sprite; 128] ,         // Sprite 0 - 127
+    pub sprite: [Sprite; 128],       // Sprite 0 - 127
     pub window: Window,
 
     pub layer: [Layer; 5], // Layer 0 - 3, and an extra layer for backdrop
-    pub buffer: [u16; 240 * 160],  // Frame buffer, 240 * 160
+    pub buffer: [u16; 240 * 160], // Frame buffer, 240 * 160
 }
 
 impl PPU {

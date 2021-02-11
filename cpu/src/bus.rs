@@ -11,12 +11,41 @@ use util::*;
 
 pub trait Bus {
     fn new() -> Self;
-    fn load8(&self, address: u32) -> u8;
-    fn load16(&self, address: u32) -> u16;
-    fn load32(&self, address: u32) -> u32;
-    fn store8(&mut self, address: u32, value: u8);
-    fn store16(&mut self, address: u32, value: u16);
-    fn store32(&mut self, address: u32, value: u32);
+    #[inline]
+    #[allow(unused_variables)]
+    fn load8(&self, address: u32) -> u8 {
+        unimplemented!()
+    }
+    #[inline]
+    fn load16(&self, address: u32) -> u16 {
+        let lo = self.load8(address);
+        let hi = self.load8(address + 1);
+        u16::from_le_bytes([lo, hi])
+    }
+    #[inline]
+    fn load32(&self, address: u32) -> u32 {
+        let lo = self.load16(address);
+        let hi = self.load16(address + 2);
+        (hi as u32) << 16 | (lo as u32)
+    }
+    #[inline]
+    #[allow(unused_variables)]
+    fn store8(&mut self, address: u32, value: u8) {
+        unimplemented!()
+    }
+    #[inline]
+    fn store16(&mut self, address: u32, value: u16) {
+        let [lo, hi] = value.to_le_bytes();
+        self.store8(address, lo);
+        self.store8(address + 1, hi);
+    }
+    #[inline]
+    fn store32(&mut self, address: u32, value: u32) {
+        let lo = value as u16;
+        let hi = (value >> 16) as u16;
+        self.store16(address, lo);
+        self.store16(address + 2, hi);
+    }
 }
 
 pub struct DummyBus {
@@ -32,31 +61,8 @@ impl Bus for DummyBus {
     fn load8(&self, address: u32) -> u8 {
         self.map[&address]
     }
-    fn load16(&self, address: u32) -> u16 {
-        u16::from_le_bytes([self.map[&address], self.map[&(address + 1)]])
-    }
-    fn load32(&self, address: u32) -> u32 {
-        u32::from_le_bytes([
-            self.map[&address],
-            self.map[&(address + 1)],
-            self.map[&(address + 2)],
-            self.map[&(address + 3)],
-        ])
-    }
     fn store8(&mut self, address: u32, value: u8) {
         self.map.insert(address, value);
-    }
-    fn store16(&mut self, address: u32, value: u16) {
-        let [v0, v1] = value.to_le_bytes();
-        self.map.insert(address, v0);
-        self.map.insert(address + 1, v1);
-    }
-    fn store32(&mut self, address: u32, value: u32) {
-        let [v0, v1, v2, v3] = value.to_le_bytes();
-        self.map.insert(address, v0);
-        self.map.insert(address + 1, v1);
-        self.map.insert(address + 2, v2);
-        self.map.insert(address + 3, v3);
     }
 }
 
