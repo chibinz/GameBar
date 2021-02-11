@@ -53,7 +53,6 @@ fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32)) {
 mod tests {
     use super::*;
 
-
     #[test]
     fn alu_operations() {
         let mut cpu = CPU::new();

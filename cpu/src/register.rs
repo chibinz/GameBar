@@ -1,7 +1,4 @@
-use crate::CPU;
-
 use util::*;
-
 use PSRMode::*;
 
 #[derive(Clone, Copy)]
@@ -103,7 +100,7 @@ impl From<PSRMode> for u32 {
     }
 }
 
-impl CPU {
+impl crate::CPU {
     #[inline]
     pub fn get_cpsr(&self) -> u32 {
         self.cpsr.into()
@@ -290,23 +287,22 @@ mod tests {
 
     #[test]
     fn get_cpsr_bit() {
-        let mut cpu = CPU::new();
-        cpu.cpsr = 0b1_11111.into();
+        let psr: CPSR = 0b1_11111.into();
 
-        assert_eq!(cpu.cpsr.t, true);
+        assert_eq!(psr.t, true);
     }
 
     #[test]
     fn set_cpsr_bit() {
-        let mut cpu = CPU::new();
-        cpu.cpsr.f = true;
+        let mut psr = CPSR::new();
+        psr.f = true;
 
-        assert_eq!(cpu.cpsr.bit(6), true);
+        assert_eq!(psr.bit(6), true);
     }
 
     #[test]
     fn check_condition() {
-        let mut cpu = CPU::new();
+        let mut cpu = crate::CPU::new();
 
         cpu.cpsr.z = true;
         assert!(cpu.check_condition(0b0000));

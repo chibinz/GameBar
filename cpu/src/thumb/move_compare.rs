@@ -41,7 +41,6 @@ fn execute(cpu: &mut CPU, (op, rd, offset8): (u32, u32, u32)) {
 mod tests {
     use super::*;
 
-
     #[test]
     fn move_compare() {
         let mut cpu = CPU::new();

@@ -111,10 +111,7 @@ pub fn arithmetic_right(operand: u32, amount: u32, c: bool, i: bool) -> (u32, bo
 pub fn rotate_right(operand: u32, amount: u32, c: bool, i: bool) -> (u32, bool) {
     if amount == 0 {
         if i {
-            (
-                (c as u32).rotate_right(1) | (operand >> 1),
-                operand.bit(0),
-            )
+            ((c as u32).rotate_right(1) | (operand >> 1), operand.bit(0))
         } else {
             (operand, c)
         }

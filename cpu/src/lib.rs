@@ -7,14 +7,14 @@ mod thumb;
 
 pub use bus::Bus;
 
-use register::{CPSR, PSRMode};
+use register::{PSRMode, CPSR};
 
 #[derive(Clone, Copy)]
 pub struct CPU {
     ir: u32,      // Next instruction to execute
     r: [u32; 16], // General purpose registers
 
-    cpsr: CPSR,       // Current Program Status Register
+    cpsr: CPSR,      // Current Program Status Register
     spsr: u32,       // Saved Program Status Register (of current mode)
     bank: [u32; 27], // Banked registers
 
@@ -24,19 +24,15 @@ pub struct CPU {
     // 18 - 20: R13_abt, R14_abt, SPSR_abt
     // 21 - 23: R13_irq, R14_irq, SPSR_irq
     // 24 - 26: R13_und, R14_und, SPSR_und
-    pub cycles: i32, // Ticks consumed for current instruction
+    pub cycles: i32,    // Ticks consumed for current instruction
     pub remaining: i32, // Remaining ticks till run finish,
-
-                     // The CPU halts when DMA is active.
-                     // An unfortunate fact that I have to use an unsafe pointer
-                     // to poll the current status of the DMA
 }
 
 impl CPU {
     pub const fn new() -> Self {
-        let mut cpu = Self {
+        Self {
             ir: 0,
-            r: [0; 16],
+            r: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
 
             // On reset, CPSR is forced to supervisor mode
             // and I and F bits in CPSR is set.
@@ -46,16 +42,16 @@ impl CPU {
 
             cycles: 0,
             remaining: 0,
-        };
+        }
+    }
 
-        cpu.r[15] = 0x08000004;
-        cpu.r[13] = 0x03007f00;
+    pub fn skip_bios(&mut self) {
+        self.r[15] = 0x08000004;
+        self.r[13] = 0x03007f00;
 
-        cpu.bank[5] = 0x03007f00; // User SP
-        cpu.bank[12] = 0x03007fa0; // IRQ SP
-        cpu.bank[15] = 0x03007fe0; // Supervisor SP
-
-        cpu
+        self.bank[5] = 0x03007f00; // User SP
+        self.bank[12] = 0x03007fa0; // IRQ SP
+        self.bank[15] = 0x03007fe0; // Supervisor SP
     }
 
     pub fn run(&mut self, cycles: i32, bus: &mut impl Bus) {

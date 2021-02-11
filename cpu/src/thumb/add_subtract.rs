@@ -37,7 +37,6 @@ fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32)
 mod tests {
     use super::*;
 
-
     #[test]
     fn add_subtract() {
         let mut cpu = CPU::new();
