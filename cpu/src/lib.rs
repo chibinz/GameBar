@@ -101,18 +101,23 @@ impl CPU {
         // self.cycles += Bus::access_timing(self.r[15], self.inst_width() / 2);
     }
 
-    pub fn software_interrupt(&mut self) {
-        log::info!("Software interrupt!");
-        let lr = self.r[15] - self.inst_width();
+    pub fn interrupt(&mut self, mode: PSRMode, lr: u32, pc: u32) {
         let spsr = self.get_cpsr();
 
         // Switch mode(register bank), disable interrupt, save CPSR
-        self.switch_mode(PSRMode::Supervisor);
+        self.switch_mode(mode);
         self.set_spsr(spsr, false);
         self.cpsr.i = true;
 
         self.set_r(14, lr);
-        self.set_r(15, 0x8);
+        self.set_r(15, pc);
+    }
+
+    pub fn software_interrupt(&mut self) {
+        log::info!("Software interrupt!");
+
+        let lr = self.r[15] - self.inst_width();
+        self.interrupt(PSRMode::Supervisor, lr, 0x8);
     }
 
     pub fn hardware_interrupt(&mut self) {
@@ -123,15 +128,8 @@ impl CPU {
         log::info!("Hardware interrupt!");
         log::info!("\n{}", self.trace());
 
-        let lr = self.r[15] + if self.in_thumb_mode() { 2 } else { 0 }; // Not sure!
-        let spsr = self.get_cpsr();
-
-        self.switch_mode(PSRMode::IRQ);
-        self.set_spsr(spsr, false);
-        self.cpsr.i = true;
-
-        self.set_r(14, lr);
-        self.set_r(15, 0x18);
+        let lr = self.r[15] + if self.in_thumb_mode() { 2 } else { 0 };
+        self.interrupt(PSRMode::IRQ, lr, 0x18);
     }
 
     #[inline]
