@@ -9,4 +9,3 @@ edition = "2018"
 [dependencies]
 cpu = { path = "../cpu" }
 util = { path = "../util" }
-log = "0.4"

@@ -9,5 +9,5 @@ edition = "2018"
 [dependencies]
 util = { path = "../util" }
 console = { path = "../console" }
-minifb = "0.15"
+minifb = "0.19"
 env_logger = "0.8"

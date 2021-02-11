@@ -39,7 +39,7 @@ impl Timers {
                 let irq = [Timer0, Timer1, Timer2, Timer3];
 
                 if times_overflowed > 0 && timer.irq_f {
-                    log::info!("Timer {} generated interrupt", i);
+                    util::info!("Timer {} generated interrupt", i);
                     irqcnt.request(irq[i])
                 }
             } else {

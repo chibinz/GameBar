@@ -216,7 +216,7 @@ impl Memory {
     fn unhandled(load: bool, size: u32, address: u32) {
         let s = if load { "load" } else { "store" };
 
-        log::warn!("Unhandled {}-byte {} at {:#08x}", size, s, address);
+        util::error!("Unhandled {}-byte {} at {:#08x}", size, s, address);
     }
 
     #[inline]

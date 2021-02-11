@@ -114,8 +114,8 @@ impl CPU {
     }
 
     pub fn software_interrupt(&mut self) {
-        log::info!("Software interrupt!");
-        log::info!("{:#?}", self);
+        util::info!("Software interrupt!");
+        util::info!("{:#?}", self);
 
         let lr = self.r[15] - self.inst_width();
         self.interrupt(PSRMode::Supervisor, lr, 0x8);
@@ -126,8 +126,8 @@ impl CPU {
             return;
         }
 
-        log::info!("Hardware interrupt!");
-        log::info!("{:#?}", self);
+        util::info!("Hardware interrupt!");
+        util::info!("{:#?}", self);
 
         let lr = self.r[15] + if self.in_thumb_mode() { 2 } else { 0 };
         self.interrupt(PSRMode::IRQ, lr, 0x18);
@@ -163,7 +163,7 @@ impl CPU {
         unsafe {
             for i in 0..LEN {
                 let c = &TRACE[(INDEX + i) % LEN];
-                log::debug!("{:?}", c,);
+                util::debug!("{:?}", c,);
             }
         }
     }
