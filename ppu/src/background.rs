@@ -10,7 +10,7 @@ pub static DIMENSION: [[(u32, u32); 4]; 2] = [
     [(128, 128), (256, 256), (512, 512), (1024, 1024)],
 ];
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Background {
     pub index: usize,    // 0 - 3
     pub bgcnt: u16,      // Raw background control register
@@ -33,9 +33,6 @@ pub struct Background {
     pub matrix: (i32, i32, i32, i32),
     pub coord: (i32, i32),
     pub internal: (i32, i32),
-
-    // Line buffer
-    pub pixel: Vec<u16>,
 }
 
 impl Background {
@@ -58,10 +55,6 @@ impl Background {
             matrix: (0, 0, 0, 0),
             coord: (0, 0),
             internal: (0, 0),
-
-            // The largest width of a background is 1024 pixels.
-            // Avoid reallocation when resizing background.
-            pixel: vec![0; 1024],
         }
     }
 }

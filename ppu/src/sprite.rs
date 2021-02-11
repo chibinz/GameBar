@@ -11,7 +11,7 @@ pub static DIMENSION: [[(u32, u32); 4]; 3] = [
     [(8, 16), (8, 32), (16, 32), (32, 64)],
 ];
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Sprite {
     pub index: usize,   // Index of sprite, 0 - 127
     pub attr: [u16; 3], // Raw object attributes, Used for fast oam read
@@ -63,7 +63,7 @@ impl Sprite {
     }
 
     #[inline]
-    pub fn get_affine_matrix(&self, mat: &mut Vec<u16>) -> (i32, i32, i32, i32) {
+    pub fn get_affine_matrix(&self, mat: &mut [u16]) -> (i32, i32, i32, i32) {
         let index = self.affine_i as usize * 4;
 
         let pa = mat[index] as i16 as i32;

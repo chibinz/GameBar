@@ -1,15 +1,15 @@
 use super::window::Window;
 use super::TRANSPARENT;
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Layer {
-    pub pixel: Vec<u16>,
+    pub pixel: [u16; 240],
 }
 
 impl Layer {
     pub fn new() -> Self {
         Self {
-            pixel: vec![TRANSPARENT; 240],
+            pixel: [TRANSPARENT; 240],
         }
     }
 
