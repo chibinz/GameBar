@@ -59,6 +59,69 @@ pub fn sign_extend(a: u32, s: u32) -> i32 {
     }
 }
 
+pub trait Bus {
+    #[inline]
+    #[allow(unused_variables)]
+    fn load8(&self, address: u32) -> u8 {
+        unimplemented!()
+    }
+    #[inline]
+    fn load16(&self, address: u32) -> u16 {
+        let lo = self.load8(address);
+        let hi = self.load8(address + 1);
+        u16::from_le_bytes([lo, hi])
+    }
+    #[inline]
+    fn load32(&self, address: u32) -> u32 {
+        let lo = self.load16(address);
+        let hi = self.load16(address + 2);
+        (hi as u32) << 16 | (lo as u32)
+    }
+    #[inline]
+    #[allow(unused_variables)]
+    fn store8(&mut self, address: u32, value: u8) {
+        unimplemented!()
+    }
+    #[inline]
+    fn store16(&mut self, address: u32, value: u16) {
+        let [lo, hi] = value.to_le_bytes();
+        self.store8(address, lo);
+        self.store8(address + 1, hi);
+    }
+    #[inline]
+    fn store32(&mut self, address: u32, value: u32) {
+        let lo = value as u16;
+        let hi = (value >> 16) as u16;
+        self.store16(address, lo);
+        self.store16(address + 2, hi);
+    }
+}
+
+impl Bus for &mut [u8] {
+    fn load8(&self, address: u32) -> u8 {
+        self[address as usize]
+    }
+    fn load16(&self, address: u32) -> u16 {
+        let a = address as usize;
+        u16::from_le_bytes(self[a..a + 2].try_into().unwrap())
+    }
+    fn load32(&self, address: u32) -> u32 {
+        let a = address as usize;
+        u32::from_le_bytes(self[a..a + 4].try_into().unwrap())
+    }
+    fn store8(&mut self, address: u32, value: u8) {
+        self[address as usize] = value
+    }
+    fn store16(&mut self, address: u32, value: u16) {
+        let a = address as usize;
+        self[a..a + 2].copy_from_slice(&value.to_le_bytes());
+    }
+    fn store32(&mut self, address: u32, value: u32) {
+        let a = address as usize;
+        self[a..a + 4].copy_from_slice(&value.to_le_bytes());
+    }
+}
+
 #[inline]
 pub fn into16(a: &[u8]) -> u16 {
     u16::from_le_bytes(a[0..2].try_into().unwrap())

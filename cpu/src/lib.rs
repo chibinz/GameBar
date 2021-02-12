@@ -5,7 +5,7 @@ mod register;
 mod shifter;
 mod thumb;
 
-pub use bus::Bus;
+pub use util::Bus;
 
 use register::{PSRMode, CPSR};
 

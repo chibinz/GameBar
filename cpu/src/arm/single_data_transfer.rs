@@ -73,20 +73,20 @@ pub fn execute(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bus::DummyBus;
 
     #[test]
     fn byte_transfer() {
         let mut cpu = CPU::new();
-        let mut bus = DummyBus::new();
+        let mut bus = [0u8; 1024];
+        let mut bus = bus.as_mut();
 
-        bus.store8(0x02000001, 0xff);
-        cpu.set_r(0, 0x02000000);
+        bus.store8(0x01, 0xff);
+        cpu.set_r(0, 0x00);
 
         // Immediate offset, pre-indexing, up offset, write back, load byte
         execute(&mut cpu, &mut bus, (false, true, true, true, 0b11, 0, 1, 1));
         assert_eq!(cpu.r(1), 0xff);
-        assert_eq!(cpu.r(0), 0x02000001);
+        assert_eq!(cpu.r(0), 0x01);
 
         // Immediate offset, pre-indexing, down offset, no write back, store byte
         execute(
@@ -94,16 +94,17 @@ mod tests {
             &mut bus,
             (false, true, false, false, 0b01, 0, 1, 1),
         );
-        assert_eq!(CPU::ldrb(0x02000000, &bus), 0xff);
+        assert_eq!(CPU::ldrb(0x00, &bus), 0xff);
     }
 
     #[test]
     fn word_transfer() {
         let mut cpu = CPU::new();
-        let mut bus = DummyBus::new();
+        let mut bus = [0u8; 1024];
+        let mut bus = bus.as_mut();
 
-        bus.store32(0x02000000, 0xdeadbeef);
-        cpu.set_r(0, 0x02000000);
+        bus.store32(0x00, 0xdeadbeef);
+        cpu.set_r(0, 0x00);
 
         // Immediate offset, post-indexing, up offset, write back, load word
         execute(
@@ -112,7 +113,7 @@ mod tests {
             (false, false, true, true, 0b10, 0, 1, 4),
         );
         assert_eq!(cpu.r(1), 0xdeadbeef);
-        assert_eq!(cpu.r(0), 0x02000004);
+        assert_eq!(cpu.r(0), 0x04);
 
         cpu.set_r(1, 0);
         // Immediate offset, pre-indexing, down offset, write back, store word
@@ -121,7 +122,7 @@ mod tests {
             &mut bus,
             (false, true, false, true, 0b00, 0, 1, 4),
         );
-        assert_eq!(CPU::ldr(0x02000000, &bus), 0);
-        assert_eq!(cpu.r(0), 0x02000000);
+        assert_eq!(CPU::ldr(0x00, &bus), 0);
+        assert_eq!(cpu.r(0), 0x00);
     }
 }

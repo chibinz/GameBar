@@ -8,7 +8,6 @@ use std::fs::File;
 use std::io::Read;
 
 use crate::Console;
-use cpu::Bus;
 
 pub struct Memory {
     bios: Vec<u8>,
@@ -20,10 +19,7 @@ pub struct Memory {
     pub console: *mut Console,
 }
 
-impl Bus for Memory {
-    fn new() -> Self {
-        Memory::new()
-    }
+impl util::Bus for Memory {
     fn load8(&self, address: u32) -> u8 {
         self.load8(address)
     }

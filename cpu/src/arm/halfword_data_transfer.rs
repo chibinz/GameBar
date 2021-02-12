@@ -72,7 +72,6 @@ pub fn execute(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bus::DummyBus;
 
     #[test]
     fn decode_strh() {
@@ -86,10 +85,11 @@ mod tests {
     #[test]
     fn halfword_transfer() {
         let mut cpu = CPU::new();
-        let mut bus = DummyBus::new();
+        let mut bus = [0u8; 1024];
+        let mut bus = bus.as_mut();
 
-        bus.store16(0x02000000, 0xdead);
-        cpu.set_r(0, 0x02000000);
+        bus.store16(0x00, 0xdead);
+        cpu.set_r(0, 0x00);
 
         // Post-indexing, up offset, write back, load unsigned halfword
         // base = r0, dst = r1, offset = 2
@@ -99,9 +99,9 @@ mod tests {
             (false, true, true, true, 0b101, 0, 1, 2),
         );
         assert_eq!(cpu.r(1), 0xdead);
-        assert_eq!(cpu.r(0), 0x02000002);
+        assert_eq!(cpu.r(0), 0x02);
 
-        bus.store8(0x02000001, 0xff);
+        bus.store8(0x01, 0xff);
         // Pre-indexing, down offset, write back, load signed byte
         // base = r0, src = r1, offset = 1
         execute(
@@ -110,6 +110,6 @@ mod tests {
             (true, false, true, true, 0b110, 0, 1, 1),
         );
         assert_eq!(cpu.r(1), 0xffffffff);
-        assert_eq!(cpu.r(0), 0x02000001);
+        assert_eq!(cpu.r(0), 0x01);
     }
 }
