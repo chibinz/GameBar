@@ -122,7 +122,7 @@ mod tests {
         // Write back bit is redundant because R0 is overwritten
         execute(
             &mut cpu,
-            &mut bus,
+             bus,
             (false, true, true, true, true, 0, 0xffff),
         );
         for i in 0..15 {

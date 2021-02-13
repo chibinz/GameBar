@@ -86,7 +86,6 @@ mod tests {
     fn halfword_transfer() {
         let mut cpu = CPU::new();
         let mut bus = [0u8; 1024];
-        let mut bus = bus.as_mut();
 
         bus.store16(0x00, 0xdead);
         cpu.set_r(0, 0x00);
@@ -95,7 +94,7 @@ mod tests {
         // base = r0, dst = r1, offset = 2
         execute(
             &mut cpu,
-            &mut bus,
+             bus.as_mut(),
             (false, true, true, true, 0b101, 0, 1, 2),
         );
         assert_eq!(cpu.r(1), 0xdead);

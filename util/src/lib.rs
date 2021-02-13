@@ -59,7 +59,8 @@ pub fn sign_extend(a: u32, s: u32) -> i32 {
     }
 }
 
-pub trait Bus {
+pub trait Bus
+ {
     #[inline]
     #[allow(unused_variables)]
     fn load8(&self, address: u32) -> u8 {
@@ -97,7 +98,7 @@ pub trait Bus {
     }
 }
 
-impl Bus for &mut [u8] {
+impl Bus for [u8] {
     fn load8(&self, address: u32) -> u8 {
         self[address as usize]
     }
