@@ -98,32 +98,32 @@ pub trait Bus {
 }
 
 impl Bus for [u8] {
-    fn load8(&self, address: usize) -> u8 {
-        self[address]
+    fn load8(&self, offset: usize) -> u8 {
+        self[offset]
     }
-    fn load16(&self, address: usize) -> u16 {
-        u16::from_le_bytes(self[address..address + 2].try_into().unwrap())
+    fn load16(&self, offset: usize) -> u16 {
+        u16::from_le_bytes(self[offset..offset + 2].try_into().unwrap())
     }
-    fn load32(&self, address: usize) -> u32 {
-        u32::from_le_bytes(self[address..address + 4].try_into().unwrap())
+    fn load32(&self, offset: usize) -> u32 {
+        u32::from_le_bytes(self[offset..offset + 4].try_into().unwrap())
     }
-    fn store8(&mut self, address: usize, value: u8) {
-        self[address] = value
+    fn store8(&mut self, offset: usize, value: u8) {
+        self[offset] = value
     }
-    fn store16(&mut self, address: usize, value: u16) {
-        self[address..address + 2].copy_from_slice(&value.to_le_bytes());
+    fn store16(&mut self, offset: usize, value: u16) {
+        self[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
     }
-    fn store32(&mut self, address: usize, value: u32) {
-        self[address..address + 4].copy_from_slice(&value.to_le_bytes());
+    fn store32(&mut self, offset: usize, value: u32) {
+        self[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
     }
 }
 
 impl Bus for [u16] {
-    fn load16(&self, address: usize) -> u16 {
-        self[address]
+    fn load16(&self, offset: usize) -> u16 {
+        self[offset / 2]
     }
-    fn store16(&mut self, address: usize, value: u16) {
-        self[address] = value;
+    fn store16(&mut self, offset: usize, value: u16) {
+        self[offset / 2] = value;
     }
 }
 
