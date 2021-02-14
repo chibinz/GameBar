@@ -138,7 +138,7 @@ impl Debugger {
     }
 
     fn examine_memory(&mut self) {
-        let address = u32::from_str_radix(self.command[1].as_str(), 16).unwrap();
+        let address = usize::from_str_radix(self.command[1].as_str(), 16).unwrap();
 
         for i in 0..16 {
             print!("{:08x}:   ", address + i * 16);

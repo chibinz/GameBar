@@ -39,11 +39,9 @@ pub fn execute<T: ?Sized + Bus>(
     let noffset = if i { offset } else { cpu.r(offset) };
 
     let post = cpu.r(rn);
-    let pre = if u {
-        cpu.r(rn) + noffset
-    } else {
-        cpu.r(rn) - noffset
-    };
+    let pre = cpu
+        .r(rn)
+        .wrapping_add(if u { noffset } else { noffset.wrapping_neg() });
 
     // When R15 is the source register, the stored value will be
     // address of the instruction plus 12
@@ -95,7 +93,7 @@ mod tests {
         // base = r0, dst = r1, offset = 2
         execute(
             &mut cpu,
-             bus.as_mut(),
+            bus.as_mut(),
             (false, true, true, true, 0b101, 0, 1, 2),
         );
         assert_eq!(cpu.r(1), 0xdead);
@@ -104,11 +102,7 @@ mod tests {
         bus.store8(0x01, 0xff);
         // Pre-indexing, down offset, write back, load signed byte
         // base = r0, src = r1, offset = 1
-        execute(
-            &mut cpu,
-            bus,
-            (true, false, true, true, 0b110, 0, 1, 1),
-        );
+        execute(&mut cpu, bus, (true, false, true, true, 0b110, 0, 1, 1));
         assert_eq!(cpu.r(1), 0xffffffff);
         assert_eq!(cpu.r(0), 0x01);
     }

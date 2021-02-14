@@ -60,8 +60,8 @@ pub fn execute<T: ?Sized + Bus>(
 
     // Misaligned word access handled in `memory.rs`
     match lb {
-        0b00 => bus.store32(address, value),
-        0b01 => bus.store8(address, value as u8),
+        0b00 => CPU::str(address, value, bus),
+        0b01 => CPU::strb(address, value, bus),
         0b10 => cpu.set_r(rd, CPU::ldr(address, bus)),
         0b11 => cpu.set_r(rd, CPU::ldrb(address, bus)),
         _ => unreachable!(),

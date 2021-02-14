@@ -64,18 +64,18 @@ pub fn execute<T: ?Sized + Bus>(
         let j = if u { i } else { 15 - i };
         if rlist.bit(j) {
             if l {
-                cpu.set_r(j, bus.load32(address));
+                cpu.set_r(j, CPU::ldr(address, bus));
             } else {
-                bus.store32(address, cpu.r(j));
+                CPU::str(address, cpu.r(j), bus);
 
                 if j == 15 {
-                    bus.store32(address, cpu.r(15) + 4);
+                    CPU::str(address, cpu.r(15) + 4, bus);
                 }
 
                 // The first register to be stored will store the
                 // unchanged value.
                 if w && j == rn && rlist.trailing_zeros() == rn {
-                    bus.store32(address, original);
+                    CPU::str(address, original, bus);
                 }
             }
 
@@ -109,22 +109,18 @@ mod tests {
     #[test]
     fn post_increment() {
         let mut cpu = CPU::new();
-        let mut bus =  [0u8; 1024];
+        let mut bus = [0u8; 1024];
         let bus = bus.as_mut();
 
         cpu.set_spsr(cpu.get_cpsr(), false);
 
         for i in 0..16 {
-            bus.as_mut().store32(0x00 + i * 4, i);
+            bus.as_mut().store32(0x00 + i * 4, i as u32);
         }
         cpu.set_r(0, 0x00);
 
         // Write back bit is redundant because R0 is overwritten
-        execute(
-            &mut cpu,
-             bus,
-            (false, true, true, true, true, 0, 0xffff),
-        );
+        execute(&mut cpu, bus, (false, true, true, true, true, 0, 0xffff));
         for i in 0..15 {
             assert_eq!(cpu.r(i), i);
         }
@@ -144,11 +140,7 @@ mod tests {
         bus.store32(0x0c, 3);
         cpu.set_r(0, 0x00);
 
-        execute(
-            &mut cpu,
-            bus,
-            (true, true, true, true, true, 0, 0x000e),
-        );
+        execute(&mut cpu, bus, (true, true, true, true, true, 0, 0x000e));
         assert_eq!(cpu.r(1), 1);
         assert_eq!(cpu.r(2), 2);
         assert_eq!(cpu.r(3), 3);
@@ -166,11 +158,7 @@ mod tests {
         bus.store32(0x0c, 3);
         cpu.set_r(0, 0x0c);
 
-        execute(
-            &mut cpu,
-           bus,
-            (false, false, true, true, true, 0, 0x000e),
-        );
+        execute(&mut cpu, bus, (false, false, true, true, true, 0, 0x000e));
         assert_eq!(cpu.r(1), 1);
         assert_eq!(cpu.r(2), 2);
         assert_eq!(cpu.r(3), 3);

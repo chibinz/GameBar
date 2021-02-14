@@ -7,35 +7,37 @@ mod vram;
 use std::fs::File;
 use std::io::Read;
 
+use util::Bus;
+
 use crate::Console;
 
 pub struct Memory {
     bios: Vec<u8>,
     ewram: [u8; 0x02040000 - 0x02000000],
     iwram: [u8; 0x03008000 - 0x03000000],
+    sram: [u8; 0x0e010000 - 0x0e000000],
     rom: Vec<u8>,
-    // sram : Vec<u8>,
     /// Pointer to containing console struct
     pub console: *mut Console,
 }
 
 impl util::Bus for Memory {
-    fn load8(&self, address: u32) -> u8 {
+    fn load8(&self, address: usize) -> u8 {
         self.load8(address)
     }
-    fn load16(&self, address: u32) -> u16 {
+    fn load16(&self, address: usize) -> u16 {
         self.load16(address)
     }
-    fn load32(&self, address: u32) -> u32 {
+    fn load32(&self, address: usize) -> u32 {
         self.load32(address)
     }
-    fn store8(&mut self, address: u32, value: u8) {
+    fn store8(&mut self, address: usize, value: u8) {
         self.store8(address, value)
     }
-    fn store16(&mut self, address: u32, value: u16) {
+    fn store16(&mut self, address: usize, value: u16) {
         self.store16(address, value)
     }
-    fn store32(&mut self, address: u32, value: u32) {
+    fn store32(&mut self, address: usize, value: u32) {
         self.store32(address, value)
     }
 }
@@ -50,105 +52,85 @@ impl Memory {
             // param:      0x05000400 - 0x05000000
             // vram :      0x06018000 - 0x06000000
             // oam  :      0x07000400 - 0x07000000
+            sram: [0; 0x0e010000 - 0x0e000000],
             rom: Vec::new(),
-            // sram : vec![0; 0x0e010000 - 0x0e000000],
             console: 0 as *mut Console,
         }
     }
 
     /// Load a byte from memory
-    pub fn load8(&self, address: u32) -> u8 {
+    pub fn load8(&self, address: usize) -> u8 {
         let offset = Self::mirror(address);
 
         match Self::region(address) {
-            0x00 => self.bios[offset],
-            0x02 => self.ewram[offset],
-            0x03 => self.iwram[offset],
+            0x00 => self.bios.load8(offset),
+            0x02 => self.ewram.load8(offset),
+            0x03 => self.iwram.load8(offset),
             0x04 => self.ioram_load8(offset),
-            0x05 => self.param_load8(offset),
             0x06 => self.vram_load8(offset),
-            0x07 => self.oam_load8(offset),
-            0x08..=0x0d => self.rom[offset],
-            // 0x0e => self.sram[offset],
-            _ => {
-                Self::unhandled(true, 4, address);
-                0
-            }
+            0x08..=0x0d => self.rom.load8(offset),
+            0x0e => self.sram.load8(offset),
+            _ => Self::unhandled(true, 4, address),
         }
     }
 
     /// Load a halfword from memory
-    pub fn load16(&self, address: u32) -> u16 {
+    pub fn load16(&self, address: usize) -> u16 {
         let offset = Self::mirror(address) & !0b1;
 
-        let ldh = |mem: &[u8]| util::into16(&mem[offset..offset + 2]);
-
         match Self::region(address) {
-            0x00 => ldh(&self.bios),
-            0x02 => ldh(&self.ewram),
-            0x03 => ldh(&self.iwram),
+            0x00 => self.bios.load16(offset),
+            0x02 => self.ewram.load16(offset),
+            0x03 => self.iwram.load16(offset),
             0x04 => self.ioram_load16(offset),
             0x05 => self.param_load16(offset),
             0x06 => self.vram_load16(offset),
             0x07 => self.oam_load16(offset),
-            0x08..=0x0d => ldh(&self.rom),
-            // 0x0e => ldh(&self.sram),
-            _ => {
-                Self::unhandled(true, 2, address);
-                0
-            }
+            0x08..=0x0d => self.rom.load16(offset),
+            0x0e => self.sram.load16(offset),
+            _ => Self::unhandled(true, 2, address),
         }
     }
 
     /// Load a word from memory
-    pub fn load32(&self, address: u32) -> u32 {
+    pub fn load32(&self, address: usize) -> u32 {
         let offset = Self::mirror(address) & !0b11;
 
-        let ld = |mem: &[u8]| util::into32(&mem[offset..offset + 4]);
-
         match Self::region(address) {
-            0x00 => ld(&self.bios),
-            0x02 => ld(&self.ewram),
-            0x03 => ld(&self.iwram),
+            0x00 => self.bios.load32(offset),
+            0x02 => self.ewram.load32(offset),
+            0x03 => self.iwram.load32(offset),
             0x04 => self.ioram_load32(offset),
             0x05 => self.param_load32(offset),
             0x06 => self.vram_load32(offset),
             0x07 => self.oam_load32(offset),
-            0x08..=0x0d => ld(&self.rom),
-            // 0x0e => ld(&self.sram),
-            _ => {
-                Self::unhandled(true, 4, address);
-                0
-            }
+            0x08..=0x0d => self.rom.load32(offset),
+            0x0e => self.sram.load32(offset),
+            _ => Self::unhandled(true, 4, address),
         }
     }
 
     /// Store a byte in memory, only EWRAM, IWRAM, IORAM, SRAM are accessible
-    pub fn store8(&mut self, address: u32, value: u8) {
+    pub fn store8(&mut self, address: usize, value: u8) {
         let offset = Self::mirror(address);
 
         match Self::region(address) {
-            0x02 => self.ewram[offset] = value,
-            0x03 => self.iwram[offset] = value,
+            0x02 => self.ewram.store8(offset, value),
+            0x03 => self.iwram.store8(offset, value),
             0x04 => self.ioram_store8(offset, value),
-            // 0x0e => self.sram[offset]  = value,
+            0x0e => self.sram.store8(offset, value),
             _ => Self::unhandled(false, 1, address),
         };
     }
 
     /// Store an halfword in memory, BIOS, ROM, SRAM are inaccessible
-    pub fn store16(&mut self, address: u32, value: u16) {
+    pub fn store16(&mut self, address: usize, value: u16) {
         // Accesses are forced to halfword aligned
         let offset = Self::mirror(address) & !0b1;
 
-        let sth = |mem: &mut [u8]| {
-            let a = value.to_le_bytes();
-            mem[offset..offset + 2].clone_from_slice(&a);
-        };
-
         match Self::region(address) {
-            0x02 => sth(&mut self.ewram),
-            0x03 => sth(&mut self.iwram),
+            0x02 => self.ewram.store16(offset, value),
+            0x03 => self.iwram.store16(offset, value),
             0x04 => self.ioram_store16(offset, value),
             0x05 => self.param_store16(offset, value),
             0x06 => self.vram_store16(offset, value),
@@ -158,21 +140,13 @@ impl Memory {
     }
 
     /// Store a word in memory, BIOS, ROM, SRAM are inaccessible
-    pub fn store32(&mut self, address: u32, value: u32) {
+    pub fn store32(&mut self, address: usize, value: u32) {
         // Accesses are forced to be word aligned
         let offset = Self::mirror(address) & !0b11;
 
-        let st = |mem: &mut [u8]| {
-            let a = value.to_le_bytes();
-            mem[offset] = a[0];
-            mem[offset + 1] = a[1];
-            mem[offset + 2] = a[2];
-            mem[offset + 3] = a[3];
-        };
-
         match Self::region(address) {
-            0x02 => st(&mut self.ewram),
-            0x03 => st(&mut self.iwram),
+            0x02 => self.ewram.store32(offset, value),
+            0x03 => self.iwram.store32(offset, value),
             0x04 => self.ioram_store32(offset, value),
             0x05 => self.param_store32(offset, value),
             0x06 => self.vram_store32(offset, value),
@@ -207,21 +181,22 @@ impl Memory {
     }
 
     /// Print invalid memory access
-    #[allow(unused_variables)]
-    fn unhandled(load: bool, size: u32, address: u32) {
+    fn unhandled<T: Default>(load: bool, size: u32, address: usize) -> T {
         let s = if load { "load" } else { "store" };
 
         util::error!("Unhandled {}-byte {} at {:#08x}", size, s, address);
+
+        T::default()
     }
 
     #[inline]
-    fn region(address: u32) -> u32 {
+    fn region(address: usize) -> usize {
         // Top nibble of address is ignored
         address >> 24
     }
 
     /// Return equivalent base address
-    fn mirror(address: u32) -> usize {
+    fn mirror(address: usize) -> usize {
         let a = match address >> 24 {
             0x02 => address % 0x40000,
             0x03 => address % 0x8000,
@@ -240,6 +215,7 @@ impl Memory {
             }
             0x07 => address % 0x400,
             0x08..=0x0d => address % 0x02000000,
+            0x0e => address % 0x10000,
             _ => address,
         };
 

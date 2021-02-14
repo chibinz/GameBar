@@ -1,7 +1,7 @@
 use super::Memory;
 
 impl Memory {
-    pub fn access_timing(address: u32, size: u32) -> i32 {
+    pub fn access_timing(address: usize, size: u32) -> i32 {
         // Do not distinguish between sequential and non sequential cycles
         let timing = match Self::region(address) {
             0x00 => [1, 1, 1],

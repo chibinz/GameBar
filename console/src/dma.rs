@@ -180,7 +180,7 @@ impl DMAChannel {
 
     pub fn transfer16(&mut self, memory: &mut Memory) {
         if self.in_count < self.count {
-            memory.store16(self.in_dst, memory.load16(self.in_src));
+            memory.store16(self.in_dst as usize, memory.load16(self.in_src as usize));
 
             // Incrment internal register
             self.in_src = self.in_src.wrapping_add(self.srcinc);
@@ -188,8 +188,8 @@ impl DMAChannel {
 
             self.in_count += 1;
 
-            self.cycles += Memory::access_timing(self.in_dst, 1);
-            self.cycles += Memory::access_timing(self.in_src, 1);
+            self.cycles += Memory::access_timing(self.in_dst as usize, 1);
+            self.cycles += Memory::access_timing(self.in_src as usize, 1);
         } else {
             self.state = DMAState::Finished;
         }
@@ -197,7 +197,7 @@ impl DMAChannel {
 
     pub fn transfer32(&mut self, memory: &mut Memory) {
         if self.in_count < self.count {
-            memory.store32(self.in_dst, memory.load32(self.in_src));
+            memory.store32(self.in_dst as usize, memory.load32(self.in_src as usize));
 
             // Incrment internal register
             self.in_src = self.in_src.wrapping_add(self.srcinc);
@@ -205,8 +205,8 @@ impl DMAChannel {
 
             self.in_count += 1;
 
-            self.cycles += Memory::access_timing(self.in_dst, 2);
-            self.cycles += Memory::access_timing(self.in_src, 2);
+            self.cycles += Memory::access_timing(self.in_dst as usize, 2);
+            self.cycles += Memory::access_timing(self.in_src as usize, 2);
         } else {
             self.state = DMAState::Finished;
         }
