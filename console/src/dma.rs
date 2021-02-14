@@ -1,6 +1,7 @@
 use crate::interrupt::IRQController;
 use crate::interrupt::Interrupt::*;
 use crate::memory::Memory;
+use util::Bus;
 
 pub struct DMA {
     pub channel: Vec<DMAChannel>,

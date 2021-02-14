@@ -19,45 +19,9 @@ pub struct Memory {
     pub console: *mut Console,
 }
 
-impl util::Bus for Memory {
-    fn load8(&self, address: usize) -> u8 {
-        self.load8(address)
-    }
-    fn load16(&self, address: usize) -> u16 {
-        self.load16(address)
-    }
-    fn load32(&self, address: usize) -> u32 {
-        self.load32(address)
-    }
-    fn store8(&mut self, address: usize, value: u8) {
-        self.store8(address, value)
-    }
-    fn store16(&mut self, address: usize, value: u16) {
-        self.store16(address, value)
-    }
-    fn store32(&mut self, address: usize, value: u32) {
-        self.store32(address, value)
-    }
-}
-
-impl Memory {
-    /// Initializes memory to zeroes
-    pub fn new() -> Self {
-        Memory {
-            bios: Vec::new(),
-            ewram: [0; 0x02040000 - 0x02000000],
-            iwram: [0; 0x03008000 - 0x03000000],
-            // param:      0x05000400 - 0x05000000
-            // vram :      0x06018000 - 0x06000000
-            // oam  :      0x07000400 - 0x07000000
-            sram: [0; 0x0e010000 - 0x0e000000],
-            rom: Vec::new(),
-            console: 0 as *mut Console,
-        }
-    }
-
+impl Bus for Memory {
     /// Load a byte from memory
-    pub fn load8(&self, address: usize) -> u8 {
+    fn load8(&self, address: usize) -> u8 {
         let offset = Self::mirror(address);
 
         match Self::region(address) {
@@ -66,14 +30,22 @@ impl Memory {
             0x03 => self.iwram.load8(offset),
             0x04 => self.ioram_load8(offset),
             0x06 => self.c().ppu.vram.load8(offset),
-            0x08..=0x0d => self.rom.load8(offset),
-            0x0e => self.sram.load8(offset),
+            0x0..=0x0d => self.rom.load8(offset),
+            0x0e => {
+                if offset == 0 {
+                    0xc8
+                } else if offset == 1 {
+                    0x9
+                } else {
+                    self.sram.load8(offset)
+                }
+            }
             _ => Self::unhandled(true, 4, address),
         }
     }
 
     /// Load a halfword from memory
-    pub fn load16(&self, address: usize) -> u16 {
+    fn load16(&self, address: usize) -> u16 {
         let offset = Self::mirror(address) & !0b1;
 
         match Self::region(address) {
@@ -91,7 +63,7 @@ impl Memory {
     }
 
     /// Load a word from memory
-    pub fn load32(&self, address: usize) -> u32 {
+    fn load32(&self, address: usize) -> u32 {
         let offset = Self::mirror(address) & !0b11;
 
         match Self::region(address) {
@@ -109,7 +81,7 @@ impl Memory {
     }
 
     /// Store a byte in memory, only EWRAM, IWRAM, IORAM, SRAM are accessible
-    pub fn store8(&mut self, address: usize, value: u8) {
+    fn store8(&mut self, address: usize, value: u8) {
         let offset = Self::mirror(address);
 
         match Self::region(address) {
@@ -122,7 +94,7 @@ impl Memory {
     }
 
     /// Store an halfword in memory, BIOS, ROM, SRAM are inaccessible
-    pub fn store16(&mut self, address: usize, value: u16) {
+    fn store16(&mut self, address: usize, value: u16) {
         // Accesses are forced to halfword aligned
         let offset = Self::mirror(address) & !0b1;
 
@@ -138,7 +110,7 @@ impl Memory {
     }
 
     /// Store a word in memory, BIOS, ROM, SRAM are inaccessible
-    pub fn store32(&mut self, address: usize, value: u32) {
+    fn store32(&mut self, address: usize, value: u32) {
         // Accesses are forced to be word aligned
         let offset = Self::mirror(address) & !0b11;
 
@@ -151,6 +123,23 @@ impl Memory {
             0x07 => self.oam_store32(offset, value),
             _ => Self::unhandled(false, 4, address),
         };
+    }
+}
+
+impl Memory {
+    /// Initializes memory to zeroes
+    pub fn new() -> Self {
+        Memory {
+            bios: Vec::new(),
+            ewram: [0; 0x02040000 - 0x02000000],
+            iwram: [0; 0x03008000 - 0x03000000],
+            // param:      0x05000400 - 0x05000000
+            // vram :      0x06018000 - 0x06000000
+            // oam  :      0x07000400 - 0x07000000
+            sram: [0; 0x0e010000 - 0x0e000000],
+            rom: Vec::new(),
+            console: 0 as *mut Console,
+        }
     }
 
     /// Return reference to containing console
@@ -212,7 +201,7 @@ impl Memory {
                 }
             }
             0x07 => address % 0x400,
-            0x08..=0x0d => address % 0x02000000,
+            0x08..=0x0d => address % 0x02000000, // Should be length of rom instead
             0x0e => address % 0x10000,
             _ => address,
         };

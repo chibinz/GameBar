@@ -1,3 +1,4 @@
+mod cart;
 mod dma;
 // mod event;
 mod interrupt;
