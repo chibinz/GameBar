@@ -27,9 +27,9 @@ pub fn decode(instr: u32) -> (bool, bool, bool, bool, u32, u32, u32, u32) {
 }
 
 #[inline]
-pub fn execute(
+pub fn execute<T: ?Sized + Bus>(
     cpu: &mut CPU,
-    bus: &mut impl ?Sized + Bus,
+    bus: &mut T,
     (i, p, u, w, lb, rn, rd, offset): (bool, bool, bool, bool, u32, u32, u32, u32),
 ) {
     // 0 for i means immediate
@@ -95,14 +95,14 @@ mod tests {
             bus,
             (false, true, false, false, 0b01, 0, 1, 1),
         );
-        assert_eq!(CPU::ldrb(0x00, &bus), 0xff);
+        assert_eq!(CPU::ldrb(0x00, bus), 0xff);
     }
 
     #[test]
     fn word_transfer() {
         let mut cpu = CPU::new();
         let mut bus = [0u8; 1024];
-        let mut bus = bus.as_mut();
+        let bus = bus.as_mut();
 
         bus.store32(0x00, 0xdeadbeef);
         cpu.set_r(0, 0x00);
@@ -110,7 +110,7 @@ mod tests {
         // Immediate offset, post-indexing, up offset, write back, load word
         execute(
             &mut cpu,
-            &mut bus,
+            bus,
             (false, false, true, true, 0b10, 0, 1, 4),
         );
         assert_eq!(cpu.r(1), 0xdeadbeef);
@@ -120,10 +120,10 @@ mod tests {
         // Immediate offset, pre-indexing, down offset, write back, store word
         execute(
             &mut cpu,
-            &mut bus,
+            bus,
             (false, true, false, true, 0b00, 0, 1, 4),
         );
-        assert_eq!(CPU::ldr(0x00, &bus), 0);
+        assert_eq!(CPU::ldr(0x00, bus), 0);
         assert_eq!(cpu.r(0), 0x00);
     }
 }

@@ -24,9 +24,9 @@ pub fn decode(instr: u32) -> (bool, bool, bool, bool, bool, u32, u32) {
 }
 
 #[inline]
-pub fn execute(
+pub fn execute<T: ?Sized + Bus>(
     cpu: &mut CPU,
-    bus: &mut impl Bus,
+    bus: &mut T,
     (p, u, s, w, l, rn, rlist): (bool, bool, bool, bool, bool, u32, u32),
 ) {
     // Empty rlist not handled
@@ -110,7 +110,7 @@ mod tests {
     fn post_increment() {
         let mut cpu = CPU::new();
         let mut bus =  [0u8; 1024];
-        let mut bus = bus.as_mut();
+        let bus = bus.as_mut();
 
         cpu.set_spsr(cpu.get_cpsr(), false);
 
@@ -137,7 +137,7 @@ mod tests {
     fn pre_increment() {
         let mut cpu = CPU::new();
         let mut bus = [0u8; 1024];
-        let mut bus = bus.as_mut();
+        let bus = bus.as_mut();
 
         bus.store32(0x04, 1);
         bus.store32(0x08, 2);
@@ -146,7 +146,7 @@ mod tests {
 
         execute(
             &mut cpu,
-            &mut bus,
+            bus,
             (true, true, true, true, true, 0, 0x000e),
         );
         assert_eq!(cpu.r(1), 1);
@@ -159,7 +159,7 @@ mod tests {
     fn post_decrement() {
         let mut cpu = CPU::new();
         let mut bus = [0u8; 1024];
-        let mut bus = bus.as_mut();
+        let bus = bus.as_mut();
 
         bus.store32(0x04, 1);
         bus.store32(0x08, 2);
@@ -168,7 +168,7 @@ mod tests {
 
         execute(
             &mut cpu,
-            &mut bus,
+           bus,
             (false, false, true, true, true, 0, 0x000e),
         );
         assert_eq!(cpu.r(1), 1);
@@ -181,7 +181,7 @@ mod tests {
     fn pre_decrement() {
         let mut cpu = CPU::new();
         let mut bus = [0u8; 1024];
-        let mut bus = bus.as_mut();
+        let bus = bus.as_mut();
 
         bus.store32(0x00, 1);
         bus.store32(0x04, 2);

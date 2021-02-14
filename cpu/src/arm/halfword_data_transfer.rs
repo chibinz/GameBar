@@ -31,9 +31,9 @@ pub fn decode(instr: u32) -> (bool, bool, bool, bool, u32, u32, u32, u32) {
 }
 
 #[inline]
-pub fn execute(
+pub fn execute<T: ?Sized + Bus>(
     cpu: &mut CPU,
-    bus: &mut impl Bus,
+    bus: &mut T,
     (p, u, i, w, lsh, rn, rd, offset): (bool, bool, bool, bool, u32, u32, u32, u32),
 ) {
     let noffset = if i { offset } else { cpu.r(offset) };
@@ -86,6 +86,7 @@ mod tests {
     fn halfword_transfer() {
         let mut cpu = CPU::new();
         let mut bus = [0u8; 1024];
+        let bus = bus.as_mut();
 
         bus.store16(0x00, 0xdead);
         cpu.set_r(0, 0x00);
@@ -105,7 +106,7 @@ mod tests {
         // base = r0, src = r1, offset = 1
         execute(
             &mut cpu,
-            &mut bus,
+            bus,
             (true, false, true, true, 0b110, 0, 1, 1),
         );
         assert_eq!(cpu.r(1), 0xffffffff);
