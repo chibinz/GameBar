@@ -33,3 +33,15 @@ get_tile(hflip: bool, vflip: bool, tile_hash1: u64, tile_hash2: u64, palette: u6
 
 ### Issues
 - Hash table is good for unbounded cache, need a way to delete cold entries.
+
+### Profiling
+As of commit 12f0ef0, the hotspot and the time spent respectively is depicted in the following table.
+Module | Percentage
+--- | ---
+Timer | 30%
+CPU | 25%
+step_frame (alone) | 8%
+PPU | 8%
+Memory::load16 | 5%
+
+DenSinH suggested implementing a scheduler, as ticking the timer every single instruction is too expensive. As for the cpu, there is not much to be done without massive refactor. Const generics could greatly reduce the number of branches, but it comes at the cost of burden of great changes to the current code base. What was really surprising to me was that the PPU only account for 8% of the time. I originally expected it to take up the bulk of execution time. Human intuition are very bad at guessing performance metrics. An issue of implementing a scheduler is that is intrusive. Right now the ppu an cpu resides in different current and have little notion of what other components are working. Also dmas can only be interrupted by dma with higher priorities, with audio fifos out of consideration, that means a dma transfer always run til completion on condition that it doesn't write other dmacnt.

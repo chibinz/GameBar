@@ -28,8 +28,6 @@ fn main() {
     let mut window = init_window();
     let mut converted = vec![0; console.ppu.buffer.len()];
 
-    // debug(&mut console as *mut console::Console);
-
     while window.is_open() {
         let input = keyboard::input(&window);
         console.keypad.set_input(input, &mut console.irqcnt);

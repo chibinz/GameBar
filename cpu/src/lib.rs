@@ -64,8 +64,6 @@ impl CPU {
     }
 
     pub fn step(&mut self, bus: &mut impl Bus) -> i32 {
-        // if self.booted {self.print(memory)}
-
         // At least one sequential cycle for any instruction
         self.cycles = 1;
 
