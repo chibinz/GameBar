@@ -60,7 +60,6 @@ pub fn sign_extend(a: u32, s: u32) -> i32 {
 }
 
 pub trait Bus {
-    #[inline]
     #[allow(unused_variables)]
     fn load8(&self, address: usize) -> u8 {
         unimplemented!()
@@ -77,7 +76,6 @@ pub trait Bus {
         let hi = self.load16(address + 2);
         (hi as u32) << 16 | (lo as u32)
     }
-    #[inline]
     #[allow(unused_variables)]
     fn store8(&mut self, address: usize, value: u8) {
         unimplemented!()

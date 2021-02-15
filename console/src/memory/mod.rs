@@ -33,9 +33,9 @@ impl Bus for Memory {
             0x0..=0x0d => self.rom.load8(offset),
             0x0e => {
                 if offset == 0 {
-                    0xc8
+                    0xc2
                 } else if offset == 1 {
-                    0x9
+                    0x09
                 } else {
                     self.sram.load8(offset)
                 }
