@@ -23,7 +23,7 @@ pub fn step(cpu: &mut CPU, bus: &mut impl Bus) {
 
     util::trace!("{:?}", cpu);
 
-    push_cpu(cpu.clone());
+    // push_cpu(cpu.clone());
 
     increment_pc(cpu);
 
