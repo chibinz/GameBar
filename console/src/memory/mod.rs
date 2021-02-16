@@ -157,7 +157,7 @@ impl Memory {
                 }
             }
             0x07 => address % 0x400,
-            0x08..=0x0d => address % 0x02000000, // Should be length of rom instead
+            0x08..=0x0d => address % 0x01000000, // Should be length of rom instead
             0x0e => address % 0x10000,
             _ => address,
         };
