@@ -24,7 +24,7 @@ pub struct PPU {
     pub fblank: bool,     // Force blanking
 
     pub palette: [u16; 0x200],   // 16 bit colors
-    pub vram: [u8; 0x18000],     // Tile mapping
+    pub vram: Vec<u8>,     // Tile mapping
     pub obj_param: [u16; 0x100], // Affine sprite rotation / scaling parameter
 
     pub background: [Background; 4], // Background 0 - 3
@@ -47,7 +47,7 @@ impl PPU {
             vcount: 0,
 
             palette: [0; 0x200],
-            vram: [0; 0x18000],
+            vram: vec![0; 0x18000],
             obj_param: [0; 0x100],
 
             background: [Background::new(); 4],

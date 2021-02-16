@@ -13,6 +13,7 @@ use keypad::Keypad;
 use memory::Memory;
 use ppu::PPU;
 use timer::Timers;
+use cart::Cart;
 
 pub struct Console {
     pub cpu: CPU,
@@ -22,6 +23,7 @@ pub struct Console {
     pub irqcnt: IRQController,
     pub keypad: Keypad,
     pub memory: Memory,
+    pub cart: Cart,
 
     pub magic: u32,
 }
@@ -36,6 +38,7 @@ impl Console {
             timers: Timers::new(),
             keypad: Keypad::new(),
             memory: Memory::new(),
+            cart: Cart::with_rom(Vec::new()),
 
             magic: 0xdeadbeef,
         }

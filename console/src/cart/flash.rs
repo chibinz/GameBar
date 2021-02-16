@@ -3,7 +3,8 @@ pub struct Flash {
     command: Vec<(usize, u8)>,
     bank: usize,
     state: u32,
-    tmp: [u8; 2],
+    id: bool,
+    erase: bool,
 }
 
 impl Flash {
@@ -13,13 +14,22 @@ impl Flash {
             command: Vec::new(),
             bank: 0,
             state: 0,
-            tmp: [0; 2],
+            id: false,
+            erase: false,
         }
     }
 }
 
 impl util::Bus for Flash {
     fn load8(&self, address: usize) -> u8 {
+        if self.id {
+            if address == 0 {
+                return 0xc2;
+            } else if address == 1 {
+                return 0x09;
+            }
+        }
+
         self.flash[self.bank + address]
     }
 
@@ -34,25 +44,31 @@ impl util::Bus for Flash {
             match self.command.as_slice() {
                 // Enter ID mode
                 [(0x5555, 0x90)] => {
-                    let a = self.bank + address;
-                    self.tmp.copy_from_slice(&self.flash[a..a + 2]);
-                    self.flash[a..a + 2].copy_from_slice(&[0xc2, 0x09]);
+                    self.id = true;
                 }
                 // Exit ID mode
                 [(0x5555, 0xf0)] => {
-                    let a = self.bank + address;
-                    self.flash[a..a + 2].copy_from_slice(&self.tmp);
+                    self.id = false;
                 }
                 // Erase command
-                [(0x5555, 0x80)] => {}
+                [(0x5555, 0x80)] => {
+                    self.erase = true;
+                    self.state = 0;
+                    self.command.clear();
+                    return;
+                }
                 // Erase entire chip
                 [(0x5555, 0x10)] => {
-                    self.flash.iter_mut().for_each(|b| *b = 0xff);
+                    if self.erase {
+                        self.flash.iter_mut().for_each(|b| *b = 0xff);
+                    }
                 }
                 // Erase 4 KB sector
                 [(n, 0x30)] => {
-                    let a = self.bank + *n;
-                    self.flash[a..a + 4096].iter_mut().for_each(|b| *b = 0xff);
+                    if self.erase {
+                        let a = self.bank + *n;
+                        self.flash[a..a + 4096].iter_mut().for_each(|b| *b = 0xff);
+                    }
                 }
                 // Look ahead
                 [(0x5555, 0xa0)] => {
@@ -72,9 +88,11 @@ impl util::Bus for Flash {
                 }
                 _ => {}
             }
+            self.erase = false;
             self.state = 0;
             self.command.clear();
         } else {
+            self.erase = false;
             self.state = 0;
             self.command.clear();
         }

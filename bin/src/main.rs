@@ -18,12 +18,13 @@ fn main() {
         return;
     }
 
+    let rom = std::fs::read(&args[1]).unwrap();
+    let bios = std::fs::read("rom/gba_bios.bin").unwrap();
     let mut console = Box::new(console::Console::new());
     console.init(); // Must be called before any operation
-
-    console.memory.load_rom(&args[1]);
-    console.memory.load_bios(&"rom/gba_bios.bin".to_string());
-    console.cpu.backtrace_on_panic();
+    console.memory.bios = bios;
+    console.cart.rom = rom;
+    // console.cpu.backtrace_on_panic();
 
     let mut window = init_window();
     let mut converted = vec![0; console.ppu.buffer.len()];
