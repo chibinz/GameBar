@@ -93,6 +93,14 @@ pub trait Bus {
         self.store16(address, lo);
         self.store16(address + 2, hi);
     }
+    /// Print invalid memory access
+    fn unhandled<T: Default>(load: bool, size: u32, address: usize) -> T {
+        let s = if load { "load" } else { "store" };
+
+        log::error!("Unhandled {}-byte {} at {:#08x}", size, s, address);
+
+        T::default()
+    }
 }
 
 impl Bus for [u8] {

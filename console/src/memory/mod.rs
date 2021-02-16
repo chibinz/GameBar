@@ -30,7 +30,7 @@ impl Bus for Memory {
             0x03 => self.iwram.load8(offset),
             0x04 => self.ioram_load8(offset),
             0x06 => self.c().ppu.vram.load8(offset),
-            0x0..=0x0d => self.rom.load8(offset),
+            0x08..=0x0d => self.rom.load8(offset),
             0x0e => {
                 if offset == 0 {
                     0xc2
@@ -165,15 +165,6 @@ impl Memory {
         file.read_to_end(&mut self.bios).unwrap();
 
         self.bios.len()
-    }
-
-    /// Print invalid memory access
-    fn unhandled<T: Default>(load: bool, size: u32, address: usize) -> T {
-        let s = if load { "load" } else { "store" };
-
-        util::error!("Unhandled {}-byte {} at {:#08x}", size, s, address);
-
-        T::default()
     }
 
     #[inline]
