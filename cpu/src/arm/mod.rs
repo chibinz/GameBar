@@ -13,8 +13,8 @@ mod single_data_transfer;
 
 pub use disassemble::disassemble;
 
-use crate::CPU;
 use crate::Bus;
+use crate::CPU;
 use util::*;
 
 #[inline]

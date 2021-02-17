@@ -19,8 +19,8 @@ mod unconditional_branch;
 
 pub use disassemble::disassemble;
 
-use crate::CPU;
 use crate::Bus;
+use crate::CPU;
 use util::*;
 
 #[inline]

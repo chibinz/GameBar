@@ -1,11 +1,12 @@
 mod ioreg;
 mod timing;
 
-use util::Bus;
-
 use crate::Console;
 
-pub struct Memory {
+use std::ops::{Deref, DerefMut};
+use util::Bus;
+
+pub struct GBus {
     pub bios: Vec<u8>,
     ewram: [u8; 0x02040000 - 0x02000000],
     iwram: [u8; 0x03008000 - 0x03000000],
@@ -13,7 +14,22 @@ pub struct Memory {
     pub console: *mut Console,
 }
 
-impl Bus for Memory {
+impl Deref for GBus {
+    type Target = Console;
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.console }
+    }
+}
+
+impl DerefMut for GBus {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { &mut *self.console }
+    }
+}
+
+impl Bus for GBus {
     /// Load a byte from memory
     fn load8(&self, address: usize) -> u8 {
         let offset = Self::mirror(address);
@@ -23,9 +39,9 @@ impl Bus for Memory {
             0x02 => self.ewram.load8(offset),
             0x03 => self.iwram.load8(offset),
             0x04 => self.ioram_load8(offset),
-            0x06 => self.c().ppu.vram.load8(offset),
-            0x08..=0x0d => self.c().cart.rom.load8(offset),
-            0x0e => self.c().cart.backup.load8(offset),
+            0x06 => self.ppu.vram.load8(offset),
+            0x08..=0x0d => self.cart.rom.load8(offset),
+            0x0e => self.cart.backup.load8(offset),
             _ => Self::unhandled(true, 4, address),
         }
     }
@@ -39,11 +55,11 @@ impl Bus for Memory {
             0x02 => self.ewram.load16(offset),
             0x03 => self.iwram.load16(offset),
             0x04 => self.ioram_load16(offset),
-            0x05 => self.c().ppu.palette.load16(offset),
-            0x06 => self.c().ppu.vram.load16(offset),
-            0x07 => self.c().ppu.oam.load16(offset),
-            0x08..=0x0d => self.c().cart.rom.load16(offset),
-            0x0e => self.c().cart.backup.load16(offset),
+            0x05 => self.ppu.palette.load16(offset),
+            0x06 => self.ppu.vram.load16(offset),
+            0x07 => self.ppu.oam.load16(offset),
+            0x08..=0x0d => self.cart.rom.load16(offset),
+            0x0e => self.cart.backup.load16(offset),
             _ => Self::unhandled(true, 2, address),
         }
     }
@@ -57,11 +73,11 @@ impl Bus for Memory {
             0x02 => self.ewram.load32(offset),
             0x03 => self.iwram.load32(offset),
             0x04 => self.ioram_load32(offset),
-            0x05 => self.c().ppu.palette.load32(offset),
-            0x06 => self.c().ppu.vram.load32(offset),
-            0x07 => self.c().ppu.oam.load32(offset),
-            0x08..=0x0d => self.c().cart.rom.load32(offset),
-            0x0e => self.c().cart.backup.load32(offset),
+            0x05 => self.ppu.palette.load32(offset),
+            0x06 => self.ppu.vram.load32(offset),
+            0x07 => self.ppu.oam.load32(offset),
+            0x08..=0x0d => self.cart.rom.load32(offset),
+            0x0e => self.cart.backup.load32(offset),
             _ => Self::unhandled(true, 4, address),
         }
     }
@@ -74,7 +90,7 @@ impl Bus for Memory {
             0x02 => self.ewram.store8(offset, value),
             0x03 => self.iwram.store8(offset, value),
             0x04 => self.ioram_store8(offset, value),
-            0x0e => self.c().cart.backup.store8(offset, value),
+            0x0e => self.cart.backup.store8(offset, value),
             _ => Self::unhandled(false, 1, address),
         };
     }
@@ -88,9 +104,9 @@ impl Bus for Memory {
             0x02 => self.ewram.store16(offset, value),
             0x03 => self.iwram.store16(offset, value),
             0x04 => self.ioram_store16(offset, value),
-            0x05 => self.c().ppu.palette.store16(offset, value),
-            0x06 => self.c().ppu.vram.store16(offset, value),
-            0x07 => self.c().ppu.oam.store16(offset, value),
+            0x05 => self.ppu.palette.store16(offset, value),
+            0x06 => self.ppu.vram.store16(offset, value),
+            0x07 => self.ppu.oam.store16(offset, value),
             _ => Self::unhandled(false, 2, address),
         };
     }
@@ -104,18 +120,18 @@ impl Bus for Memory {
             0x02 => self.ewram.store32(offset, value),
             0x03 => self.iwram.store32(offset, value),
             0x04 => self.ioram_store32(offset, value),
-            0x05 => self.c().ppu.palette.store32(offset, value),
-            0x06 => self.c().ppu.vram.store32(offset, value),
-            0x07 => self.c().ppu.oam.store32(offset, value),
+            0x05 => self.ppu.palette.store32(offset, value),
+            0x06 => self.ppu.vram.store32(offset, value),
+            0x07 => self.ppu.oam.store32(offset, value),
             _ => Self::unhandled(false, 4, address),
         };
     }
 }
 
-impl Memory {
+impl GBus {
     /// Initializes memory to zeroes
     pub fn new() -> Self {
-        Memory {
+        GBus {
             bios: Vec::new(),
             ewram: [0; 0x02040000 - 0x02000000],
             iwram: [0; 0x03008000 - 0x03000000],
@@ -124,11 +140,6 @@ impl Memory {
             // oam  :      0x07000400 - 0x07000000
             console: 0 as *mut Console,
         }
-    }
-
-    /// Return reference to containing console
-    pub fn c(&self) -> &mut Console {
-        unsafe { &mut *self.console }
     }
 
     #[inline]

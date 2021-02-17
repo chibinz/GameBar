@@ -1,6 +1,6 @@
+use crate::bus::GBus;
 use crate::interrupt::IRQController;
 use crate::interrupt::Interrupt::*;
-use crate::memory::Memory;
 use util::Bus;
 
 pub struct DMA {
@@ -21,7 +21,7 @@ pub struct DMAChannel {
     pub dstinc: u32,   // Added to dst_src after every copy
     pub in_count: u16, // Keep track of how many words transferred
 
-    transfer: fn(&mut Self, &mut Memory),
+    transfer: fn(&mut Self, &mut GBus),
     pub state: DMAState,
     pub cycles: i32, // Number of cycles consumed for transfer
 
@@ -48,7 +48,7 @@ impl DMA {
         d
     }
 
-    pub fn step(&mut self, irqcnt: &mut IRQController, memory: &mut Memory) -> i32 {
+    pub fn step(&mut self, irqcnt: &mut IRQController, memory: &mut GBus) -> i32 {
         for c in self.channel.iter_mut() {
             if c.active {
                 return c.step(irqcnt, memory);
@@ -165,7 +165,7 @@ impl DMAChannel {
         self.state = DMAState::Unintialized;
     }
 
-    pub fn step(&mut self, irqcnt: &mut IRQController, memory: &mut Memory) -> i32 {
+    pub fn step(&mut self, irqcnt: &mut IRQController, memory: &mut GBus) -> i32 {
         use DMAState::*;
 
         self.cycles = 0;
@@ -179,7 +179,7 @@ impl DMAChannel {
         self.cycles
     }
 
-    pub fn transfer16(&mut self, memory: &mut Memory) {
+    pub fn transfer16(&mut self, memory: &mut GBus) {
         if self.in_count < self.count {
             memory.store16(self.in_dst as usize, memory.load16(self.in_src as usize));
 
@@ -189,14 +189,14 @@ impl DMAChannel {
 
             self.in_count += 1;
 
-            self.cycles += Memory::access_timing(self.in_dst as usize, 1);
-            self.cycles += Memory::access_timing(self.in_src as usize, 1);
+            self.cycles += GBus::access_timing(self.in_dst as usize, 1);
+            self.cycles += GBus::access_timing(self.in_src as usize, 1);
         } else {
             self.state = DMAState::Finished;
         }
     }
 
-    pub fn transfer32(&mut self, memory: &mut Memory) {
+    pub fn transfer32(&mut self, memory: &mut GBus) {
         if self.in_count < self.count {
             memory.store32(self.in_dst as usize, memory.load32(self.in_src as usize));
 
@@ -206,8 +206,8 @@ impl DMAChannel {
 
             self.in_count += 1;
 
-            self.cycles += Memory::access_timing(self.in_dst as usize, 2);
-            self.cycles += Memory::access_timing(self.in_src as usize, 2);
+            self.cycles += GBus::access_timing(self.in_dst as usize, 2);
+            self.cycles += GBus::access_timing(self.in_src as usize, 2);
         } else {
             self.state = DMAState::Finished;
         }

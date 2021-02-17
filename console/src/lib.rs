@@ -1,19 +1,19 @@
 mod cart;
 mod dma;
 // mod event;
+mod bus;
 mod interrupt;
 mod keypad;
-mod memory;
 mod timer;
 
+use bus::GBus;
+use cart::Cart;
 use cpu::CPU;
 use dma::DMA;
 use interrupt::IRQController;
 use keypad::Keypad;
-use memory::Memory;
 use ppu::PPU;
 use timer::Timers;
-use cart::Cart;
 
 pub struct Console {
     pub cpu: CPU,
@@ -22,7 +22,7 @@ pub struct Console {
     pub timers: Timers,
     pub irqcnt: IRQController,
     pub keypad: Keypad,
-    pub memory: Memory,
+    pub memory: GBus,
     pub cart: Cart,
 
     pub magic: u32,
@@ -37,7 +37,7 @@ impl Console {
             irqcnt: IRQController::new(),
             timers: Timers::new(),
             keypad: Keypad::new(),
-            memory: Memory::new(),
+            memory: GBus::new(),
             cart: Cart::with_rom(Vec::new()),
 
             magic: 0xdeadbeef,
@@ -102,7 +102,7 @@ impl Console {
     pub fn step_dma_cpu_timer(
         dma: &mut DMA,
         cpu: &mut CPU,
-        memory: &mut Memory,
+        memory: &mut GBus,
         timers: &mut Timers,
         irqcnt: &mut IRQController,
     ) {
