@@ -19,10 +19,10 @@ pub struct Console {
     pub cpu: CPU,
     pub ppu: PPU,
     pub dma: DMA,
+    pub bus: GBus,
     pub timers: Timers,
     pub irqcnt: IRQController,
     pub keypad: Keypad,
-    pub memory: GBus,
     pub cart: Cart,
 }
 
@@ -35,13 +35,13 @@ impl Console {
             irqcnt: IRQController::new(),
             timers: Timers::new(),
             keypad: Keypad::new(),
-            memory: GBus::new(),
+            bus: GBus::new(),
             cart: Cart::with_rom(Vec::new()),
         }
     }
 
     pub fn init(&mut self) {
-        self.memory.console = self as *mut Self;
+        self.bus.console = self as *mut Self;
     }
 
     /// Render a frame
@@ -50,7 +50,7 @@ impl Console {
         // self.schedule();
         let cpu = &mut self.cpu;
         let ppu = &mut self.ppu;
-        let memory = &mut self.memory;
+        let bus = &mut self.bus;
         let timers = &mut self.timers;
         let dma = &mut self.dma;
         let irqcnt = &mut self.irqcnt;
@@ -59,7 +59,7 @@ impl Console {
             ppu.hdraw();
 
             for _ in 0..960 {
-                Self::step_dma_cpu_timer(dma, cpu, memory, timers, irqcnt);
+                Self::step_dma_cpu_timer(dma, cpu, bus, timers, irqcnt);
             }
 
             dma.request_hblank();
@@ -68,7 +68,7 @@ impl Console {
             }
 
             for _ in 0..272 {
-                Self::step_dma_cpu_timer(dma, cpu, memory, timers, irqcnt);
+                Self::step_dma_cpu_timer(dma, cpu, bus, timers, irqcnt);
             }
 
             if ppu.increment_vcount() {
@@ -83,7 +83,7 @@ impl Console {
 
         for _ in 0..68 {
             for _ in 0..1272 {
-                Self::step_dma_cpu_timer(dma, cpu, memory, timers, irqcnt);
+                Self::step_dma_cpu_timer(dma, cpu, bus, timers, irqcnt);
             }
 
             if ppu.increment_vcount() {
@@ -98,15 +98,15 @@ impl Console {
     pub fn step_dma_cpu_timer(
         dma: &mut DMA,
         cpu: &mut CPU,
-        memory: &mut GBus,
+        bus: &mut GBus,
         timers: &mut Timers,
         irqcnt: &mut IRQController,
     ) {
         let t = if dma.is_active() {
-            dma.step(irqcnt, memory)
+            dma.step(irqcnt, bus)
         } else {
             irqcnt.check(cpu);
-            cpu.step(memory)
+            cpu.step(bus)
         };
 
         timers.run(t, irqcnt);
@@ -114,7 +114,7 @@ impl Console {
 
     /// Single step CPU, for debugging purpose
     pub fn step(&mut self) {
-        self.cpu.step(&mut self.memory);
+        self.cpu.step(&mut self.bus);
         // self.cpu.print(&mut self.memory);
     }
 }

@@ -22,7 +22,7 @@ fn main() {
     let bios = std::fs::read("rom/gba_bios.bin").unwrap();
     let mut console = Box::new(console::Console::new());
     console.init(); // Must be called before any operation
-    console.memory.bios = bios;
+    console.bus.bios = bios;
     console.cart.rom = rom;
     // console.cpu.backtrace_on_panic();
 

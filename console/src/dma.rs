@@ -48,10 +48,10 @@ impl DMA {
         d
     }
 
-    pub fn step(&mut self, irqcnt: &mut IRQController, memory: &mut GBus) -> i32 {
+    pub fn step(&mut self, irqcnt: &mut IRQController, bus: &mut GBus) -> i32 {
         for c in self.channel.iter_mut() {
             if c.active {
-                return c.step(irqcnt, memory);
+                return c.step(irqcnt, bus);
             }
         }
 
@@ -165,23 +165,23 @@ impl DMAChannel {
         self.state = DMAState::Unintialized;
     }
 
-    pub fn step(&mut self, irqcnt: &mut IRQController, memory: &mut GBus) -> i32 {
+    pub fn step(&mut self, irqcnt: &mut IRQController, bus: &mut GBus) -> i32 {
         use DMAState::*;
 
         self.cycles = 0;
 
         match self.state {
             Unintialized => self.setup(),
-            Transferring => (self.transfer)(self, memory),
+            Transferring => (self.transfer)(self, bus),
             Finished => self.finish(irqcnt),
         }
 
         self.cycles
     }
 
-    pub fn transfer16(&mut self, memory: &mut GBus) {
+    pub fn transfer16(&mut self, bus: &mut GBus) {
         if self.in_count < self.count {
-            memory.store16(self.in_dst as usize, memory.load16(self.in_src as usize));
+            bus.store16(self.in_dst as usize, bus.load16(self.in_src as usize));
 
             // Incrment internal register
             self.in_src = self.in_src.wrapping_add(self.srcinc);
@@ -196,9 +196,9 @@ impl DMAChannel {
         }
     }
 
-    pub fn transfer32(&mut self, memory: &mut GBus) {
+    pub fn transfer32(&mut self, bus: &mut GBus) {
         if self.in_count < self.count {
-            memory.store32(self.in_dst as usize, memory.load32(self.in_src as usize));
+            bus.store32(self.in_dst as usize, bus.load32(self.in_src as usize));
 
             // Incrment internal register
             self.in_src = self.in_src.wrapping_add(self.srcinc);

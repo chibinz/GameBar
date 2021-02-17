@@ -140,7 +140,7 @@ impl Debugger {
         for i in 0..16 {
             print!("{:08x}:   ", address + i * 16);
             for j in 0..16 {
-                let value = self.c().memory.load8(address + i * 16 + j);
+                let value = self.c().bus.load8(address + i * 16 + j);
 
                 print!("{:02x} ", value);
             }
