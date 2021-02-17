@@ -24,9 +24,9 @@ pub fn decode(instr: u32) -> (bool, bool, bool, bool, bool, u32, u32) {
 }
 
 #[inline]
-pub fn execute<T: ?Sized + Bus>(
+pub fn execute(
     cpu: &mut CPU,
-    bus: &mut T,
+    bus: &mut impl Bus,
     (p, u, s, w, l, rn, rlist): (bool, bool, bool, bool, bool, u32, u32),
 ) {
     // Empty rlist not handled
@@ -105,22 +105,22 @@ fn count_cycles(rlist: u32) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::bus::DummyBus;
 
     #[test]
     fn post_increment() {
         let mut cpu = CPU::new();
-        let mut bus = [0u8; 1024];
-        let bus = bus.as_mut();
+        let mut bus = DummyBus::new();
 
         cpu.set_spsr(cpu.get_cpsr(), false);
 
         for i in 0..16 {
-            bus.as_mut().store32(0x00 + i * 4, i as u32);
+            bus.store32(0x00 + i * 4, i as u32);
         }
         cpu.set_r(0, 0x00);
 
         // Write back bit is redundant because R0 is overwritten
-        execute(&mut cpu, bus, (false, true, true, true, true, 0, 0xffff));
+        execute(&mut cpu, &mut bus, (false, true, true, true, true, 0, 0xffff));
         for i in 0..15 {
             assert_eq!(cpu.r(i), i);
         }
@@ -132,15 +132,14 @@ mod tests {
     #[test]
     fn pre_increment() {
         let mut cpu = CPU::new();
-        let mut bus = [0u8; 1024];
-        let bus = bus.as_mut();
+        let mut bus = DummyBus::new();
 
         bus.store32(0x04, 1);
         bus.store32(0x08, 2);
         bus.store32(0x0c, 3);
         cpu.set_r(0, 0x00);
 
-        execute(&mut cpu, bus, (true, true, true, true, true, 0, 0x000e));
+        execute(&mut cpu, &mut bus, (true, true, true, true, true, 0, 0x000e));
         assert_eq!(cpu.r(1), 1);
         assert_eq!(cpu.r(2), 2);
         assert_eq!(cpu.r(3), 3);
@@ -150,15 +149,14 @@ mod tests {
     #[test]
     fn post_decrement() {
         let mut cpu = CPU::new();
-        let mut bus = [0u8; 1024];
-        let bus = bus.as_mut();
+        let mut bus = DummyBus::new();
 
         bus.store32(0x04, 1);
         bus.store32(0x08, 2);
         bus.store32(0x0c, 3);
         cpu.set_r(0, 0x0c);
 
-        execute(&mut cpu, bus, (false, false, true, true, true, 0, 0x000e));
+        execute(&mut cpu, &mut bus, (false, false, true, true, true, 0, 0x000e));
         assert_eq!(cpu.r(1), 1);
         assert_eq!(cpu.r(2), 2);
         assert_eq!(cpu.r(3), 3);

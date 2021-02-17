@@ -10,7 +10,7 @@ use util::*;
 
 impl CPU {
     #[inline]
-    pub fn ldr<T: ?Sized + Bus>(address: u32, bus: &T) -> u32 {
+    pub fn ldr(address: u32, bus: &impl Bus) -> u32 {
         let rotation = (address & 0b11) * 8;
 
         // Memory loads are forcibly aligned
@@ -20,12 +20,12 @@ impl CPU {
     }
 
     #[inline]
-    pub fn ldrb<T: ?Sized + Bus>(address: u32, bus: &T) -> u32 {
+    pub fn ldrb(address: u32, bus: &impl Bus) -> u32 {
         bus.load8(address as usize) as u32
     }
 
     #[inline]
-    pub fn ldrh<T: ?Sized + Bus>(address: u32, bus: &T) -> u32 {
+    pub fn ldrh(address: u32, bus: &impl Bus) -> u32 {
         let rotation = (address & 1) * 8;
 
         let value = bus.load16(address as usize) as u32;
@@ -34,12 +34,12 @@ impl CPU {
     }
 
     #[inline]
-    pub fn ldrsb<T: ?Sized + Bus>(address: u32, bus: &T) -> u32 {
+    pub fn ldrsb(address: u32, bus: &impl Bus) -> u32 {
         bus.load8(address as usize) as i8 as i32 as u32
     }
 
     #[inline]
-    pub fn ldrsh<T: ?Sized + Bus>(address: u32, bus: &T) -> u32 {
+    pub fn ldrsh(address: u32, bus: &impl Bus) -> u32 {
         if address.bit(0) {
             // Misaligned LDRSH is effectively LDRSB
             bus.load8(address as usize) as i8 as i32 as u32
@@ -49,17 +49,43 @@ impl CPU {
     }
 
     #[inline]
-    pub fn str<T: ?Sized + Bus>(address: u32, value: u32, bus: &mut T) {
+    pub fn str(address: u32, value: u32, bus: &mut impl Bus) {
         bus.store32(address as usize, value)
     }
 
     #[inline]
-    pub fn strb<T: ?Sized + Bus>(address: u32, value: u32, bus: &mut T) {
+    pub fn strb(address: u32, value: u32, bus: &mut impl Bus) {
         bus.store8(address as usize, value as u8)
     }
 
     #[inline]
-    pub fn strh<T: ?Sized + Bus>(address: u32, value: u32, bus: &mut T) {
+    pub fn strh(address: u32, value: u32, bus: &mut impl Bus) {
         bus.store16(address as usize, value as u16)
+    }
+}
+
+use std::collections::HashMap;
+
+/// Used in unit tests
+pub struct DummyBus {
+    map: HashMap<usize, u8>,
+}
+
+impl DummyBus {
+    #[allow(dead_code)]
+    pub fn new() -> Self {
+        Self {
+            map: HashMap::new(),
+        }
+    }
+
+}
+
+impl Bus for DummyBus {
+    fn load8(&self, address: usize) -> u8 {
+        self.map[&address]
+    }
+    fn store8(&mut self, address: usize, value: u8) {
+        self.map.insert(address, value);
     }
 }

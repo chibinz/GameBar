@@ -31,9 +31,9 @@ pub fn decode(instr: u32) -> (bool, bool, bool, bool, u32, u32, u32, u32) {
 }
 
 #[inline]
-pub fn execute<T: ?Sized + Bus>(
+pub fn execute(
     cpu: &mut CPU,
-    bus: &mut T,
+    bus: &mut impl Bus,
     (p, u, i, w, lsh, rn, rd, offset): (bool, bool, bool, bool, u32, u32, u32, u32),
 ) {
     let noffset = if i { offset } else { cpu.r(offset) };
@@ -70,6 +70,7 @@ pub fn execute<T: ?Sized + Bus>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::bus::DummyBus;
 
     #[test]
     fn decode_strh() {
@@ -83,8 +84,7 @@ mod tests {
     #[test]
     fn halfword_transfer() {
         let mut cpu = CPU::new();
-        let mut bus = [0u8; 1024];
-        let bus = bus.as_mut();
+        let mut bus = DummyBus::new();
 
         bus.store16(0x00, 0xdead);
         cpu.set_r(0, 0x00);
@@ -93,7 +93,7 @@ mod tests {
         // base = r0, dst = r1, offset = 2
         execute(
             &mut cpu,
-            bus.as_mut(),
+            &mut bus,
             (false, true, true, true, 0b101, 0, 1, 2),
         );
         assert_eq!(cpu.r(1), 0xdead);
@@ -102,7 +102,7 @@ mod tests {
         bus.store8(0x01, 0xff);
         // Pre-indexing, down offset, write back, load signed byte
         // base = r0, src = r1, offset = 1
-        execute(&mut cpu, bus, (true, false, true, true, 0b110, 0, 1, 1));
+        execute(&mut cpu, &mut bus, (true, false, true, true, 0b110, 0, 1, 1));
         assert_eq!(cpu.r(1), 0xffffffff);
         assert_eq!(cpu.r(0), 0x01);
     }
