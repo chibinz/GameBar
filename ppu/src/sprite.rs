@@ -13,7 +13,6 @@ pub static DIMENSION: [[(u32, u32); 4]; 3] = [
 
 #[derive(Debug, Clone, Copy)]
 pub struct Sprite {
-    pub index: usize,   // Index of sprite, 0 - 127
     pub attr: [u16; 3], // Raw object attributes, Used for fast oam read
 
     pub xcoord: u32,     // X coordinate, top left for text sprites
@@ -36,7 +35,6 @@ pub struct Sprite {
 impl Sprite {
     pub fn new() -> Self {
         Self {
-            index: 0,
             attr: [0; 3],
 
             xcoord: 0,
@@ -143,7 +141,7 @@ impl Sprite {
 
 impl PPU {
     pub fn draw_sprite(&mut self, index: usize) {
-        let sprite = &self.sprite[index];
+        let sprite = &self.oam.sprite[index];
         let vcount = self.vcount as u32;
 
         if !sprite.disabled() && sprite.visible(vcount) {
@@ -156,7 +154,7 @@ impl PPU {
     }
 
     pub fn draw_text_sprite(&mut self, index: usize) {
-        let sprite = &self.sprite[index];
+        let sprite = &self.oam.sprite[index];
         let vcount = self.vcount as u32;
         let sequential = self.sequential;
         let window = &self.window;
@@ -198,7 +196,7 @@ impl PPU {
 
     #[allow(unused_assignments)]
     pub fn draw_affine_sprite(&mut self, index: usize) {
-        let sprite = &self.sprite[index];
+        let sprite = &self.oam.sprite[index];
         let vcount = self.vcount as u32;
         let sequential = self.sequential;
         let window = &self.window;
@@ -225,7 +223,7 @@ impl PPU {
         let y = vcount as i32 - ycenter;
         let w = if sequential { width / 8 } else { 32 };
 
-        let (pa, pb, pc, pd) = sprite.get_affine_matrix(&mut self.obj_param);
+        let (pa, pb, pc, pd) = sprite.get_affine_matrix(&mut self.oam.param);
 
         for x in -half_width..half_width {
             // Due to the linearity of the transform matrix, the origin is preserved.

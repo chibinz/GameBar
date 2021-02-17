@@ -1,5 +1,4 @@
 mod ioreg;
-mod oam;
 mod timing;
 
 use util::Bus;
@@ -42,7 +41,7 @@ impl Bus for Memory {
             0x04 => self.ioram_load16(offset),
             0x05 => self.c().ppu.palette.load16(offset),
             0x06 => self.c().ppu.vram.load16(offset),
-            0x07 => self.oam_load16(offset),
+            0x07 => self.c().ppu.oam.load16(offset),
             0x08..=0x0d => self.c().cart.rom.load16(offset),
             0x0e => self.c().cart.backup.load16(offset),
             _ => Self::unhandled(true, 2, address),
@@ -60,7 +59,7 @@ impl Bus for Memory {
             0x04 => self.ioram_load32(offset),
             0x05 => self.c().ppu.palette.load32(offset),
             0x06 => self.c().ppu.vram.load32(offset),
-            0x07 => self.oam_load32(offset),
+            0x07 => self.c().ppu.oam.load32(offset),
             0x08..=0x0d => self.c().cart.rom.load32(offset),
             0x0e => self.c().cart.backup.load32(offset),
             _ => Self::unhandled(true, 4, address),
@@ -91,7 +90,7 @@ impl Bus for Memory {
             0x04 => self.ioram_store16(offset, value),
             0x05 => self.c().ppu.palette.store16(offset, value),
             0x06 => self.c().ppu.vram.store16(offset, value),
-            0x07 => self.oam_store16(offset, value),
+            0x07 => self.c().ppu.oam.store16(offset, value),
             _ => Self::unhandled(false, 2, address),
         };
     }
@@ -107,7 +106,7 @@ impl Bus for Memory {
             0x04 => self.ioram_store32(offset, value),
             0x05 => self.c().ppu.palette.store32(offset, value),
             0x06 => self.c().ppu.vram.store32(offset, value),
-            0x07 => self.oam_store32(offset, value),
+            0x07 => self.c().ppu.oam.store32(offset, value),
             _ => Self::unhandled(false, 4, address),
         };
     }

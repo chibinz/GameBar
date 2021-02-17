@@ -114,34 +114,6 @@ impl PPU {
     }
 }
 
-/// Object attribute memory access
-impl PPU {
-    #[inline]
-    pub fn oam_store16(&mut self, offset: usize, value: u16) {
-        // offset is in bytes
-        let obj_index = (offset / 2) / 4;
-        let attr_index = (offset / 2) % 4;
-
-        match attr_index {
-            0 => self.sprite[obj_index].set_attr0(value),
-            1 => self.sprite[obj_index].set_attr1(value),
-            2 => self.sprite[obj_index].set_attr2(value),
-            _ => self.obj_param[obj_index] = value,
-        }
-    }
-
-    #[inline]
-    pub fn oam_load16(&self, offset: usize) -> u16 {
-        let obj_index = (offset / 2) / 4;
-        let attr_index = (offset / 2) % 4;
-
-        match attr_index {
-            0..=2 => self.sprite[obj_index].attr[attr_index],
-            _ => self.obj_param[obj_index],
-        }
-    }
-}
-
 impl PPU {
     pub fn get_dispcnt(&self) -> u16 {
         self.dispcnt

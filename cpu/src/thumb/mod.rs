@@ -20,7 +20,7 @@ mod unconditional_branch;
 pub use disassemble::disassemble;
 
 use crate::CPU;
-use crate::{push_cpu, Bus};
+use crate::Bus;
 use util::*;
 
 #[inline]
@@ -29,7 +29,7 @@ pub fn step(cpu: &mut CPU, bus: &mut impl Bus) {
 
     util::trace!("{:?}", cpu);
 
-    // push_cpu(cpu.clone());
+    // crate::push_cpu(cpu.clone());
 
     increment_pc(cpu);
 

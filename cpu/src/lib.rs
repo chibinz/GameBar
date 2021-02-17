@@ -207,6 +207,7 @@ impl Debug for CPU {
 const LEN: usize = 1024;
 static mut INDEX: usize = 0;
 static mut TRACE: [CPU; LEN] = [CPU::new(); 1024];
+#[allow(dead_code)]
 fn push_cpu(c: CPU) {
     unsafe {
         TRACE[INDEX] = c;
