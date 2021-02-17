@@ -24,8 +24,6 @@ pub struct Console {
     pub keypad: Keypad,
     pub memory: GBus,
     pub cart: Cart,
-
-    pub magic: u32,
 }
 
 impl Console {
@@ -39,8 +37,6 @@ impl Console {
             keypad: Keypad::new(),
             memory: GBus::new(),
             cart: Cart::with_rom(Vec::new()),
-
-            magic: 0xdeadbeef,
         }
     }
 

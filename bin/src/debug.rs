@@ -34,10 +34,7 @@ impl Debugger {
 
     #[inline]
     pub fn c(&self) -> &mut Console {
-        let c = unsafe { &mut *self.console };
-        assert_eq!(c.magic, 0xdeadbeef);
-
-        c
+        unsafe { &mut *self.console }
     }
 
     pub fn run(&mut self) {

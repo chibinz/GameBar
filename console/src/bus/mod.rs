@@ -42,7 +42,7 @@ impl Bus for GBus {
             0x06 => self.ppu.vram.load8(offset),
             0x08..=0x0d => self.cart.rom.load8(offset),
             0x0e => self.cart.backup.load8(offset),
-            _ => Self::unhandled(true, 4, address),
+            _ => Self::unhandled(true, 1, address),
         }
     }
 

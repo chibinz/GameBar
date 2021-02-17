@@ -97,7 +97,7 @@ pub trait Bus {
     fn unhandled<T: Default>(load: bool, size: u32, address: usize) -> T {
         let s = if load { "load" } else { "store" };
 
-        log::error!("Unhandled {}-byte {} at {:#08x}", size, s, address);
+        log::warn!("Unhandled {}-byte {} at {:#08x}", size, s, address);
 
         T::default()
     }

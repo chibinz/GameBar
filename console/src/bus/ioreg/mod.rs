@@ -95,8 +95,6 @@ impl GBus {
     }
 
     pub fn ioram_store16(&mut self, offset: usize, value: u16) {
-        assert_eq!(self.magic, 0xdeadbeef);
-
         // Seems like match patterns cannot be replaced with macros...
         match offset {
             0x000 => self.ppu.set_dispcnt(value),
