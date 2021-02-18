@@ -78,7 +78,6 @@ impl DummyBus {
             map: HashMap::new(),
         }
     }
-
 }
 
 impl Bus for DummyBus {

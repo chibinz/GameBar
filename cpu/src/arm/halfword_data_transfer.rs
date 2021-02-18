@@ -102,7 +102,11 @@ mod tests {
         bus.store8(0x01, 0xff);
         // Pre-indexing, down offset, write back, load signed byte
         // base = r0, src = r1, offset = 1
-        execute(&mut cpu, &mut bus, (true, false, true, true, 0b110, 0, 1, 1));
+        execute(
+            &mut cpu,
+            &mut bus,
+            (true, false, true, true, 0b110, 0, 1, 1),
+        );
         assert_eq!(cpu.r(1), 0xffffffff);
         assert_eq!(cpu.r(0), 0x01);
     }

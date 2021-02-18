@@ -120,7 +120,11 @@ mod tests {
         cpu.set_r(0, 0x00);
 
         // Write back bit is redundant because R0 is overwritten
-        execute(&mut cpu, &mut bus, (false, true, true, true, true, 0, 0xffff));
+        execute(
+            &mut cpu,
+            &mut bus,
+            (false, true, true, true, true, 0, 0xffff),
+        );
         for i in 0..15 {
             assert_eq!(cpu.r(i), i);
         }
@@ -139,7 +143,11 @@ mod tests {
         bus.store32(0x0c, 3);
         cpu.set_r(0, 0x00);
 
-        execute(&mut cpu, &mut bus, (true, true, true, true, true, 0, 0x000e));
+        execute(
+            &mut cpu,
+            &mut bus,
+            (true, true, true, true, true, 0, 0x000e),
+        );
         assert_eq!(cpu.r(1), 1);
         assert_eq!(cpu.r(2), 2);
         assert_eq!(cpu.r(3), 3);
@@ -156,7 +164,11 @@ mod tests {
         bus.store32(0x0c, 3);
         cpu.set_r(0, 0x0c);
 
-        execute(&mut cpu, &mut bus, (false, false, true, true, true, 0, 0x000e));
+        execute(
+            &mut cpu,
+            &mut bus,
+            (false, false, true, true, true, 0, 0x000e),
+        );
         assert_eq!(cpu.r(1), 1);
         assert_eq!(cpu.r(2), 2);
         assert_eq!(cpu.r(3), 3);

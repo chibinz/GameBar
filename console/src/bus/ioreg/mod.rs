@@ -3,7 +3,7 @@ mod interrupt;
 mod keypad;
 mod timer;
 
-use super::{GBus, Bus};
+use super::{Bus, GBus};
 
 impl GBus {
     #[inline]
@@ -73,7 +73,7 @@ impl GBus {
             0x200 => self.irqcnt.get_ie(),
             0x202 => self.irqcnt.get_irf(),
             0x208 => self.irqcnt.get_ime(),
-            _ => Self::unhandled(true, 2,(4 << 24) + offset),
+            _ => Self::unhandled(true, 2, (4 << 24) + offset),
         }
     }
 
