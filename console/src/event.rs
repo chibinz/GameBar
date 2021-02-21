@@ -22,6 +22,14 @@ use crate::Console;
 // / HBlank /
 // /-- 272 -/
 
+enum Event {
+
+}
+
+struct Scheduler {
+    queue: std::collections::VecDeque<(Event, u64)>,
+}
+
 impl Console {
     pub fn schedule(&mut self) {
         use super::ppu::PPUState::*;
