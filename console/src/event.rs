@@ -23,7 +23,6 @@ use crate::Console;
 // /-- 272 -/
 
 enum Event {
-
 }
 
 struct Scheduler {
