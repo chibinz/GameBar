@@ -51,3 +51,7 @@ DenSinH suggested implementing a scheduler, as ticking the timer every single in
 - Min Heap
 
 ### Interpretation vs Representation
+
+### PPU Rendering Phases
+- Tile / Pixel resolution
+- Post-effects
