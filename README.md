@@ -1,14 +1,29 @@
 # GameBar
 A Game Boy Advance emulator written in Rust
 
+GameBar is a GBA emulator that I've started development during 2019's summer. It is mostfully feature complete, with a ARM7TDMI cpu interpreter, and ppu, timer, dma, interrupt controller emulation. It is able to run quite a few popular commercial game titles， such as Pokemon Emerald, with minor graphical glitches.
+
+## Runnable Commercial Games / Demo
+- Pokemon Emerald
+- Pokemon Fire Red
+- Kirby: Nightmare in Dreamland
+- Zelda: The Minish Cap
+- Fire Emblem: The Sacred Stones
+
 ## Running
 ```
-cargo run --release -- <rom.gba>
+cargo run --release rom/emerald.gba
 ```
 The emulator will crash very often if you build it in debug mode due to integer overflow checks. Running in release mode gives better performance and avoid these sorts of problems.
 
 ## TODO
+- PPU
+    - Alpha blending
+    - Tile caching (optimization)
 - EEPROM IO
+- Audio
+- State saves
+- Timing calibration
 
 ## Tile caching
 Whether background or sprite tiles, they are always contiguous in memory. If it is a 4bpp pixel, it will be 64 / 2 = 32 bytes. If it is a 8 bpp pixel, it will occupy 64 bytes. An issue with caching tiles is that background maps and object attributes keep references to the vram where the tile data is actually stored, and tiles are once again indirect references to pixels in the palette ram. So a cached tile should be rerendered if a write to attributes, tile data, and corresponding palette memory occurs. Recalculating the hash for the whole tile data (32 bytes) or palette ram (256 * 2) bytes every single scanline is just too expansive. There needs to be some way of knowing whether the tile data or palette ram is dirty when a write occurs. A solution that I have in mind is to eagerly calculate the hash of tile data and palette memory upon write, since writes are infrequent and ppu reads are hot. (Interpretation vs Representation). Implementationwise, this would require placing hash value alongside vram and palette ram. When a write to vram happens, calculate the byte index rounded to the nearest multiple of 32. Hash the consecutive 32 bytes beginning with the index. And store the value in the hash value array. For instance, if vram[37] is written, hash vram[32..64], store the value in vram_hash[1]. Since we're referencing contiguous memory, the cost shouldn't be very large. Similar strategy could be applied to palette ram, except that we need special case handling for 8bpp tiles. 16 entries for 16 rows, and 1 entry for hash of 16 hashes as global palette ram hash.
