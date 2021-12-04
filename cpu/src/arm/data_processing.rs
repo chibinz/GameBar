@@ -71,7 +71,7 @@ pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
     }
 
     // Write result to register, if needed
-    if opcode < 0b1000 || opcode > 0b1011 {
+    if !(0b1000..=0b1011).contains(&opcode) {
         cpu.r[rd as usize] = result;
 
         // Direct manipulation of pc will result in a pipeline flush.
@@ -102,7 +102,7 @@ mod tests {
         cpu.set_r(2, 2);
         cpu.set_r(3, 1);
         cpu.set_r(4, 0xffffffff);
-        execute(&mut cpu, (false, 0b0000, true, 2, 1, 0b0011_0_00_1_0100));
+        execute(&mut cpu, (false, 0b0000, true, 2, 1, 0b0011_0001_0100));
         assert_eq!(cpu.r(1), 2);
         assert_eq!(cpu.cpsr.c, true);
     }
@@ -116,7 +116,7 @@ mod tests {
         cpu.set_r(2, 0x0000001f);
         cpu.set_cpsr(0xf0000000, true);
 
-        execute(&mut cpu, (false, 0b0101, true, 0, 4, 0b0010_0_10_1_0001));
+        execute(&mut cpu, (false, 0b0101, true, 0, 4, 0b0010_0101_0001));
 
         assert_eq!(cpu.r(4), cpu.r(0));
         assert_eq!(cpu.cpsr.c, true); // Carry bit should be set
@@ -131,7 +131,7 @@ mod tests {
         cpu.set_r(2, 0x00000020);
         cpu.set_cpsr(0x10000000, true);
 
-        execute(&mut cpu, (false, 0b0110, false, 0, 4, 0b0010_0_10_1_0001));
+        execute(&mut cpu, (false, 0b0110, false, 0, 4, 0b0010_0101_0001));
 
         assert_eq!(cpu.r(4), cpu.r(0));
         assert_eq!(cpu.cpsr.c, false); // Carry bit should be clear

@@ -134,12 +134,12 @@ mod tests {
         let mut operand2;
 
         // ASR 32
-        operand2 = 0b11111_10_0_0100;
+        operand2 = 0b1111_1100_0100;
         cpu.set_r(4, 0x80000000);
         assert_eq!(shift_register(&cpu, operand2), (0xffffffff, false));
 
         // LSR 32
-        operand2 = 0b0001_0_01_1_0100;
+        operand2 = 0b0001_0011_0100;
         cpu.set_r(1, 32);
         cpu.set_r(4, 0x80000000);
         assert_eq!(shift_register(&cpu, operand2), (0, true));
@@ -147,7 +147,7 @@ mod tests {
 
     #[test]
     fn test_rotate_immediate() {
-        let operand2 = 0b0001_00000010;
+        let operand2 = 0b0001_0000_0010;
 
         assert_eq!(rotate_immediate(operand2, false), (0x80000000, true));
     }

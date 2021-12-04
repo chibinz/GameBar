@@ -51,10 +51,8 @@ impl Window {
             if vcount < y2 || vcount >= y1 {
                 draw_x()
             }
-        } else {
-            if vcount >= y1 && vcount < y2 {
-                draw_x()
-            }
+        } else if vcount >= y1 && vcount < y2 {
+            draw_x()
         }
     }
 

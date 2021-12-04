@@ -73,7 +73,7 @@ impl CPU {
             arm::step(self, bus);
         }
 
-        return self.cycles;
+        self.cycles
     }
 
     #[inline]

@@ -73,12 +73,10 @@ pub fn dispatch(cpu: &mut CPU, bus: &mut impl Bus) {
         0b000 => {
             if b74() < 0b11 {
                 data_process_psr_bx(cpu)
+            } else if instr.bits(6, 5) > 0 {
+                halfword_data_transfer::interpret(cpu, bus, instr)
             } else {
-                if instr.bits(6, 5) > 0 {
-                    halfword_data_transfer::interpret(cpu, bus, instr)
-                } else {
-                    multiply_swap(cpu, bus, instr)
-                }
+                multiply_swap(cpu, bus, instr)
             }
         }
         0b001 => match instr.bits(24, 20) {

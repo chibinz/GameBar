@@ -138,7 +138,7 @@ impl GBus {
             // param:      0x05000400 - 0x05000000
             // vram :      0x06018000 - 0x06000000
             // oam  :      0x07000400 - 0x07000000
-            console: 0 as *mut Console,
+            console: std::ptr::null_mut::<Console>(),
         }
     }
 

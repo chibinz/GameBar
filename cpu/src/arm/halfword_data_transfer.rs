@@ -74,7 +74,7 @@ mod tests {
 
     #[test]
     fn decode_strh() {
-        let instruction = 0b0000_000_11111_1010_0101_1111_1011_1111;
+        let instruction = 0b0000_0001_1111_1010_0101_1111_1011_1111;
         assert_eq!(
             decode(instruction),
             (true, true, true, true, 0b101, 0b1010, 0b0101, 0b11111111)

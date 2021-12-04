@@ -70,7 +70,7 @@ impl From<CPSR> for u32 {
 
 impl Debug for CPSR {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        let raw: u32 = self.clone().into();
+        let raw: u32 = (*self).into();
         write!(
             f,
             "{:08x} [{}{}{}{}{}{}{}] {:?}",
@@ -307,7 +307,7 @@ mod tests {
 
     #[test]
     fn get_cpsr_bit() {
-        let psr: CPSR = 0b1_11111.into();
+        let psr: CPSR = 0b11_1111.into();
 
         assert_eq!(psr.t, true);
     }

@@ -83,7 +83,7 @@ impl DMA {
             }
         }
 
-        return false;
+        false
     }
 }
 

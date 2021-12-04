@@ -28,7 +28,7 @@ impl Debugger {
             buffer: vec![0; WIDTH * HEIGHT],
 
             counter: 0,
-            console: 0 as *mut Console,
+            console: std::ptr::null_mut::<Console>(),
         }
     }
 
@@ -144,7 +144,7 @@ impl Debugger {
 
                 print!("{:02x} ", value);
             }
-            println!("");
+            println!();
         }
     }
 

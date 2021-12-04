@@ -33,7 +33,7 @@ pub fn disassemble(opcode: u16) -> String {
             0b01 => format!("SUB R{}, R{}, R{}", rd(), rs(), rn()),
             0b10 => format!("ADD R{}, R{}, #{}", rd(), rs(), rn()),
             0b11 => format!("SUB R{}, R{}, #{}", rd(), rs(), rn()),
-            _ => format!("undefined"),
+            _ => "undefined".to_string(),
         },
         0b00100 => format!("MOV R{}, #{}", rdb(), offset8()),
         0b00101 => format!("CMP R{}, #{}", rdb(), offset8()),
@@ -67,7 +67,7 @@ pub fn disassemble(opcode: u16) -> String {
             0b11011 => format!("MOV R{}, R{}", hd(), hs()),
             0b11100 => format!("BX R{}", rs()),
             0b11101 => format!("BX R{}", hs()),
-            _ => format!("undefined"),
+            _ => "undefined".to_string(),
         },
         0b01001 => format!("LDR R{}, [PC, #{}]", rdb(), offset8() << 2),
         0b01010 | 0b1011 => match b11_9() {
@@ -79,7 +79,7 @@ pub fn disassemble(opcode: u16) -> String {
             0b101 => format!("LDRH R{}, [R{}, R{}]", rd(), rb(), ro()),
             0b110 => format!("LDRB R{}, [R{}, R{}]", rd(), rb(), ro()),
             0b111 => format!("LDSH R{}, [R{}, R{}]", rd(), rb(), ro()),
-            _ => format!("undefined"),
+            _ => "undefined".to_string(),
         },
         0b01100 => format!("STR R{}, [R{}, #{}]", rd(), rb(), offset5() << 2),
         0b01101 => format!("LDR R{}, [R{}, #{}]", rd(), rb(), offset5() << 2),
@@ -103,7 +103,7 @@ pub fn disassemble(opcode: u16) -> String {
                 0b0101 => format!("PUSH R{{{:08b}, LR}}", offset8()),
                 0b1100 => format!("POP {{{:08b}}}", offset8()),
                 0b1101 => format!("POP {{{:08b}, PC}}", offset8()),
-                _ => format!("undefined"),
+                _ => "undefined".to_string(),
             }
         }
         0b11000 => format!("STMIA R{}!, {{{:08b}}}", rb(), rlist()),
@@ -126,12 +126,12 @@ pub fn disassemble(opcode: u16) -> String {
                 0b1100 => format!("BGT #{}", (offset8() + 2) << 1),
                 0b1101 => format!("BLE #{}", (offset8() + 2) << 1),
                 0b1111 => format!("SWI #{}", offset8()),
-                _ => format!("undefined"),
+                _ => "undefined".to_string(),
             }
         }
         0b11100 => format!("B #{}", offset11()),
-        0b11110 => format!("BL-0"),
-        0b11111 => format!("BL-1"),
-        _ => format!("undefined"),
+        0b11110 => "BL-0".to_string(),
+        0b11111 => "BL-1".to_string(),
+        _ => "undefined".to_string(),
     }
 }

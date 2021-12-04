@@ -38,11 +38,9 @@ pub fn execute(
 
     let saved_cpsr = cpu.get_cpsr();
 
-    if s {
-        if !(l && rlist.bit(15)) {
-            // Switch to User mode register bank
-            cpu.set_cpsr(User as u32, false);
-        }
+    if s && !(l && rlist.bit(15)) {
+        // Switch to User mode register bank
+        cpu.set_cpsr(User as u32, false);
     }
 
     // Whether or not the p bit is set, the final address after transfer

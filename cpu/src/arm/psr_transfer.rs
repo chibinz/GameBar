@@ -53,11 +53,11 @@ mod tests {
 
         // MSR CPSR
         cpu.set_r(0, 0xf00000f1);
-        interpret(&mut cpu, 0b0000_00010_0_10100_1_1111_00000000_0000);
+        interpret(&mut cpu, 0b0000_0001_0010_1001_1111_0000_0000_0000);
         assert_eq!(cpu.get_cpsr(), 0xf00000f1);
 
         // MSR SPSR flag bits
-        interpret(&mut cpu, 0b0000_00010_1_10100_0_1111_00000000_0000);
+        interpret(&mut cpu, 0b0000_0001_0110_1000_1111_0000_0000_0000);
         assert_eq!(cpu.get_spsr(), 0xf0000000);
     }
 }

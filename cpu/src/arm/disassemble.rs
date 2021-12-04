@@ -82,7 +82,7 @@ pub fn disassemble(opcode: u32) -> String {
                 }
             }
 
-            _ => format!("undefined"),
+            _ => "undefined".to_string(),
         }
     };
 
@@ -114,7 +114,7 @@ pub fn disassemble(opcode: u32) -> String {
             0b10110 => format!("MSR{} SPSR, #{:#x}", cond(), op2),
             0b10010 => format!("MSR{} CPSR, #{:#x}", cond(), op2),
 
-            _ => format!("undefined"),
+            _ => "undefined".to_string(),
         }
     };
 
@@ -165,7 +165,7 @@ pub fn disassemble(opcode: u32) -> String {
 
             0b10000 | 0b10100 => format!("SWP{}{} R{}, R{}, [R{}]", cond(), b(), rd(), rm(), rn()),
 
-            _ => format!("undefined"),
+            _ => "undefined".to_string(),
         }
     };
 
@@ -206,7 +206,7 @@ pub fn disassemble(opcode: u32) -> String {
             0b1101 => format!("LDR{}H R{}, [R{}, {}]{}", cond(), rd(), rn(), offset, w),
             0b1110 => format!("LDR{}SB R{}, [R{}, {}]{}", cond(), rd(), rn(), offset, w),
             0b1111 => format!("LDR{}SH R{}, [R{}, {}]{}", cond(), rd(), rn(), offset, w),
-            _ => format!("undefined"),
+            _ => "undefined".to_string(),
         }
     };
 
@@ -272,7 +272,7 @@ pub fn disassemble(opcode: u32) -> String {
                 offset,
                 w
             ),
-            _ => format!("undefined"),
+            _ => "undefined".to_string(),
         }
     };
 
@@ -308,21 +308,19 @@ pub fn disassemble(opcode: u32) -> String {
         0b000 => {
             if b74() < 0b11 {
                 data_process_psr_bx()
+            } else if b65() > 0 {
+                halfword_signed_data_transfer()
             } else {
-                if b65() > 0 {
-                    halfword_signed_data_transfer()
-                } else {
-                    multiply_swap()
-                }
+                multiply_swap()
             }
         }
         0b001 => data_process_imm(),
         0b010 | 0b011 => single_data_transfer(),
         0b100 => block_data_transfer(),
         0b101 => branch(),
-        0b110 => format!("Coprocessor"),
-        0b111 => format!("SWI / Coprocessor"),
-        _ => format!("undefined"),
+        0b110 => "Coprocessor".to_string(),
+        0b111 => "SWI / Coprocessor".to_string(),
+        _ => "undefined".to_string(),
     }
 }
 
@@ -333,11 +331,11 @@ mod tests {
     #[test]
     fn psr_transfer_immediate() {
         assert_eq!(
-            disassemble(0b1110_0011001010001111000100000001),
+            disassemble(0b1110_0011_0010_1000_1111_0001_0000_0001),
             "MSR CPSR, #0x40000000"
         );
         assert_eq!(
-            disassemble(0b1110_0011011010001111000100000001),
+            disassemble(0b1110_0011_0110_1000_1111_0001_0000_0001),
             "MSR SPSR, #0x40000000"
         );
     }
@@ -345,31 +343,31 @@ mod tests {
     #[test]
     fn data_process_psr_bx() {
         assert_eq!(
-            disassemble(0b0000_00000000_0100_0010_0000_0000_0111),
+            disassemble(0b0000_0000_0000_0100_0010_0000_0000_0111),
             "ANDEQ R2, R4, R7, LSL #0x0"
         );
         assert_eq!(
-            disassemble(0b0000_00000011_1000_0000_0000_0111_1101),
+            disassemble(0b0000_0000_0011_1000_0000_0000_0111_1101),
             "EOREQS R0, R8, R13, ROR R0"
         );
         assert_eq!(
-            disassemble(0b0000_00011110_0010_0001_1111_0011_1110),
+            disassemble(0b0000_0001_1110_0010_0001_1111_0011_1110),
             "MVNEQ R1, R14, LSR R15"
         );
         assert_eq!(
-            disassemble(0b0000_00000000_0100_1010_1111_1100_1111),
+            disassemble(0b0000_0000_0000_0100_1010_1111_1100_1111),
             "ANDEQ R10, R4, R15, ASR #0x1f"
         );
         assert_eq!(
-            disassemble(0b1110_00010000_1111_1111_0000_0000_0000),
+            disassemble(0b1110_0001_0000_1111_1111_0000_0000_0000),
             "MRS R15, CPSR"
         );
         assert_eq!(
-            disassemble(0b1000_00010010_1000_1111_0000_0000_0000),
+            disassemble(0b1000_0001_0010_1000_1111_0000_0000_0000),
             "MSRHI CPSR, R0"
         );
         assert_eq!(
-            disassemble(0b0001_00010010_1111_1111_1111_0001_1000),
+            disassemble(0b0001_0001_0010_1111_1111_1111_0001_1000),
             "BXNE R8"
         );
     }
@@ -377,15 +375,15 @@ mod tests {
     #[test]
     fn multiply_swap() {
         assert_eq!(
-            disassemble(0b1110_00000011_0001_1000_0000_1001_0100),
+            disassemble(0b1110_0000_0011_0001_1000_0000_1001_0100),
             "MLAS R1, R4, R0"
         );
         assert_eq!(
-            disassemble(0b1110_00001111_0010_0011_0000_1001_0100),
+            disassemble(0b1110_0000_1111_0010_0011_0000_1001_0100),
             "SMLALS R2, R3, R4, R0"
         );
         assert_eq!(
-            disassemble(0b1110_00010100_0001_1000_0000_1001_0100),
+            disassemble(0b1110_0001_0100_0001_1000_0000_1001_0100),
             "SWPB R8, R4, [R1]"
         );
     }
@@ -393,11 +391,11 @@ mod tests {
     #[test]
     fn branch() {
         assert_eq!(
-            disassemble(0b0000_1011_10000000_00000000_00000000),
+            disassemble(0b0000_1011_1000_0000_0000_0000_0000_0000),
             "BLEQ #0xfe000000"
         );
         assert_eq!(
-            disassemble(0b0000_1010_00000000_00000000_00000001),
+            disassemble(0b0000_1010_0000_0000_0000_0000_0000_0001),
             "BEQ #0x4"
         );
     }
@@ -405,11 +403,11 @@ mod tests {
     #[test]
     fn halfword_signed_data_transfer() {
         assert_eq!(
-            disassemble(0b0000_00011111_0011_1100_1000_1011_0001),
+            disassemble(0b0000_0001_1111_0011_1100_1000_1011_0001),
             "LDREQH R12, [R3, #0x81]!"
         );
         assert_eq!(
-            disassemble(0b0000_00000010_0011_1100_1000_1111_0001),
+            disassemble(0b0000_0000_0010_0011_1100_1000_1111_0001),
             "STREQSH R12, [R3], -R1"
         );
     }
@@ -417,7 +415,7 @@ mod tests {
     #[test]
     fn single_data_transfer() {
         assert_eq!(
-            disassemble(0b0000_01111111_1010_0101_100000000000),
+            disassemble(0b0000_0111_1111_1010_0101_1000_0000_0000),
             "LDREQB R5, [R10, R0, LSL #0x10]!"
         );
     }
@@ -425,11 +423,11 @@ mod tests {
     #[test]
     fn block_data_transfer() {
         assert_eq!(
-            disassemble(0b0000_10011111_1010_0101_100000000000),
+            disassemble(0b0000_1001_1111_1010_0101_1000_0000_0000),
             "LDMEQ R10!, R{0101100000000000}^"
         );
         assert_eq!(
-            disassemble(0b0001_10000000_1010_0000_000000000000),
+            disassemble(0b0001_1000_0000_1010_0000_0000_0000_0000),
             "STMNE R10, R{0000000000000000}"
         );
     }
