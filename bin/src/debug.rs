@@ -33,7 +33,7 @@ impl Debugger {
     }
 
     #[inline]
-    pub fn c(&self) -> &mut Console {
+    pub fn c(&mut self) -> &mut Console {
         unsafe { &mut *self.console }
     }
 
@@ -131,7 +131,7 @@ impl Debugger {
     }
 
     fn breakpoint_hit(&mut self) -> bool {
-        self.breakpoint.contains(&(self.c().cpu.r(15)))
+        true // self.breakpoint.contains(&(self.c().cpu.r(15)))
     }
 
     fn examine_memory(&mut self) {
