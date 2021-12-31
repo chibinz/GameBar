@@ -7,7 +7,7 @@ mod thumb;
 
 pub use util::Bus;
 
-use register::{PsrMode, Cpsr};
+use register::{Cpsr, PsrMode};
 
 #[derive(Clone, Copy)]
 pub struct Cpu {

@@ -1,6 +1,6 @@
 use crate::bus::GbaBus;
+use crate::interrupt::Irq::*;
 use crate::interrupt::IrqController;
-use crate::interrupt::Interrupt::*;
 use util::Bus;
 
 pub struct Dma {

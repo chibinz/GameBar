@@ -46,7 +46,7 @@ impl Gba {
 
     /// Render a frame
     pub fn step_frame(&mut self) {
-        use interrupt::Interrupt::*;
+        use interrupt::Irq::*;
         // self.schedule();
         let cpu = &mut self.cpu;
         let ppu = &mut self.ppu;

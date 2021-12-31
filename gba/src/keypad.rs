@@ -1,5 +1,5 @@
+use crate::interrupt::Irq::*;
 use crate::interrupt::IrqController;
-use crate::interrupt::Interrupt::*;
 use util::*;
 
 pub struct Keypad {

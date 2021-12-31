@@ -2,7 +2,7 @@ use util::*;
 
 #[allow(dead_code)]
 #[derive(Clone, Copy)]
-pub enum Interrupt {
+pub enum Irq {
     VBlank = 1 << 0,
     HBlank = 1 << 1,
     VCount = 1 << 2,
@@ -39,7 +39,7 @@ impl IrqController {
         self.ime.bit(0) && self.ie & self.irf != 0
     }
 
-    pub fn request(&mut self, irq: Interrupt) {
+    pub fn request(&mut self, irq: Irq) {
         self.irf |= irq as u16;
     }
 

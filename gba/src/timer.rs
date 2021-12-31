@@ -1,5 +1,5 @@
+use crate::interrupt::Irq::*;
 use crate::interrupt::IrqController;
-use crate::interrupt::Interrupt::*;
 
 pub static PRESCALER: [u16; 4] = [1, 64, 256, 1024];
 
