@@ -1,10 +1,10 @@
-use crate::register::PSRMode::User;
+use crate::register::PsrMode::User;
 use crate::Bus;
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus, instr: u32) {
+pub fn interpret(cpu: &mut Cpu, bus: &mut impl Bus, instr: u32) {
     execute(cpu, bus, decode(instr));
 }
 
@@ -25,7 +25,7 @@ pub fn decode(instr: u32) -> (bool, bool, bool, bool, bool, u32, u32) {
 
 #[inline]
 pub fn execute(
-    cpu: &mut CPU,
+    cpu: &mut Cpu,
     bus: &mut impl Bus,
     (p, u, s, w, l, rn, rlist): (bool, bool, bool, bool, bool, u32, u32),
 ) {
@@ -62,18 +62,18 @@ pub fn execute(
         let j = if u { i } else { 15 - i };
         if rlist.bit(j) {
             if l {
-                cpu.set_r(j, CPU::ldr(address, bus));
+                cpu.set_r(j, Cpu::ldr(address, bus));
             } else {
-                CPU::str(address, cpu.r(j), bus);
+                Cpu::str(address, cpu.r(j), bus);
 
                 if j == 15 {
-                    CPU::str(address, cpu.r(15) + 4, bus);
+                    Cpu::str(address, cpu.r(15) + 4, bus);
                 }
 
                 // The first register to be stored will store the
                 // unchanged value.
                 if w && j == rn && rlist.trailing_zeros() == rn {
-                    CPU::str(address, original, bus);
+                    Cpu::str(address, original, bus);
                 }
             }
 
@@ -107,7 +107,7 @@ mod tests {
 
     #[test]
     fn post_increment() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
         let mut bus = DummyBus::new();
 
         cpu.set_spsr(cpu.get_cpsr(), false);
@@ -133,7 +133,7 @@ mod tests {
 
     #[test]
     fn pre_increment() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
         let mut bus = DummyBus::new();
 
         bus.store32(0x04, 1);
@@ -154,7 +154,7 @@ mod tests {
 
     #[test]
     fn post_decrement() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
         let mut bus = DummyBus::new();
 
         bus.store32(0x04, 1);
@@ -175,7 +175,7 @@ mod tests {
 
     #[test]
     fn pre_decrement() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
         let mut bus = [0u8; 1024];
         let bus = bus.as_mut();
 

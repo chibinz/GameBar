@@ -1,9 +1,9 @@
 use crate::alu;
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u16) {
+pub fn interpret(cpu: &mut Cpu, instr: u16) {
     execute(cpu, decode(instr));
 }
 
@@ -18,7 +18,7 @@ fn decode(instr: u16) -> (u32, u32, u32, u32) {
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, (op, offset5, rs, rd): (u32, u32, u32, u32)) {
+fn execute(cpu: &mut Cpu, (op, offset5, rs, rd): (u32, u32, u32, u32)) {
     let (shifted, carry) = crate::shifter::shift(cpu.r(rs), offset5, op, cpu.cpsr.c, true);
     cpu.cpsr.c = carry;
 
@@ -33,7 +33,7 @@ mod tests {
 
     #[test]
     fn logical_left() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
 
         cpu.set_r(0, 1);
         execute(&mut cpu, (0b00, 0b11111, 0, 1));
@@ -48,7 +48,7 @@ mod tests {
 
     #[test]
     fn logical_right() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
 
         cpu.set_r(0, 0x80000000);
         execute(&mut cpu, (0b01, 0b11111, 0, 1));
@@ -63,7 +63,7 @@ mod tests {
 
     #[test]
     fn arithmetic_right() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
 
         cpu.set_r(0, 0x80000000);
         execute(&mut cpu, (0b10, 0b11111, 0, 1));

@@ -14,11 +14,11 @@ mod single_data_transfer;
 pub use disassemble::disassemble;
 
 use crate::Bus;
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn step(cpu: &mut CPU, bus: &mut impl Bus) {
+pub fn step(cpu: &mut Cpu, bus: &mut impl Bus) {
     fetch(cpu, bus);
 
     util::trace!("{:?}", cpu);
@@ -31,17 +31,17 @@ pub fn step(cpu: &mut CPU, bus: &mut impl Bus) {
 }
 
 #[inline]
-pub fn fetch(cpu: &mut CPU, bus: &mut impl Bus) {
-    cpu.ir = CPU::ldr(cpu.r(15) - 4, bus);
+pub fn fetch(cpu: &mut Cpu, bus: &mut impl Bus) {
+    cpu.ir = Cpu::ldr(cpu.r(15) - 4, bus);
 }
 
 #[inline]
-pub fn increment_pc(cpu: &mut CPU) {
+pub fn increment_pc(cpu: &mut Cpu) {
     cpu.r[15] += 4;
 }
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus) {
+pub fn interpret(cpu: &mut Cpu, bus: &mut impl Bus) {
     let cond = cpu.ir.bits(31, 28);
     if cpu.check_condition(cond) {
         dispatch(cpu, bus);
@@ -49,13 +49,13 @@ pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus) {
 }
 
 #[inline]
-pub fn dispatch(cpu: &mut CPU, bus: &mut impl Bus) {
+pub fn dispatch(cpu: &mut Cpu, bus: &mut impl Bus) {
     let instr = cpu.ir;
 
     let b74 = || instr >> 6 & 0b10 | instr >> 4 & 0b01;
 
     // Data Processing / PSR Transfer / branch and exchange
-    let data_process_psr_bx = |cpu: &mut CPU| {
+    let data_process_psr_bx = |cpu: &mut Cpu| {
         match instr.bits(24, 20) {
             0b10000 | 0b10100 | 0b10110 => psr_transfer::interpret(cpu, instr),
             0b10010 => {
@@ -93,7 +93,7 @@ pub fn dispatch(cpu: &mut CPU, bus: &mut impl Bus) {
 
 /// Multiply / Multiply Long / Single Data Swap
 #[inline]
-fn multiply_swap(cpu: &mut CPU, bus: &mut impl Bus, instr: u32) {
+fn multiply_swap(cpu: &mut Cpu, bus: &mut impl Bus, instr: u32) {
     match instr.bits(24, 20) {
         0b00000 | 0b00001 | 0b00010 | 0b00011 => multiply_accumulate::interpret(cpu, instr),
         0b01000 | 0b01001 | 0b01010 | 0b01011 | 0b01100 | 0b01101 | 0b01110 | 0b01111 => {

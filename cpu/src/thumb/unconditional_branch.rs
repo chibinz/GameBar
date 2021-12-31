@@ -1,8 +1,8 @@
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u16) {
+pub fn interpret(cpu: &mut Cpu, instr: u16) {
     execute(cpu, decode(instr));
 }
 
@@ -12,7 +12,7 @@ pub fn decode(instr: u16) -> u32 {
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, offset11: u32) {
+pub fn execute(cpu: &mut Cpu, offset11: u32) {
     let offset = sign_extend(offset11 << 1, 11) as u32;
     cpu.set_r(15, cpu.r(15).wrapping_add(offset));
 }

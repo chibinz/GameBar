@@ -6,36 +6,36 @@ mod interrupt;
 mod keypad;
 mod timer;
 
-use bus::GBus;
+use bus::GbaBus;
 use cart::Cart;
-use cpu::CPU;
-use dma::DMA;
-use interrupt::IRQController;
+use cpu::Cpu;
+use dma::Dma;
+use interrupt::IrqController;
 use keypad::Keypad;
-use ppu::PPU;
+use ppu::Ppu;
 use timer::Timers;
 
-pub struct Console {
-    pub cpu: CPU,
-    pub ppu: PPU,
-    pub dma: DMA,
-    pub bus: GBus,
+pub struct Gba {
+    pub cpu: Cpu,
+    pub ppu: Ppu,
+    pub dma: Dma,
+    pub bus: GbaBus,
     pub timers: Timers,
-    pub irqcnt: IRQController,
+    pub irqcnt: IrqController,
     pub keypad: Keypad,
     pub cart: Cart,
 }
 
-impl Console {
-    pub fn new() -> Console {
+impl Gba {
+    pub fn new() -> Gba {
         Self {
-            cpu: CPU::new(),
-            ppu: PPU::new(),
-            dma: DMA::new(),
-            irqcnt: IRQController::new(),
+            cpu: Cpu::new(),
+            ppu: Ppu::new(),
+            dma: Dma::new(),
+            irqcnt: IrqController::new(),
             timers: Timers::new(),
             keypad: Keypad::new(),
-            bus: GBus::new(),
+            bus: GbaBus::new(),
             cart: Cart::with_rom(Vec::new()),
         }
     }
@@ -96,11 +96,11 @@ impl Console {
 
     #[inline]
     pub fn step_dma_cpu_timer(
-        dma: &mut DMA,
-        cpu: &mut CPU,
-        bus: &mut GBus,
+        dma: &mut Dma,
+        cpu: &mut Cpu,
+        bus: &mut GbaBus,
         timers: &mut Timers,
-        irqcnt: &mut IRQController,
+        irqcnt: &mut IrqController,
     ) {
         let t = if dma.is_active() {
             dma.step(irqcnt, bus)

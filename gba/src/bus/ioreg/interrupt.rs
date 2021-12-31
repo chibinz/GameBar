@@ -1,6 +1,6 @@
-use crate::interrupt::IRQController;
+use crate::interrupt::IrqController;
 
-impl IRQController {
+impl IrqController {
     #[inline]
     pub fn get_ime(&self) -> u16 {
         self.ime

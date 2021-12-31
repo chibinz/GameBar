@@ -1,9 +1,9 @@
 use crate::alu;
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u16) {
+pub fn interpret(cpu: &mut Cpu, instr: u16) {
     execute(cpu, decode(instr));
 }
 
@@ -17,7 +17,7 @@ fn decode(instruction: u16) -> (u32, u32, u32) {
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, (op, rs, rd): (u32, u32, u32)) {
+fn execute(cpu: &mut Cpu, (op, rs, rd): (u32, u32, u32)) {
     let op1 = cpu.r(rd);
     let op2 = cpu.r(rs);
     let c = cpu.cpsr.c;
@@ -55,7 +55,7 @@ mod tests {
 
     #[test]
     fn alu_operations() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
 
         // MUL 0x80000000, 0x10000000
         cpu.set_r(0, 0x10000000);

@@ -1,8 +1,8 @@
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u16) {
+pub fn interpret(cpu: &mut Cpu, instr: u16) {
     execute(cpu, decode(instr));
 }
 
@@ -15,7 +15,7 @@ fn decode(instr: u16) -> (bool, u32) {
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, (h, offset): (bool, u32)) {
+fn execute(cpu: &mut Cpu, (h, offset): (bool, u32)) {
     if h {
         let temp = cpu.r(15) - 2;
         cpu.set_r(15, cpu.r(14).wrapping_add(offset << 1));

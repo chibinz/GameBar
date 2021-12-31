@@ -1,11 +1,11 @@
 use crate::Bus;
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 use crate::arm::block_data_transfer;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus, instr: u16) {
+pub fn interpret(cpu: &mut Cpu, bus: &mut impl Bus, instr: u16) {
     execute(cpu, bus, decode(instr));
 }
 
@@ -19,7 +19,7 @@ fn decode(instr: u16) -> (bool, u32, u32) {
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, bus: &mut impl Bus, (l, rb, rlist): (bool, u32, u32)) {
+fn execute(cpu: &mut Cpu, bus: &mut impl Bus, (l, rb, rlist): (bool, u32, u32)) {
     // P = 0, U = 1, S = 0, W = true, L = l
     block_data_transfer::execute(cpu, bus, (false, true, false, true, l, rb, rlist));
 }

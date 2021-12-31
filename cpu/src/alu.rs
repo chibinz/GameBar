@@ -9,7 +9,7 @@ use util::*;
 type Flags = (bool, bool, bool, bool);
 
 // CPSR flag manipulation
-impl crate::CPU {
+impl crate::Cpu {
     pub fn set_flags(&mut self, (n, z, c, v): Flags) {
         self.cpsr.n = n;
         self.cpsr.z = z;

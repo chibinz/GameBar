@@ -1,11 +1,11 @@
 use crate::Bus;
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 use crate::arm::block_data_transfer;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus, instr: u16) {
+pub fn interpret(cpu: &mut Cpu, bus: &mut impl Bus, instr: u16) {
     execute(cpu, bus, decode(instr));
 }
 
@@ -21,12 +21,12 @@ fn decode(instr: u16) -> (bool, bool, u32) {
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, bus: &mut impl Bus, (l, r, rlist): (bool, bool, u32)) {
+fn execute(cpu: &mut Cpu, bus: &mut impl Bus, (l, r, rlist): (bool, bool, u32)) {
     // Push the link register, and then registers specified by rlist
     // onto the stack
     if r && !l {
         cpu.set_r(13, cpu.r(13) - 4);
-        CPU::str(cpu.r(13), cpu.r(14), bus);
+        Cpu::str(cpu.r(13), cpu.r(14), bus);
     }
 
     if rlist != 0 {
@@ -36,7 +36,7 @@ fn execute(cpu: &mut CPU, bus: &mut impl Bus, (l, r, rlist): (bool, bool, u32)) 
     // Pop values off the stack into registers specified by rlist,
     // and then Pop PC off the stack
     if r && l {
-        cpu.set_r(15, CPU::ldr(cpu.r(13), bus));
+        cpu.set_r(15, Cpu::ldr(cpu.r(13), bus));
         cpu.set_r(13, cpu.r(13) + 4);
     }
 }

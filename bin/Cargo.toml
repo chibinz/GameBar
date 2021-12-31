@@ -8,6 +8,6 @@ edition = "2018"
 
 [dependencies]
 util = { path = "../util" }
-console = { path = "../console" }
+gba = { path = "../gba" }
 minifb = "0.19"
 env_logger = "0.8"

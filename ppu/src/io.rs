@@ -1,9 +1,9 @@
-use crate::PPU;
+use crate::Ppu;
 use crate::TRANSPARENT;
 use util::*;
 
 /// Video ram access
-impl PPU {
+impl Ppu {
     pub fn vram_load8(&mut self, offset: usize) -> u8 {
         self.vram[offset]
     }
@@ -78,7 +78,7 @@ impl PPU {
 }
 
 /// Palette memory access
-impl PPU {
+impl Ppu {
     /// Color 0 of palette 0 is the backdrop color
     #[inline]
     pub fn backdrop(&self) -> u16 {
@@ -114,7 +114,7 @@ impl PPU {
     }
 }
 
-impl PPU {
+impl Ppu {
     pub fn get_dispcnt(&self) -> u16 {
         self.dispcnt
     }

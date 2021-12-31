@@ -1,5 +1,5 @@
 [package]
-name = "console"
+name = "gba"
 version = "0.1.0"
 authors = ["chibinz <chibinzhang@hotmail.com>"]
 edition = "2018"

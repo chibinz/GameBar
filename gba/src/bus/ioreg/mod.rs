@@ -3,9 +3,9 @@ mod interrupt;
 mod keypad;
 mod timer;
 
-use super::{Bus, GBus};
+use super::{Bus, GbaBus};
 
-impl GBus {
+impl GbaBus {
     #[inline]
     pub fn ioram_load8(&self, offset: usize) -> u8 {
         let value = self.ioram_load16(offset);

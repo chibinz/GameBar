@@ -2,12 +2,12 @@ use crate::Sprite;
 
 use util::Bus;
 
-pub struct OAM {
+pub struct Oam {
     pub sprite: [Sprite; 128],
     pub param: [u16; 256],
 }
 
-impl OAM {
+impl Oam {
     pub fn new() -> Self {
         Self {
             sprite: [Sprite::new(); 128],
@@ -17,7 +17,7 @@ impl OAM {
 }
 
 /// Object attribute memory access
-impl Bus for OAM {
+impl Bus for Oam {
     #[inline]
     fn store16(&mut self, offset: usize, value: u16) {
         // offset is in bytes

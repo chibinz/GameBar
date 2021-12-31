@@ -1,8 +1,8 @@
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u16) {
+pub fn interpret(cpu: &mut Cpu, instr: u16) {
     execute(cpu, decode(instr));
 }
 
@@ -15,7 +15,7 @@ pub fn decode(instr: u16) -> (u32, u32) {
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, (cond, soffset8): (u32, u32)) {
+pub fn execute(cpu: &mut Cpu, (cond, soffset8): (u32, u32)) {
     if cpu.check_condition(cond) {
         cpu.set_r(
             15,

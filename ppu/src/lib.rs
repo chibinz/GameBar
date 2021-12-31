@@ -9,13 +9,13 @@ use util::*;
 
 use background::Background;
 use layer::Layer;
-use oam::OAM;
+use oam::Oam;
 use sprite::Sprite;
 use window::Window;
 
 pub static TRANSPARENT: u16 = 0x8000;
 
-pub struct PPU {
+pub struct Ppu {
     pub dispcnt: u16,  // Raw display control register
     pub dispstat: u16, // Raw display status
     pub vcount: u16,   // Line number of current scanline
@@ -29,7 +29,7 @@ pub struct PPU {
     pub vram: Vec<u8>,         // Tile mapping
     /// Sprite 0 - 127
     /// Affine sprite rotation / scaling parameter
-    pub oam: OAM,
+    pub oam: Oam,
 
     pub background: [Background; 4], // Background 0 - 3
     pub window: Window,
@@ -38,7 +38,7 @@ pub struct PPU {
     pub buffer: [u16; 240 * 160], // Frame buffer, 240 * 160
 }
 
-impl PPU {
+impl Ppu {
     pub fn new() -> Self {
         let mut p = Self {
             dispcnt: 0,
@@ -51,7 +51,7 @@ impl PPU {
 
             palette: [0; 0x200],
             vram: vec![0; 0x18000],
-            oam: OAM::new(),
+            oam: Oam::new(),
 
             background: [Background::new(); 4],
             window: Window::new(),

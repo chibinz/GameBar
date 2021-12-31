@@ -1,9 +1,9 @@
 use crate::alu;
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u16) {
+pub fn interpret(cpu: &mut Cpu, instr: u16) {
     execute(cpu, decode(instr));
 }
 
@@ -19,7 +19,7 @@ fn decode(instruction: u16) -> (bool, bool, u32, u32, u32) {
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32)) {
+fn execute(cpu: &mut Cpu, (i, op, operand2, rs, rd): (bool, bool, u32, u32, u32)) {
     let op1 = cpu.r(rs);
     let op2 = if i { operand2 } else { cpu.r(operand2) };
 
@@ -39,7 +39,7 @@ mod tests {
 
     #[test]
     fn add_subtract() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
 
         cpu.set_r(1, 0xffffffff);
         execute(&mut cpu, (true, false, 0b111, 1, 1));

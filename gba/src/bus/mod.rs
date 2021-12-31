@@ -1,35 +1,35 @@
 mod ioreg;
 mod timing;
 
-use crate::Console;
+use crate::Gba;
 
 use std::ops::{Deref, DerefMut};
 use util::Bus;
 
-pub struct GBus {
+pub struct GbaBus {
     pub bios: Vec<u8>,
     ewram: [u8; 0x02040000 - 0x02000000],
     iwram: [u8; 0x03008000 - 0x03000000],
     /// Pointer to containing console struct
-    pub console: *mut Console,
+    pub console: *mut Gba,
 }
 
-impl Deref for GBus {
-    type Target = Console;
+impl Deref for GbaBus {
+    type Target = Gba;
     #[inline]
     fn deref(&self) -> &Self::Target {
         unsafe { &*self.console }
     }
 }
 
-impl DerefMut for GBus {
+impl DerefMut for GbaBus {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { &mut *self.console }
     }
 }
 
-impl Bus for GBus {
+impl Bus for GbaBus {
     /// Load a byte from memory
     fn load8(&self, address: usize) -> u8 {
         let offset = Self::mirror(address);
@@ -128,17 +128,17 @@ impl Bus for GBus {
     }
 }
 
-impl GBus {
+impl GbaBus {
     /// Initializes memory to zeroes
     pub fn new() -> Self {
-        GBus {
+        GbaBus {
             bios: Vec::new(),
             ewram: [0; 0x02040000 - 0x02000000],
             iwram: [0; 0x03008000 - 0x03000000],
             // param:      0x05000400 - 0x05000000
             // vram :      0x06018000 - 0x06000000
             // oam  :      0x07000400 - 0x07000000
-            console: std::ptr::null_mut::<Console>(),
+            console: std::ptr::null_mut::<Gba>(),
         }
     }
 

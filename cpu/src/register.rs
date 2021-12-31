@@ -1,9 +1,9 @@
 use std::fmt::*;
 use util::*;
-use PSRMode::*;
+use PsrMode::*;
 
 #[derive(Clone, Copy)]
-pub struct CPSR {
+pub struct Cpsr {
     pub n: bool,
     pub z: bool,
     pub c: bool,
@@ -11,10 +11,10 @@ pub struct CPSR {
     pub i: bool,
     pub f: bool,
     pub t: bool,
-    pub mode: PSRMode,
+    pub mode: PsrMode,
 }
 
-impl CPSR {
+impl Cpsr {
     pub const fn new() -> Self {
         Self {
             n: false,
@@ -29,7 +29,7 @@ impl CPSR {
     }
 }
 
-impl From<u32> for CPSR {
+impl From<u32> for Cpsr {
     fn from(word: u32) -> Self {
         Self {
             n: word.bit(31),
@@ -39,14 +39,14 @@ impl From<u32> for CPSR {
             i: word.bit(7),
             f: word.bit(6),
             t: word.bit(5),
-            mode: PSRMode::from(word.bits(4, 0)),
+            mode: PsrMode::from(word.bits(4, 0)),
         }
     }
 }
 
-impl From<CPSR> for u32 {
+impl From<Cpsr> for u32 {
     fn from(
-        CPSR {
+        Cpsr {
             n,
             z,
             c,
@@ -55,7 +55,7 @@ impl From<CPSR> for u32 {
             f,
             t,
             mode,
-        }: CPSR,
+        }: Cpsr,
     ) -> Self {
         (n as u32) << 31
             | (z as u32) << 30
@@ -68,7 +68,7 @@ impl From<CPSR> for u32 {
     }
 }
 
-impl Debug for CPSR {
+impl Debug for Cpsr {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let raw: u32 = (*self).into();
         write!(
@@ -89,22 +89,22 @@ impl Debug for CPSR {
 
 /// Operating Mode
 #[derive(Clone, Copy, Debug)]
-pub enum PSRMode {
+pub enum PsrMode {
     User = 0b10000,
-    FIQ = 0b10001,
-    IRQ = 0b10010,
+    Fiq = 0b10001,
+    Irq = 0b10010,
     Supervisor = 0b10011,
     Abort = 0b10111,
     Undefined = 0b11011,
     System = 0b11111,
 }
 
-impl From<u32> for PSRMode {
+impl From<u32> for PsrMode {
     fn from(mbits: u32) -> Self {
         match mbits {
             0b10000 => User,
-            0b10001 => FIQ,
-            0b10010 => IRQ,
+            0b10001 => Fiq,
+            0b10010 => Irq,
             0b10011 => Supervisor,
             0b10111 => Abort,
             0b11011 => Undefined,
@@ -114,13 +114,13 @@ impl From<u32> for PSRMode {
     }
 }
 
-impl From<PSRMode> for u32 {
-    fn from(mode: PSRMode) -> Self {
+impl From<PsrMode> for u32 {
+    fn from(mode: PsrMode) -> Self {
         mode as u32
     }
 }
 
-impl crate::CPU {
+impl crate::Cpu {
     #[inline]
     pub fn get_cpsr(&self) -> u32 {
         self.cpsr.into()
@@ -133,7 +133,7 @@ impl crate::CPU {
     pub fn set_cpsr(&mut self, r: u32, f: bool) {
         if f {
             // Set condition code flags only
-            self.cpsr = CPSR {
+            self.cpsr = Cpsr {
                 n: r.bit(31),
                 z: r.bit(30),
                 c: r.bit(29),
@@ -142,7 +142,7 @@ impl crate::CPU {
             };
         } else {
             // Save state and switch mode
-            let psr: CPSR = r.into();
+            let psr: Cpsr = r.into();
             self.switch_mode(psr.mode);
 
             // Change control bits
@@ -151,7 +151,7 @@ impl crate::CPU {
     }
 
     #[inline]
-    pub fn switch_mode(&mut self, mode: PSRMode) {
+    pub fn switch_mode(&mut self, mode: PsrMode) {
         self.save_state();
         self.switch_bank(mode);
 
@@ -191,7 +191,7 @@ impl crate::CPU {
                 self.bank[5] = self.r[13];
                 self.bank[6] = self.r[14]
             }
-            FIQ => {
+            Fiq => {
                 self.bank[12] = self.r[13];
                 self.bank[13] = self.r[14];
                 self.bank[14] = self.spsr
@@ -206,7 +206,7 @@ impl crate::CPU {
                 self.bank[19] = self.r[14];
                 self.bank[20] = self.spsr
             }
-            IRQ => {
+            Irq => {
                 self.bank[21] = self.r[13];
                 self.bank[22] = self.r[14];
                 self.bank[23] = self.spsr
@@ -218,7 +218,7 @@ impl crate::CPU {
             }
         };
 
-        if let FIQ = self.cpsr.mode {
+        if let Fiq = self.cpsr.mode {
             for i in 0..5 {
                 self.bank[i + 7] = self.r[i + 8];
             }
@@ -229,7 +229,7 @@ impl crate::CPU {
         }
     }
 
-    pub fn switch_bank(&mut self, mode: PSRMode) {
+    pub fn switch_bank(&mut self, mode: PsrMode) {
         match mode {
             User => {
                 self.r[13] = self.bank[5];
@@ -239,7 +239,7 @@ impl crate::CPU {
                 self.r[13] = self.bank[5];
                 self.r[14] = self.bank[6];
             }
-            FIQ => {
+            Fiq => {
                 self.r[13] = self.bank[12];
                 self.r[14] = self.bank[13];
                 self.spsr = self.bank[14];
@@ -254,7 +254,7 @@ impl crate::CPU {
                 self.r[14] = self.bank[19];
                 self.spsr = self.bank[20];
             }
-            IRQ => {
+            Irq => {
                 self.r[13] = self.bank[21];
                 self.r[14] = self.bank[22];
                 self.spsr = self.bank[23];
@@ -266,7 +266,7 @@ impl crate::CPU {
             }
         };
 
-        if let FIQ = mode {
+        if let Fiq = mode {
             for i in 0..5 {
                 self.r[i + 8] = self.bank[i + 7];
             }
@@ -307,14 +307,14 @@ mod tests {
 
     #[test]
     fn get_cpsr_bit() {
-        let psr: CPSR = 0b11_1111.into();
+        let psr: Cpsr = 0b11_1111.into();
 
         assert_eq!(psr.t, true);
     }
 
     #[test]
     fn set_cpsr_bit() {
-        let mut psr = CPSR::new();
+        let mut psr = Cpsr::new();
         psr.f = true;
 
         assert_eq!(psr.bit(6), true);
@@ -322,7 +322,7 @@ mod tests {
 
     #[test]
     fn check_condition() {
-        let mut cpu = crate::CPU::new();
+        let mut cpu = crate::Cpu::new();
 
         cpu.cpsr.z = true;
         assert!(cpu.check_condition(0b0000));

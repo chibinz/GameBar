@@ -1,4 +1,4 @@
-use crate::interrupt::IRQController;
+use crate::interrupt::IrqController;
 use crate::interrupt::Interrupt::*;
 use util::*;
 
@@ -15,7 +15,7 @@ impl Keypad {
         }
     }
 
-    pub fn set_input(&mut self, value: u16, irqcnt: &mut IRQController) {
+    pub fn set_input(&mut self, value: u16, irqcnt: &mut IrqController) {
         self.keyinput = value;
 
         if self.keycnt.bit(14) {

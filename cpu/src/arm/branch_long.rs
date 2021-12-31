@@ -1,8 +1,8 @@
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u32) {
+pub fn interpret(cpu: &mut Cpu, instr: u32) {
     // If the link bit is set, the old value of pc is written
     // to the link register, which is R14.
     let l = instr.bit(24);

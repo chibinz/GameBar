@@ -1,9 +1,9 @@
 use crate::Bus;
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus, instr: u32) {
+pub fn interpret(cpu: &mut Cpu, bus: &mut impl Bus, instr: u32) {
     execute(cpu, bus, decode(instr));
 }
 
@@ -32,7 +32,7 @@ pub fn decode(instr: u32) -> (bool, bool, bool, bool, u32, u32, u32, u32) {
 
 #[inline]
 pub fn execute(
-    cpu: &mut CPU,
+    cpu: &mut Cpu,
     bus: &mut impl Bus,
     (p, u, i, w, lsh, rn, rd, offset): (bool, bool, bool, bool, u32, u32, u32, u32),
 ) {
@@ -54,12 +54,12 @@ pub fn execute(
     }
 
     match lsh {
-        0b001 => CPU::strh(address, value, bus),
-        0b010 => CPU::strb(address, value, bus),
-        0b011 => CPU::strh(address, value, bus),
-        0b101 => cpu.set_r(rd, CPU::ldrh(address, bus)),
-        0b110 => cpu.set_r(rd, CPU::ldrsb(address, bus)),
-        0b111 => cpu.set_r(rd, CPU::ldrsh(address, bus)),
+        0b001 => Cpu::strh(address, value, bus),
+        0b010 => Cpu::strb(address, value, bus),
+        0b011 => Cpu::strh(address, value, bus),
+        0b101 => cpu.set_r(rd, Cpu::ldrh(address, bus)),
+        0b110 => cpu.set_r(rd, Cpu::ldrsb(address, bus)),
+        0b111 => cpu.set_r(rd, Cpu::ldrsh(address, bus)),
         _ => unreachable!(),
     }
 
@@ -83,7 +83,7 @@ mod tests {
 
     #[test]
     fn halfword_transfer() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
         let mut bus = DummyBus::new();
 
         bus.store16(0x00, 0xdead);

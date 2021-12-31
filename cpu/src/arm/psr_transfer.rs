@@ -1,9 +1,9 @@
 use crate::shifter::rotate_immediate;
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u32) {
+pub fn interpret(cpu: &mut Cpu, instr: u32) {
     let l = instr.bit(21);
     let pd = instr.bit(22);
 
@@ -49,7 +49,7 @@ mod tests {
 
     #[test]
     fn test_msr() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
 
         // MSR CPSR
         cpu.set_r(0, 0xf00000f1);

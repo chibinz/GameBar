@@ -7,9 +7,8 @@ use util::Bus;
 use Backup::*;
 
 pub enum Backup {
-    EEPROM,
     Flash(flash::Flash),
-    SRAM(Vec<u8>),
+    Sram(Vec<u8>),
 }
 
 impl Bus for Backup {

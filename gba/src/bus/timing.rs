@@ -1,6 +1,6 @@
-use super::GBus;
+use super::GbaBus;
 
-impl GBus {
+impl GbaBus {
     pub fn access_timing(address: usize, size: u32) -> i32 {
         // Do not distinguish between sequential and non sequential cycles
         let timing = match Self::region(address) {

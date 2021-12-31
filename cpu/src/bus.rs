@@ -5,10 +5,10 @@
 //! Current `Memory` implementation always clear lower bits of
 //! misaligned addresses.
 
-use super::CPU;
+use super::Cpu;
 use util::*;
 
-impl CPU {
+impl Cpu {
     #[inline]
     pub fn ldr(address: u32, bus: &impl Bus) -> u32 {
         let rotation = (address & 0b11) * 8;

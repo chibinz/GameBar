@@ -1,8 +1,8 @@
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u32) {
+pub fn interpret(cpu: &mut Cpu, instr: u32) {
     execute(cpu, decode(instr));
 }
 
@@ -30,7 +30,7 @@ pub fn decode(instr: u32) -> (bool, bool, u32, u32, u32, u32) {
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, (a, s, rd, rn, rs, rm): (bool, bool, u32, u32, u32, u32)) {
+pub fn execute(cpu: &mut Cpu, (a, s, rd, rn, rs, rm): (bool, bool, u32, u32, u32, u32)) {
     let op0 = cpu.r(rm);
     let op1 = cpu.r(rs);
     let mut result = op0.wrapping_mul(op1);
@@ -78,7 +78,7 @@ mod tests {
 
     #[test]
     fn mul_execute() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
 
         cpu.set_r(0, 0xfffffff6);
         cpu.set_r(1, 0x00000014);

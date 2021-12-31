@@ -1,10 +1,10 @@
 use crate::shifter::shift_register;
 use crate::Bus;
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus, instr: u32) {
+pub fn interpret(cpu: &mut Cpu, bus: &mut impl Bus, instr: u32) {
     execute(cpu, bus, decode(instr));
 }
 
@@ -28,7 +28,7 @@ pub fn decode(instr: u32) -> (bool, bool, bool, bool, u32, u32, u32, u32) {
 
 #[inline]
 pub fn execute(
-    cpu: &mut CPU,
+    cpu: &mut Cpu,
     bus: &mut impl Bus,
     (i, p, u, w, lb, rn, rd, offset): (bool, bool, bool, bool, u32, u32, u32, u32),
 ) {
@@ -60,10 +60,10 @@ pub fn execute(
 
     // Misaligned word access handled in `memory.rs`
     match lb {
-        0b00 => CPU::str(address, value, bus),
-        0b01 => CPU::strb(address, value, bus),
-        0b10 => cpu.set_r(rd, CPU::ldr(address, bus)),
-        0b11 => cpu.set_r(rd, CPU::ldrb(address, bus)),
+        0b00 => Cpu::str(address, value, bus),
+        0b01 => Cpu::strb(address, value, bus),
+        0b10 => cpu.set_r(rd, Cpu::ldr(address, bus)),
+        0b11 => cpu.set_r(rd, Cpu::ldrb(address, bus)),
         _ => unreachable!(),
     }
 
@@ -77,7 +77,7 @@ mod tests {
 
     #[test]
     fn byte_transfer() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
         let mut bus = DummyBus::new();
 
         bus.store8(0x01, 0xff);
@@ -94,12 +94,12 @@ mod tests {
             &mut bus,
             (false, true, false, false, 0b01, 0, 1, 1),
         );
-        assert_eq!(CPU::ldrb(0x00, &mut bus), 0xff);
+        assert_eq!(Cpu::ldrb(0x00, &mut bus), 0xff);
     }
 
     #[test]
     fn word_transfer() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
         let mut bus = DummyBus::new();
 
         bus.store32(0x00, 0xdeadbeef);
@@ -121,7 +121,7 @@ mod tests {
             &mut bus,
             (false, true, false, true, 0b00, 0, 1, 4),
         );
-        assert_eq!(CPU::ldr(0x00, &mut bus), 0);
+        assert_eq!(Cpu::ldr(0x00, &mut bus), 0);
         assert_eq!(cpu.r(0), 0x00);
     }
 }

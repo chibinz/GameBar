@@ -1,9 +1,9 @@
 use crate::Bus;
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus, instr: u16) {
+pub fn interpret(cpu: &mut Cpu, bus: &mut impl Bus, instr: u16) {
     execute(cpu, bus, decode(instr));
 }
 
@@ -20,13 +20,13 @@ fn decode(instr: u16) -> (bool, u32, u32, u32) {
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, bus: &mut impl Bus, (l, offset5, rb, rd): (bool, u32, u32, u32)) {
+fn execute(cpu: &mut Cpu, bus: &mut impl Bus, (l, offset5, rb, rd): (bool, u32, u32, u32)) {
     let address = cpu.r(rb) + (offset5 << 1);
 
     if l {
-        cpu.set_r(rd, CPU::ldrh(address, bus));
+        cpu.set_r(rd, Cpu::ldrh(address, bus));
     } else {
-        CPU::strh(address, cpu.r(rd), bus);
+        Cpu::strh(address, cpu.r(rd), bus);
     }
 
     // cpu.cycles += 1 + Bus::access_timing(address, 1);

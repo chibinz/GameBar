@@ -1,4 +1,4 @@
-use crate::interrupt::IRQController;
+use crate::interrupt::IrqController;
 use crate::interrupt::Interrupt::*;
 
 pub static PRESCALER: [u16; 4] = [1, 64, 256, 1024];
@@ -27,7 +27,7 @@ impl Timers {
     }
 
     /// There might be some issues when ticks > u16::max_value()
-    pub fn run(&mut self, ticks: i32, irqcnt: &mut IRQController) {
+    pub fn run(&mut self, ticks: i32, irqcnt: &mut IrqController) {
         let mut times_overflowed = 0;
 
         for (i, timer) in self.timer.iter_mut().enumerate() {

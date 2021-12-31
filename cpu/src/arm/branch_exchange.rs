@@ -1,8 +1,8 @@
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u32) {
+pub fn interpret(cpu: &mut Cpu, instr: u32) {
     debug_assert_eq!(instr.bits(27, 4), 0b000100101111111111110001);
 
     let rn = instr.bits(3, 0);

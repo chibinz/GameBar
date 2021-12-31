@@ -1,10 +1,10 @@
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 use super::multiply_accumulate::count_cycles;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u32) {
+pub fn interpret(cpu: &mut Cpu, instr: u32) {
     execute(cpu, decode(instr));
 }
 
@@ -36,7 +36,7 @@ pub fn decode(instr: u32) -> (bool, bool, bool, u32, u32, u32, u32) {
 
 #[inline]
 pub fn execute(
-    cpu: &mut CPU,
+    cpu: &mut Cpu,
     (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, u32, u32, u32, u32),
 ) {
     let mut result: u64;
@@ -85,7 +85,7 @@ mod tests {
 
     #[test]
     fn mul_long_execute() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
 
         // unsigned
         cpu.set_r(0, 0x10000000);

@@ -1,8 +1,8 @@
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u16) {
+pub fn interpret(cpu: &mut Cpu, instr: u16) {
     execute(cpu, decode(instr));
 }
 
@@ -16,7 +16,7 @@ fn decode(instr: u16) -> (bool, u32, u32) {
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, (sp, rd, word8): (bool, u32, u32)) {
+fn execute(cpu: &mut Cpu, (sp, rd, word8): (bool, u32, u32)) {
     if sp {
         cpu.set_r(rd, cpu.r(13) + (word8 << 2));
     } else {
@@ -33,7 +33,7 @@ mod tests {
 
     #[test]
     fn load_address() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
 
         cpu.set_r(13, 0xffffff00);
         execute(&mut cpu, (true, 0, 0b00111111));

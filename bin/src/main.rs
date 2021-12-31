@@ -20,7 +20,7 @@ fn main() {
 
     let rom = std::fs::read(&args[1]).unwrap();
     let bios = std::fs::read("rom/gba_bios.bin").unwrap();
-    let mut console = Box::new(console::Console::new());
+    let mut console = Box::new(gba::Gba::new());
     console.init(); // Must be called before any operation
     console.bus.bios = bios;
     console.cart.rom = rom;
@@ -65,7 +65,7 @@ fn init_window() -> Window {
 }
 
 #[allow(dead_code)]
-fn debug(c: *mut console::Console) {
+fn debug(c: *mut gba::Gba) {
     let mut debugger = debug::Debugger::new();
     debugger.console = c;
 

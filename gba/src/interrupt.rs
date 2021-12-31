@@ -20,13 +20,13 @@ pub enum Interrupt {
 }
 
 #[derive(Debug)]
-pub struct IRQController {
+pub struct IrqController {
     pub ime: u16, // Interrupt master enable flag
     pub ie: u16,  // Interrupt enable flag
     pub irf: u16, // Interrupt request flag
 }
 
-impl IRQController {
+impl IrqController {
     pub fn new() -> Self {
         Self {
             ime: 0,
@@ -43,7 +43,7 @@ impl IRQController {
         self.irf |= irq as u16;
     }
 
-    pub fn check(&mut self, cpu: &mut cpu::CPU) {
+    pub fn check(&mut self, cpu: &mut cpu::Cpu) {
         if self.pending() {
             util::info!("Hardware interrupt triggered by irqcnt");
             util::info!("{:?}", &self);

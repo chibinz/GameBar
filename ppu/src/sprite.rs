@@ -1,4 +1,4 @@
-use crate::PPU;
+use crate::Ppu;
 use util::*;
 
 /// Sprite dimension in pixels
@@ -139,7 +139,7 @@ impl Sprite {
     }
 }
 
-impl PPU {
+impl Ppu {
     pub fn draw_sprite(&mut self, index: usize) {
         let sprite = &self.oam.sprite[index];
         let vcount = self.vcount as u32;

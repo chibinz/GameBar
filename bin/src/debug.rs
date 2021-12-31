@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::io::prelude::*;
 use std::process::exit;
 
-use console::Console;
+use gba::Gba;
 use minifb::Window;
 use util::*;
 
@@ -16,7 +16,7 @@ pub struct Debugger {
     buffer: Vec<u32>,
 
     pub counter: i32,
-    pub console: *mut Console,
+    pub console: *mut Gba,
 }
 
 #[allow(dead_code)]
@@ -28,12 +28,12 @@ impl Debugger {
             buffer: vec![0; WIDTH * HEIGHT],
 
             counter: 0,
-            console: std::ptr::null_mut::<Console>(),
+            console: std::ptr::null_mut::<Gba>(),
         }
     }
 
     #[inline]
-    pub fn c(&mut self) -> &mut Console {
+    pub fn c(&mut self) -> &mut Gba {
         unsafe { &mut *self.console }
     }
 

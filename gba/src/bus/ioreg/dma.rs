@@ -1,7 +1,7 @@
-use crate::dma::DMAChannel;
+use crate::dma::DmaChannel;
 use util::*;
 
-impl DMAChannel {
+impl DmaChannel {
     #[inline]
     pub fn get_src_l(&self) -> u16 {
         self.src as u16

@@ -7,14 +7,14 @@ mod thumb;
 
 pub use util::Bus;
 
-use register::{PSRMode, CPSR};
+use register::{PsrMode, Cpsr};
 
 #[derive(Clone, Copy)]
-pub struct CPU {
+pub struct Cpu {
     ir: u32,      // Next instruction to execute
     r: [u32; 16], // General purpose registers
 
-    cpsr: CPSR,      // Current Program Status Register
+    cpsr: Cpsr,      // Current Program Status Register
     spsr: u32,       // Saved Program Status Register (of current mode)
     bank: [u32; 27], // Banked registers
 
@@ -28,7 +28,7 @@ pub struct CPU {
     pub remaining: i32, // Remaining ticks till run finish,
 }
 
-impl CPU {
+impl Cpu {
     pub const fn new() -> Self {
         Self {
             ir: 0,
@@ -36,7 +36,7 @@ impl CPU {
 
             // On reset, CPSR is forced to supervisor mode
             // and I and F bits in CPSR is set.
-            cpsr: CPSR::new(),
+            cpsr: Cpsr::new(),
             spsr: 0,
             bank: [0; 27],
 
@@ -99,7 +99,7 @@ impl CPU {
         // self.cycles += Bus::access_timing(self.r[15], self.inst_width() / 2);
     }
 
-    pub fn interrupt(&mut self, mode: PSRMode, lr: u32, pc: u32) {
+    pub fn interrupt(&mut self, mode: PsrMode, lr: u32, pc: u32) {
         let spsr = self.get_cpsr();
 
         // Switch mode(register bank), disable interrupt, save CPSR
@@ -116,7 +116,7 @@ impl CPU {
         util::info!("{:#?}", self);
 
         let lr = self.r[15] - self.inst_width();
-        self.interrupt(PSRMode::Supervisor, lr, 0x8);
+        self.interrupt(PsrMode::Supervisor, lr, 0x8);
     }
 
     pub fn hardware_interrupt(&mut self) {
@@ -128,7 +128,7 @@ impl CPU {
         util::info!("{:#?}", self);
 
         let lr = self.r[15] + if self.in_thumb_mode() { 2 } else { 0 };
-        self.interrupt(PSRMode::IRQ, lr, 0x18);
+        self.interrupt(PsrMode::Irq, lr, 0x18);
     }
 
     #[inline]
@@ -168,7 +168,7 @@ impl CPU {
 }
 
 use std::fmt::*;
-impl Debug for CPU {
+impl Debug for Cpu {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
@@ -206,9 +206,9 @@ impl Debug for CPU {
 
 const LEN: usize = 1024;
 static mut INDEX: usize = 0;
-static mut TRACE: [CPU; LEN] = [CPU::new(); 1024];
+static mut TRACE: [Cpu; LEN] = [Cpu::new(); 1024];
 #[allow(dead_code)]
-fn push_cpu(c: CPU) {
+fn push_cpu(c: Cpu) {
     unsafe {
         TRACE[INDEX] = c;
         INDEX += 1;

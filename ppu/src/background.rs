@@ -1,6 +1,6 @@
 use util::*;
 
-use super::PPU;
+use super::Ppu;
 
 /// Background dimension in pixels
 pub static DIMENSION: [[(u32, u32); 4]; 2] = [
@@ -121,7 +121,7 @@ impl Background {
     }
 }
 
-impl PPU {
+impl Ppu {
     pub fn draw_text_background(&mut self, index: usize) {
         let bg = &self.background[index];
         let vcount = self.vcount;

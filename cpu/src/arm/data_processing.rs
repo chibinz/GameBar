@@ -1,10 +1,10 @@
 use crate::alu;
 use crate::shifter::{rotate_immediate, shift_register};
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u32) {
+pub fn interpret(cpu: &mut Cpu, instr: u32) {
     execute(cpu, decode(instr));
 }
 
@@ -21,7 +21,7 @@ pub fn decode(instr: u32) -> (bool, u32, bool, u32, u32, u32) {
 }
 
 #[inline]
-pub fn execute(cpu: &mut CPU, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32)) {
+pub fn execute(cpu: &mut Cpu, (i, opcode, s, rn, rd, operand2): (bool, u32, bool, u32, u32, u32)) {
     let v = cpu.cpsr.v;
     let oldc = cpu.cpsr.c; // Old carry
     let mut op1 = cpu.r(rn);
@@ -95,7 +95,7 @@ mod tests {
 
     #[test]
     fn data_execute() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
 
         // AND R1, R2, R4 LSL R1
         cpu.set_r(1, 1);
@@ -109,7 +109,7 @@ mod tests {
 
     #[test]
     fn fuzzarm_adc() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
 
         cpu.set_r(0, 0x1fffffff);
         cpu.set_r(1, 0xe8888888);
@@ -124,7 +124,7 @@ mod tests {
 
     #[test]
     fn fuzzarm_sbc() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
 
         cpu.set_r(0, 0x61111111);
         cpu.set_r(1, 0xb3333333);

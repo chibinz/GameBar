@@ -7,7 +7,7 @@ use util::*;
 /// Perform shift on a register, return shifted result.
 /// Note that this function may change the C flag of CPSR.
 #[inline]
-pub fn shift_register(cpu: &crate::CPU, operand2: u32) -> (u32, bool) {
+pub fn shift_register(cpu: &crate::Cpu, operand2: u32) -> (u32, bool) {
     let rm = operand2.bits(3, 0);
     let stype = operand2.bits(6, 5);
     // Register specified shift operates differently when shift amount
@@ -129,7 +129,7 @@ mod tests {
     use super::*;
     #[test]
     fn test_shift_register() {
-        let mut cpu = crate::CPU::new();
+        let mut cpu = crate::Cpu::new();
 
         let mut operand2;
 

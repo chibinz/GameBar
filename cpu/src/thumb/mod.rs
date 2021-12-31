@@ -20,11 +20,11 @@ mod unconditional_branch;
 pub use disassemble::disassemble;
 
 use crate::Bus;
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn step(cpu: &mut CPU, bus: &mut impl Bus) {
+pub fn step(cpu: &mut Cpu, bus: &mut impl Bus) {
     fetch(cpu, bus);
 
     util::trace!("{:?}", cpu);
@@ -37,22 +37,22 @@ pub fn step(cpu: &mut CPU, bus: &mut impl Bus) {
 }
 
 #[inline]
-pub fn fetch(cpu: &mut CPU, bus: &mut impl Bus) {
-    cpu.ir = CPU::ldrh(cpu.r(15) - 2, bus);
+pub fn fetch(cpu: &mut Cpu, bus: &mut impl Bus) {
+    cpu.ir = Cpu::ldrh(cpu.r(15) - 2, bus);
 }
 
 #[inline]
-pub fn increment_pc(cpu: &mut CPU) {
+pub fn increment_pc(cpu: &mut Cpu) {
     cpu.r[15] += 2;
 }
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, bus: &mut impl Bus) {
+pub fn interpret(cpu: &mut Cpu, bus: &mut impl Bus) {
     dispatch(cpu, bus);
 }
 
 #[inline]
-pub fn dispatch(cpu: &mut CPU, bus: &mut impl Bus) {
+pub fn dispatch(cpu: &mut Cpu, bus: &mut impl Bus) {
     let instr = cpu.ir as u16;
 
     match instr.bits(15, 11) {

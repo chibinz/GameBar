@@ -1,14 +1,14 @@
-use crate::bus::GBus;
-use crate::interrupt::IRQController;
+use crate::bus::GbaBus;
+use crate::interrupt::IrqController;
 use crate::interrupt::Interrupt::*;
 use util::Bus;
 
-pub struct DMA {
-    pub channel: Vec<DMAChannel>,
+pub struct Dma {
+    pub channel: Vec<DmaChannel>,
 }
 
 #[derive(Clone)]
-pub struct DMAChannel {
+pub struct DmaChannel {
     pub index: usize, // DMA index 0 - 3
     pub src: u32,     // Source address when read from the bus
     pub dst: u32,     // Destination address
@@ -21,7 +21,7 @@ pub struct DMAChannel {
     pub dstinc: u32,   // Added to dst_src after every copy
     pub in_count: u16, // Keep track of how many words transferred
 
-    transfer: fn(&mut Self, &mut GBus),
+    transfer: fn(&mut Self, &mut GbaBus),
     pub state: DMAState,
     pub cycles: i32, // Number of cycles consumed for transfer
 
@@ -35,10 +35,10 @@ pub enum DMAState {
     Finished,
 }
 
-impl DMA {
+impl Dma {
     pub fn new() -> Self {
         let mut d = Self {
-            channel: vec![DMAChannel::new(); 4],
+            channel: vec![DmaChannel::new(); 4],
         };
 
         for i in 0..4 {
@@ -48,7 +48,7 @@ impl DMA {
         d
     }
 
-    pub fn step(&mut self, irqcnt: &mut IRQController, bus: &mut GBus) -> i32 {
+    pub fn step(&mut self, irqcnt: &mut IrqController, bus: &mut GbaBus) -> i32 {
         for c in self.channel.iter_mut() {
             if c.active {
                 return c.step(irqcnt, bus);
@@ -87,7 +87,7 @@ impl DMA {
     }
 }
 
-impl DMAChannel {
+impl DmaChannel {
     pub fn new() -> Self {
         Self {
             index: 0,
@@ -141,7 +141,7 @@ impl DMAChannel {
 
     /// Things to be done after transfer completes,
     /// e.g. Source register write back, interrupt...
-    pub fn finish(&mut self, irqcnt: &mut IRQController) {
+    pub fn finish(&mut self, irqcnt: &mut IrqController) {
         self.src = self.in_src;
         if self.dstcnt() != 3 {
             self.dst = self.in_dst
@@ -165,7 +165,7 @@ impl DMAChannel {
         self.state = DMAState::Unintialized;
     }
 
-    pub fn step(&mut self, irqcnt: &mut IRQController, bus: &mut GBus) -> i32 {
+    pub fn step(&mut self, irqcnt: &mut IrqController, bus: &mut GbaBus) -> i32 {
         use DMAState::*;
 
         self.cycles = 0;
@@ -179,7 +179,7 @@ impl DMAChannel {
         self.cycles
     }
 
-    pub fn transfer16(&mut self, bus: &mut GBus) {
+    pub fn transfer16(&mut self, bus: &mut GbaBus) {
         if self.in_count < self.count {
             bus.store16(self.in_dst as usize, bus.load16(self.in_src as usize));
 
@@ -189,14 +189,14 @@ impl DMAChannel {
 
             self.in_count += 1;
 
-            self.cycles += GBus::access_timing(self.in_dst as usize, 1);
-            self.cycles += GBus::access_timing(self.in_src as usize, 1);
+            self.cycles += GbaBus::access_timing(self.in_dst as usize, 1);
+            self.cycles += GbaBus::access_timing(self.in_src as usize, 1);
         } else {
             self.state = DMAState::Finished;
         }
     }
 
-    pub fn transfer32(&mut self, bus: &mut GBus) {
+    pub fn transfer32(&mut self, bus: &mut GbaBus) {
         if self.in_count < self.count {
             bus.store32(self.in_dst as usize, bus.load32(self.in_src as usize));
 
@@ -206,8 +206,8 @@ impl DMAChannel {
 
             self.in_count += 1;
 
-            self.cycles += GBus::access_timing(self.in_dst as usize, 2);
-            self.cycles += GBus::access_timing(self.in_src as usize, 2);
+            self.cycles += GbaBus::access_timing(self.in_dst as usize, 2);
+            self.cycles += GbaBus::access_timing(self.in_src as usize, 2);
         } else {
             self.state = DMAState::Finished;
         }

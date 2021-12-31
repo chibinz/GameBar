@@ -1,8 +1,8 @@
-use crate::CPU;
+use crate::Cpu;
 use util::*;
 
 #[inline]
-pub fn interpret(cpu: &mut CPU, instr: u16) {
+pub fn interpret(cpu: &mut Cpu, instr: u16) {
     execute(cpu, decode(instr));
 }
 
@@ -15,7 +15,7 @@ fn decode(instruction: u16) -> (bool, u32) {
 }
 
 #[inline]
-fn execute(cpu: &mut CPU, (s, sword7): (bool, u32)) {
+fn execute(cpu: &mut Cpu, (s, sword7): (bool, u32)) {
     let shifted = sword7 << 2;
     let offset = if s { shifted.wrapping_neg() } else { shifted };
     cpu.set_r(13, cpu.r(13).wrapping_add(offset));

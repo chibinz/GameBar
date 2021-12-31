@@ -4,7 +4,7 @@ members = [
     "bin",
     "cpu",
     "ppu",
-    "console",
+    "gba",
     "util",
 ]
 
