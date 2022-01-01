@@ -90,6 +90,16 @@ impl Ppu {
         self.draw_sprites();
 
         self.combine_layers();
+
+        let fsprite = self.decode_sprite(0);
+        let (width, height) = self.oam.sprite[0].get_dimension();
+        for y in 0..height {
+            for x in 0..width {
+                let bn = y * 240 + x;
+                let sn = y * width + x;
+                self.buffer[bn as usize] = fsprite[sn as usize];
+            }
+        }
     }
 
     pub fn hblank(&mut self) -> bool {

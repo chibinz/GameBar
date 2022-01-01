@@ -153,6 +153,31 @@ impl Ppu {
         }
     }
 
+    pub fn decode_sprite(&mut self, index: usize) -> Vec<u16> {
+        let sprite = &self.oam.sprite[index];
+        let (width, height) = sprite.get_dimension();
+        let stride = if self.sequential { width / 8 } else { 32 };
+        let mut ret = vec![0; (width * height) as usize];
+
+        for tile_y in 0..(height / 8) {
+            for tile_x in 0..(width / 8) {
+                let tile_b = 4;
+                let tile_n = sprite.tile_n + (tile_y * stride + tile_x);
+
+                for pixel_y in 0..8 {
+                    for pixel_x in 0..8 {
+                        let t = self.tile_data(sprite.palette_f, tile_b, tile_n, pixel_x, pixel_y);
+                        let p = self.obj_palette(sprite.palette_n, t);
+                        let n = (tile_y * 8 + pixel_y) * width + tile_x * 8 + pixel_x;
+                        ret[n as usize] = p;
+                    }
+                }
+            }
+        }
+
+        ret
+    }
+
     pub fn draw_text_sprite(&mut self, index: usize) {
         let sprite = &self.oam.sprite[index];
         let vcount = self.vcount as u32;
