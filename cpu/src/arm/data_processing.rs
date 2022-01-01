@@ -65,28 +65,51 @@ pub fn execute(cpu: &mut Cpu, (i, opcode, s, rn, rd, operand2): (bool, u32, bool
         _ => unreachable!(),
     };
 
+    let logical = (0b1000..=0b1011).contains(&opcode);
+
+    match (s, rd == 15, logical) {
+        (true, true, true) => cpu.restore_cpsr(),
+        (true, true, false) => {
+            cpu.r[15] = result;
+            cpu.restore_cpsr();
+            cpu.flush()
+        }
+        (true, false, true) => cpu.set_flags(flags),
+        (true, false, false) => {
+            cpu.set_flags(flags);
+            cpu.set_r(rd, result);
+        }
+        (false, true, true) => unreachable!(),
+        (false, true, false) => {
+            cpu.set_r(rd, result);
+        }
+        (false, false, true) => unreachable!(),
+        (false, false, false) => cpu.set_r(rd, result),
+    };
+
+    /*
     if s && rd != 15 {
-        cpu.cpsr.c = c;
         cpu.set_flags(flags);
     }
 
     // Write result to register, if needed
     if !(0b1000..=0b1011).contains(&opcode) {
         cpu.r[rd as usize] = result;
-
-        // Direct manipulation of pc will result in a pipeline flush.
-        // The next instruction will be fetched from memory address
-        // at pc. pc is further incremented by 4 to maintain offset 8
-        // from the currently executed instruction.
-        if rd == 15 {
-            if s {
-                cpu.restore_cpsr();
-            }
-            // Pipeline flush happens after cpsr mode change
-            // Add 2 to r[15] in thumb mode, 4 in arm mode
-            cpu.flush();
-        }
     }
+
+    // Direct manipulation of pc will result in a pipeline flush.
+    // The next instruction will be fetched from memory address
+    // at pc. pc is further incremented by 4 to maintain offset 8
+    // from the currently executed instruction.
+    if rd == 15 {
+        if s {
+            cpu.restore_cpsr();
+        }
+        // Pipeline flush happens after cpsr mode change
+        // Add 2 to r[15] in thumb mode, 4 in arm mode
+        cpu.flush();
+    }
+    */
 }
 
 #[cfg(test)]
