@@ -52,7 +52,7 @@ impl Debugger {
         // ).unwrap();
 
         loop {
-            // self.step();
+            self.step();
         }
     }
 

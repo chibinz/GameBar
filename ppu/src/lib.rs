@@ -1,3 +1,5 @@
+#![allow(clippy::new_without_default)]
+
 mod background;
 mod io;
 mod layer;
@@ -135,13 +137,13 @@ impl Ppu {
         let n = self.vcount as usize * 240;
         let line = &mut self.buffer[n..n + 240];
 
-        for i in 0..240 {
+        for (i, l) in line.iter_mut().enumerate() {
             for j in 0..5 {
                 let pixel = self.layer[j].pixel[i];
 
                 // Render the topmost opaque color
                 if pixel != TRANSPARENT {
-                    line[i] = pixel;
+                    *l = pixel;
                     break;
                 }
             }
