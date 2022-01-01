@@ -10,8 +10,8 @@ pub fn interpret(cpu: &mut Cpu, bus: &mut impl Bus, instr: u32) {
 #[inline]
 pub fn decode(instr: u32) -> (bool, bool, bool, bool, u32, u32, u32, u32) {
     debug_assert_eq!(instr.bits(27, 25), 0b000);
-    debug_assert_eq!(instr.bit(7), true);
-    debug_assert_eq!(instr.bit(4), true);
+    debug_assert!(instr.bit(7));
+    debug_assert!(instr.bit(4));
 
     let p = instr.bit(24);
     let u = instr.bit(23);

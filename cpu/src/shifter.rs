@@ -17,7 +17,7 @@ pub fn shift_register(cpu: &crate::Cpu, operand2: u32) -> (u32, bool) {
         let rs = operand2.bits(11, 8);
 
         debug_assert_ne!(rs, 15);
-        debug_assert_eq!(operand2.bit(7), false);
+        debug_assert!(!operand2.bit(7));
 
         cpu.r(rs) & 0xff
     } else {

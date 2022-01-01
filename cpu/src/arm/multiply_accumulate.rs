@@ -89,7 +89,7 @@ mod tests {
         cpu.set_r(1, 0x10000000);
         execute(&mut cpu, (false, true, 3, 0, 0, 1));
         assert_eq!(cpu.r(3), 0);
-        assert_eq!(cpu.cpsr.z, true);
-        assert_eq!(cpu.cpsr.n, false);
+        assert!(cpu.cpsr.z);
+        assert!(!cpu.cpsr.n);
     }
 }

@@ -100,6 +100,6 @@ mod tests {
         execute(&mut cpu, (true, false, true, 4, 3, 0, 1));
         assert_eq!(cpu.r(3), 1);
         assert_eq!(cpu.r(4), 0);
-        assert_eq!(cpu.cpsr.n, false);
+        assert!(!cpu.cpsr.n);
     }
 }

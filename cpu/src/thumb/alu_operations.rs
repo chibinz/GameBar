@@ -62,18 +62,18 @@ mod tests {
         cpu.set_r(1, 0x80000000);
         execute(&mut cpu, (0b1101, 0, 1));
         assert_eq!(cpu.r(1), 0);
-        assert_eq!(cpu.cpsr.z, true);
+        assert!(cpu.cpsr.z);
 
         // NEG 0xf0f0f0f0
         cpu.set_r(1, 0xf0f0f0f0);
         execute(&mut cpu, (0b1001, 1, 1));
         assert_eq!(cpu.r(1), 0x0f0f0f0f + 1);
-        assert_eq!(cpu.cpsr.z, false);
+        assert!(!cpu.cpsr.z);
 
         // BIC 0x0f0f0f0f, 0xffffffff
         cpu.set_r(0, 0xffffffff);
         execute(&mut cpu, (0b1110, 0, 1));
         assert_eq!(cpu.r(1), 0);
-        assert_eq!(cpu.cpsr.z, true);
+        assert!(cpu.cpsr.z);
     }
 }

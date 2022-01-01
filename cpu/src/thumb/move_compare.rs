@@ -48,21 +48,21 @@ mod tests {
         cpu.set_r(1, 0xffffffff);
         execute(&mut cpu, (0b10, 1, 1));
         assert_eq!(cpu.r(1), 0);
-        assert_eq!(cpu.cpsr.c, true);
+        assert!(cpu.cpsr.c);
 
         cpu.set_r(1, 0x7fffffff);
         execute(&mut cpu, (0b10, 1, 1));
         assert_eq!(cpu.r(1), 0x80000000);
-        assert_eq!(cpu.cpsr.v, true);
-        assert_eq!(cpu.cpsr.c, false);
-        assert_eq!(cpu.cpsr.n, true);
+        assert!(cpu.cpsr.v);
+        assert!(!cpu.cpsr.c);
+        assert!(cpu.cpsr.n);
 
         cpu.set_r(1, 1);
         execute(&mut cpu, (0b01, 1, 2));
         assert_eq!(cpu.r(1), 1);
-        assert_eq!(cpu.cpsr.v, false);
-        assert_eq!(cpu.cpsr.c, false);
-        assert_eq!(cpu.cpsr.n, true);
-        assert_eq!(cpu.cpsr.z, false);
+        assert!(!cpu.cpsr.v);
+        assert!(!cpu.cpsr.c);
+        assert!(cpu.cpsr.n);
+        assert!(!cpu.cpsr.z);
     }
 }

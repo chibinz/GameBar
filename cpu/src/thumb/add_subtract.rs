@@ -44,13 +44,13 @@ mod tests {
         cpu.set_r(1, 0xffffffff);
         execute(&mut cpu, (true, false, 0b111, 1, 1));
         assert_eq!(cpu.r(1), 0b110);
-        assert_eq!(cpu.cpsr.c, true);
+        assert!(cpu.cpsr.c);
 
         cpu.set_r(0, 0x10000000);
         cpu.set_r(1, 1);
         execute(&mut cpu, (false, true, 1, 0, 1));
         assert_eq!(cpu.r(1), 0x0fffffff);
-        assert_eq!(cpu.cpsr.v, false);
-        assert_eq!(cpu.cpsr.c, true);
+        assert!(!cpu.cpsr.v);
+        assert!(cpu.cpsr.c);
     }
 }

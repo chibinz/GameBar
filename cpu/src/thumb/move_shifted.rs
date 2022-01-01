@@ -38,12 +38,12 @@ mod tests {
         cpu.set_r(0, 1);
         execute(&mut cpu, (0b00, 0b11111, 0, 1));
         assert_eq!(cpu.r(1), 0x80000000);
-        assert_eq!(cpu.cpsr.c, false);
+        assert!(!cpu.cpsr.c);
 
         // cpu.set_r(0, 0b10);
         // execute(&mut cpu, (0b00, 0b11111, 0, 1));
         // assert_eq!(cpu.r(1), 0);
-        // assert_eq!(cpu.cpsr.c, true);
+        // assert!(cpu.cpsr.c);
     }
 
     #[test]
@@ -53,12 +53,12 @@ mod tests {
         cpu.set_r(0, 0x80000000);
         execute(&mut cpu, (0b01, 0b11111, 0, 1));
         assert_eq!(cpu.r(1), 1);
-        assert_eq!(cpu.cpsr.c, false);
+        assert!(!cpu.cpsr.c);
 
         cpu.set_r(0, 0x40000000);
         execute(&mut cpu, (0b01, 0b11111, 0, 1));
         assert_eq!(cpu.r(1), 0);
-        assert_eq!(cpu.cpsr.c, true);
+        assert!(cpu.cpsr.c);
     }
 
     #[test]
@@ -68,11 +68,11 @@ mod tests {
         cpu.set_r(0, 0x80000000);
         execute(&mut cpu, (0b10, 0b11111, 0, 1));
         assert_eq!(cpu.r(1), 0xffffffff);
-        assert_eq!(cpu.cpsr.c, false);
+        assert!(!cpu.cpsr.c);
 
         cpu.set_r(0, 0x40000000);
         execute(&mut cpu, (0b10, 0b11111, 0, 1));
         assert_eq!(cpu.r(1), 0);
-        assert_eq!(cpu.cpsr.c, true);
+        assert!(cpu.cpsr.c);
     }
 }

@@ -52,13 +52,13 @@ mod tests {
         cpu.set_r(9, 2);
         execute(&mut cpu, (0b00, 8, 9));
         assert_eq!(cpu.r(9), 1);
-        assert_eq!(cpu.cpsr.c, false);
+        assert!(!cpu.cpsr.c);
 
         // CMP 1, 1
         cpu.set_r(8, 1);
         execute(&mut cpu, (0b01, 8, 9));
         assert_eq!(cpu.r(9), 1);
-        assert_eq!(cpu.cpsr.z, true);
+        assert!(cpu.cpsr.z);
 
         // BX
         cpu.set_r(14, 0xfffffffb);

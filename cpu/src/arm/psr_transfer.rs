@@ -7,9 +7,8 @@ pub fn interpret(cpu: &mut Cpu, instr: u32) {
     let l = instr.bit(21);
     let pd = instr.bit(22);
 
-    if l
-    // MSR
-    {
+    if l {
+        // MSR
         let i = instr.bit(25);
         // Bit 16 of MSR instructions varies.
         // When it is clear, only PSR flag bits are
@@ -30,9 +29,8 @@ pub fn interpret(cpu: &mut Cpu, instr: u32) {
         } else {
             cpu.set_cpsr(op, f);
         }
-    } else
-    // MRS
-    {
+    } else {
+        // MRS
         debug_assert_eq!(instr.bits(21, 16), 0b001111);
         debug_assert_eq!(instr.bits(11, 0), 0);
 

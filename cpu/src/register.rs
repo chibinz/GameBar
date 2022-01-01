@@ -309,7 +309,7 @@ mod tests {
     fn get_cpsr_bit() {
         let psr: Cpsr = 0b11_1111.into();
 
-        assert_eq!(psr.t, true);
+        assert!(psr.t);
     }
 
     #[test]
@@ -317,7 +317,7 @@ mod tests {
         let mut psr = Cpsr::new();
         psr.f = true;
 
-        assert_eq!(psr.bit(6), true);
+        assert!(psr.bit(6));
     }
 
     #[test]

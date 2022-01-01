@@ -22,7 +22,7 @@ impl<T: std::convert::Into<u32>> BitField for T {
     /// Test certains bit of a integer, return true if set
     /// ```
     /// use util::BitField;
-    /// assert_eq!(0b10u32.bit(1), true)
+    /// assert!(0b10u32.bit(1))
     /// ```
     #[inline]
     fn bit(self, b: u32) -> bool {
@@ -154,7 +154,7 @@ mod tests {
 
     #[test]
     fn test_bit() {
-        assert_eq!(0x80000000u32.bit(31), true);
+        assert!(0x80000000u32.bit(31));
     }
 
     #[test]

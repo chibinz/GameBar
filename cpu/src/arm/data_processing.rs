@@ -104,7 +104,7 @@ mod tests {
         cpu.set_r(4, 0xffffffff);
         execute(&mut cpu, (false, 0b0000, true, 2, 1, 0b0011_0001_0100));
         assert_eq!(cpu.r(1), 2);
-        assert_eq!(cpu.cpsr.c, true);
+        assert!(cpu.cpsr.c);
     }
 
     #[test]
@@ -119,7 +119,7 @@ mod tests {
         execute(&mut cpu, (false, 0b0101, true, 0, 4, 0b0010_0101_0001));
 
         assert_eq!(cpu.r(4), cpu.r(0));
-        assert_eq!(cpu.cpsr.c, true); // Carry bit should be set
+        assert!(cpu.cpsr.c); // Carry bit should be set
     }
 
     #[test]
@@ -134,6 +134,6 @@ mod tests {
         execute(&mut cpu, (false, 0b0110, false, 0, 4, 0b0010_0101_0001));
 
         assert_eq!(cpu.r(4), cpu.r(0));
-        assert_eq!(cpu.cpsr.c, false); // Carry bit should be clear
+        assert!(!cpu.cpsr.c); // Carry bit should be clear
     }
 }
