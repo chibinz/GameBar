@@ -10,8 +10,10 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Get dependencies
-      run: sudo apt install -y libxkbcommon-dev libwayland-cursor0 libwayland-dev
+      run: sudo apt-get install -y libxkbcommon-dev libwayland-cursor0 libwayland-dev
     - name: Build
       run: cargo build --verbose
+    - name: Run clippy
+      run: cargo clippy -- --deny warnings
     - name: Run tests
       run: cargo test --verbose
