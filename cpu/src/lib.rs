@@ -73,6 +73,8 @@ impl Cpu {
             arm::step(self, bus);
         }
 
+        push_cpu(*self);
+
         self.cycles
     }
 

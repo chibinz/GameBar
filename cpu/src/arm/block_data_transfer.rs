@@ -33,10 +33,8 @@ pub fn execute(
     assert_ne!(rlist, 0);
 
     // Misaligned address not handled
-    let mut address = cpu.r(rn);
-    assert_eq!(address & 0b11, 0);
-
-    let original = address;
+    let mut addr = cpu.r(rn);
+    assert_eq!(addr & 0b11, 0);
 
     let saved_cpsr = cpu.get_cpsr();
 
@@ -47,40 +45,38 @@ pub fn execute(
 
     // Whether or not the p bit is set, the final address after transfer
     // should be the same.
-    if w {
-        if u {
-            cpu.set_r(rn, address + 4 * rlist.count_ones());
+    let step = if u { 4 } else { 4u32.wrapping_neg() };
+    let final_addr = addr.wrapping_add(step.wrapping_mul(rlist.count_ones()));
+    let indices = rlist_to_index(rlist);
+    let mut regs = indices.iter();
+
+    // Fucking doesn't make sense...
+    addr = match (u, p) {
+        (true, true) => addr.wrapping_add(4),
+        (true, false) => addr,
+        (false, true) => final_addr,
+        (false, false) => final_addr.wrapping_add(4),
+    };
+
+    let &first = regs.next().unwrap();
+    if l {
+        cpu.set_r(first, Cpu::ldr(addr, bus));
+    } else {
+        Cpu::str(addr, cpu.r(first) + if first == 15 {4} else {0}, bus);
+    };
+    addr = addr.wrapping_add(4);
+
+    // Write back after second cycle
+    if w && !(l && rlist.bit(rn)) { cpu.set_r(rn, final_addr); }
+
+    for &r in regs {
+        if l {
+            cpu.set_r(r, Cpu::ldr(addr, bus));
         } else {
-            cpu.set_r(rn, address - 4 * rlist.count_ones());
-        }
-    }
+            Cpu::str(addr, cpu.r(r) + if r == 15 {4} else {0}, bus);
+        };
 
-    if p {
-        address = if u { address + 4 } else { address - 4 }
-    }
-
-    // Empty list not handled
-    for i in 0..16 {
-        let j = if u { i } else { 15 - i };
-        if rlist.bit(j) {
-            if l {
-                cpu.set_r(j, Cpu::ldr(address, bus));
-            } else {
-                Cpu::str(address, cpu.r(j), bus);
-
-                if j == 15 {
-                    Cpu::str(address, cpu.r(15) + 4, bus);
-                }
-
-                // The first register to be stored will store the
-                // unchanged value.
-                if w && j == rn && rlist.trailing_zeros() == rn {
-                    Cpu::str(address, original, bus);
-                }
-            }
-
-            address = if u { address + 4 } else { address - 4 };
-        }
+        addr = addr.wrapping_add(4);
     }
 
     if s {
@@ -100,6 +96,18 @@ pub fn execute(
 #[allow(dead_code)]
 fn count_cycles(rlist: u32) -> i32 {
     rlist.count_ones() as i32
+}
+
+fn rlist_to_index(mut rlist: u32) -> Vec<u32> {
+    let mut ret = Vec::with_capacity(16);
+
+    while rlist > 0 {
+        let i = rlist.trailing_zeros();
+        rlist &= !(1 << i);
+        ret.push(i);
+    }
+
+    ret
 }
 
 #[cfg(test)]
