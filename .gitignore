@@ -1,7 +1,8 @@
-target/
 .vscode/
-reference/
+
 rom/
-suite/
+reference/
+target/
+
 **/*.rs.bk
 Cargo.lock
