@@ -20,6 +20,17 @@ fn decode(instr: u16) -> (bool, u32, u32) {
 
 #[inline]
 fn execute(cpu: &mut Cpu, bus: &mut impl Bus, (l, rb, rlist): (bool, u32, u32)) {
-    // P = 0, U = 1, S = 0, W = true, L = l
-    block_data_transfer::execute(cpu, bus, (false, true, false, true, l, rb, rlist));
+    // Hacky monkey patch...
+    if rlist == 0 {
+        let addr = cpu.r(rb);
+        if l {
+            cpu.set_r(15, Cpu::ldr(addr & !0b11, bus));
+        } else {
+            Cpu::str(addr & !0b11, cpu.r(15) + 2, bus);
+        }
+        cpu.set_r(rb, addr.wrapping_add(0x40));
+    } else {
+        // P = 0, U = 1, S = 0, W = true, L = l
+        block_data_transfer::execute(cpu, bus, (false, true, false, true, l, rb, rlist));
+    }
 }
