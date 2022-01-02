@@ -170,7 +170,7 @@ impl Cpu {
     }
 }
 
-use std::fmt::*;
+use std::{fmt::*};
 impl Debug for Cpu {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(

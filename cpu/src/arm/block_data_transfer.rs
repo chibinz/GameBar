@@ -29,13 +29,10 @@ pub fn execute(
     bus: &mut impl Bus,
     (p, u, s, w, l, rn, rlist): (bool, bool, bool, bool, bool, u32, u32),
 ) {
+    // LDM and STM are forced align
     // Empty rlist not handled
-    assert_ne!(rlist, 0);
 
-    // Misaligned address not handled
     let mut addr = cpu.r(rn);
-    assert_eq!(addr & 0b11, 0);
-
     let saved_cpsr = cpu.get_cpsr();
 
     if s && !(l && rlist.bit(15)) {
@@ -46,7 +43,12 @@ pub fn execute(
     // Whether or not the p bit is set, the final address after transfer
     // should be the same.
     let step = if u { 4 } else { 4u32.wrapping_neg() };
-    let final_addr = addr.wrapping_add(step.wrapping_mul(rlist.count_ones()));
+    let (rlist, num_regs) = if rlist == 0 {
+        (0x8000, 16)
+    } else {
+        (rlist, rlist.count_ones())
+    };
+    let final_addr = addr.wrapping_add(step.wrapping_mul(num_regs));
     let indices = rlist_to_index(rlist);
     let mut regs = indices.iter();
 
@@ -60,9 +62,9 @@ pub fn execute(
 
     let &first = regs.next().unwrap();
     if l {
-        cpu.set_r(first, Cpu::ldr(addr, bus));
+        cpu.set_r(first, Cpu::ldr(addr & !0b11, bus));
     } else {
-        Cpu::str(addr, cpu.r(first) + if first == 15 {4} else {0}, bus);
+        Cpu::str(addr & !0b11, cpu.r(first) + if first == 15 {4} else {0}, bus);
     };
     addr = addr.wrapping_add(4);
 
@@ -71,9 +73,9 @@ pub fn execute(
 
     for &r in regs {
         if l {
-            cpu.set_r(r, Cpu::ldr(addr, bus));
+            cpu.set_r(r, Cpu::ldr(addr & !0b11, bus));
         } else {
-            Cpu::str(addr, cpu.r(r) + if r == 15 {4} else {0}, bus);
+            Cpu::str(addr & !0b11, cpu.r(r) + if r == 15 {4} else {0}, bus);
         };
 
         addr = addr.wrapping_add(4);

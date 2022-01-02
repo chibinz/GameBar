@@ -18,7 +18,7 @@ pub fn decode(instr: u32) -> (bool, bool, u32, u32, u32, u32) {
     let rm = instr.bits(3, 0);
 
     // The destination register rd must not be the same as the operand register rm
-    debug_assert_ne!(rd, rm);
+    // debug_assert_ne!(rd, rm); // Asserted by gba-tests...
 
     // `r15` must not be used as an operand or destination register
     debug_assert_ne!(rd, 15);
