@@ -125,7 +125,7 @@ mod tests {
         cpu.set_spsr(cpu.get_cpsr(), false);
 
         for i in 0..16 {
-            bus.store32(0x00 + i * 4, i as u32);
+            bus.store32( i * 4, i as u32);
         }
         cpu.set_r(0, 0x00);
 

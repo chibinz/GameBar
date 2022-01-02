@@ -94,7 +94,7 @@ mod tests {
             &mut bus,
             (false, true, false, false, 0b01, 0, 1, 1),
         );
-        assert_eq!(Cpu::ldrb(0x00, &mut bus), 0xff);
+        assert_eq!(Cpu::ldrb(0x00, &bus), 0xff);
     }
 
     #[test]
@@ -121,7 +121,7 @@ mod tests {
             &mut bus,
             (false, true, false, true, 0b00, 0, 1, 4),
         );
-        assert_eq!(Cpu::ldr(0x00, &mut bus), 0);
+        assert_eq!(Cpu::ldr(0x00, &bus), 0);
         assert_eq!(cpu.r(0), 0x00);
     }
 }
