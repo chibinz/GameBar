@@ -21,10 +21,12 @@ fn main() {
     let rom = std::fs::read(&args[1]).unwrap();
     let bios = std::fs::read("rom/gba_bios.bin").unwrap();
     let mut console = Box::new(gba::Gba::new());
-    console.init(); // Must be called before any operation
+
+    // Must be called before any operation
+    console.init();
     console.bus.bios = bios;
     console.cart.rom = rom;
-    // console.cpu.backtrace_on_panic();
+    console.cpu.backtrace_on_panic();
 
     let mut window = init_window();
     let mut converted = vec![0; console.ppu.buffer.len()];
@@ -36,8 +38,6 @@ fn main() {
         convert_buffer(&console.ppu.buffer, &mut converted);
         window.update_with_buffer(&converted, 240, 160).unwrap();
     }
-
-    unreachable!();
 }
 
 fn convert_buffer(orig: &[u16], new: &mut [u32]) {

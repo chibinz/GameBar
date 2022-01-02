@@ -34,6 +34,8 @@ pub fn execute(
 
     // Misaligned address not handled
     let mut address = cpu.r(rn);
+    assert_eq!(address & 0b11, 0);
+
     let original = address;
 
     let saved_cpsr = cpu.get_cpsr();

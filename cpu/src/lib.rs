@@ -154,15 +154,16 @@ impl Cpu {
     }
 
     pub fn backtrace_on_panic(&self) {
-        std::panic::set_hook(Box::new(|_| Self::panic_hook()));
+        std::panic::set_hook(Box::new(Self::panic_hook));
     }
 
-    fn panic_hook() {
+    fn panic_hook(p: &std::panic::PanicInfo) {
         unsafe {
             for i in 0..LEN {
                 let c = &TRACE[(INDEX + i) % LEN];
-                util::debug!("{:?}", c,);
+                util::error!("{:?}", c,);
             }
+            util::error!("{}", p);
         }
     }
 }
