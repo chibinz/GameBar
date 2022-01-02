@@ -28,14 +28,19 @@ fn main() {
     console.cart.rom = rom;
     console.cpu.backtrace_on_panic();
 
-    let mut window = init_window();
+    let mut window = init_window("GameBar", 240, 160, 2);
     let mut converted = vec![0; console.ppu.buffer.len()];
+
+    let mut background_palette_window = init_window("Background Palette", 16, 16, 16);
+    let mut background_palette_buffer = vec![0; 16 * 16];
 
     while window.is_open() {
         let input = keyboard::input(&window);
         console.keypad.set_input(input, &mut console.irqcnt);
         console.step_frame();
         convert_buffer(&console.ppu.buffer, &mut converted);
+        convert_buffer(&console.ppu.palette[..256], &mut background_palette_buffer);
+        background_palette_window.update_with_buffer(&background_palette_buffer, 16, 16).unwrap();
         window.update_with_buffer(&converted, 240, 160).unwrap();
     }
 }
@@ -51,13 +56,22 @@ fn usage() {
     println!("usage: GameBar <rom>");
 }
 
-fn init_window() -> Window {
+fn init_window(name: &str, width: usize, height: usize, scale: usize) -> Window {
+    let scale = match scale {
+        1 => minifb::Scale::X1,
+        2 => minifb::Scale::X2,
+        4 => minifb::Scale::X4,
+        8 => minifb::Scale::X8,
+        16 => minifb::Scale::X16,
+        _ => minifb::Scale::X1,
+    };
+
     Window::new(
-        "GameBar",
-        240,
-        160,
+        name,
+        width,
+        height,
         WindowOptions {
-            scale: minifb::Scale::X2,
+            scale,
             ..WindowOptions::default()
         },
     )
