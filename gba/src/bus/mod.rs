@@ -85,11 +85,15 @@ impl Bus for GbaBus {
     /// Store a byte in memory, only EWRAM, IWRAM, IORAM, SRAM are accessible
     fn store8(&mut self, address: usize, value: u8) {
         let offset = Self::mirror(address);
+        let hword = value as u16;
+        let hvalue = (hword << 8) | hword;
 
         match Self::region(address) {
             0x02 => self.ewram.store8(offset, value),
             0x03 => self.iwram.store8(offset, value),
             0x04 => self.ioram_store8(offset, value),
+            0x05 => self.ppu.palette.store16(offset, hvalue),
+            0x06 => self.ppu.vram.store16(offset, hvalue),
             0x0e => self.cart.backup.store8(offset, value),
             _ => Self::unhandled(false, 1, address),
         };
