@@ -13,7 +13,7 @@ impl Layer {
         }
     }
 
-    pub fn paint(&mut self, x: u32, color: u16, window: &Window, index: u32) {
+    pub fn paint(&mut self, x: u32, color: u16, window: &Window, index: usize) {
         if color == TRANSPARENT || x >= 240 {
             return;
         }

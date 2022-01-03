@@ -71,12 +71,12 @@ impl Window {
         }
     }
 
-    pub fn get_display_flag(&self, x: u32, index: u32) -> bool {
+    pub fn get_display_flag(&self, x: u32, index: usize) -> bool {
         if x >= 240 {
             return false;
         }
 
-        self.cnt[x as usize].bit(index)
+        self.cnt[x as usize].bit(index as u32)
     }
 
     pub fn clear(&mut self) {

@@ -12,7 +12,6 @@ pub static DIMENSION: [[(u32, u32); 4]; 2] = [
 
 #[derive(Clone, Copy)]
 pub struct Background {
-    pub index: usize,    // 0 - 3
     pub bgcnt: u16,      // Raw background control register
     pub priority: u32,   // Lower priority takes precedence
     pub tile_b: u32,     // Determine base address of tile data
@@ -38,7 +37,6 @@ pub struct Background {
 impl Background {
     pub fn new() -> Self {
         Self {
-            index: 0,
             bgcnt: 0,
             priority: 0,
             tile_b: 0,
@@ -157,7 +155,7 @@ impl Ppu {
             let color = self.bg_palette(palette_n, palette_entry);
 
             let layer = &mut self.layer[bg.priority as usize];
-            layer.paint(x, color, window, bg.index as u32);
+            layer.paint(x, color, window, index);
         }
     }
 
@@ -206,7 +204,7 @@ impl Ppu {
             let color = self.palette[palette_entry as usize];
 
             let layer = &mut self.layer[bg.priority as usize];
-            layer.paint(i, color, window, bg.index as u32);
+            layer.paint(i, color, window, index);
         }
 
         bg.internal.0 += bg.matrix.1;

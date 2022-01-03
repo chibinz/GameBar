@@ -42,7 +42,7 @@ pub struct Ppu {
 
 impl Ppu {
     pub fn new() -> Self {
-        let mut p = Self {
+        Self {
             dispcnt: 0,
             dispstat: 0,
             mode: 0,
@@ -60,13 +60,7 @@ impl Ppu {
 
             layer: [Layer::new(); 5],
             buffer: [0; 240 * 160],
-        };
-
-        for i in 0..4 {
-            p.background[i].index = i;
         }
-
-        p
     }
 
     pub fn hdraw(&mut self) {
