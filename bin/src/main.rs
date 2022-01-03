@@ -3,7 +3,7 @@ mod window;
 
 use std::env;
 
-use window::Window;
+pub use window::Window;
 
 fn main() {
     env_logger::init();
@@ -20,21 +20,16 @@ fn main() {
     gba.init();
     gba.bus.bios = bios;
     gba.cart.rom = rom;
-    debug::init_debugger(&mut *gba);
 
-    let mut gba_frame = Window::new("GameBar", 240, 160, 2);
-    let mut object_frame = Window::new("Object", 256, 256, 2);
+    let debugger = debug::init_debugger(&mut *gba);
+    let mut window = Window::new("GameBar", 240, 160, 2);
+    window.topmost(true);
 
-    while gba_frame.is_open() {
-        gba.keypad.set_input(gba_frame.get_input(), &mut gba.irqcnt);
+    while window.is_open() {
         gba.step_frame();
-        gba_frame.update_with_buffer(&gba.ppu.buffer);
-        // palette_frame.update_with_buffer(&console.ppu.palette);
-
-        let first_object = gba.ppu.decode_sprite(0);
-        let (width, height) = gba.ppu.oam.sprite[0].get_dimension();
-        object_frame.resize(width as usize, height as usize);
-        object_frame.update_with_buffer(&first_object);
+        gba.keypad.set_input(window.get_input(), &mut gba.irqcnt);
+        window.update_with_buffer(&gba.ppu.buffer);
+        debugger.display_palette();
     }
 }
 

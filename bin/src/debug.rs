@@ -4,18 +4,20 @@ use std::ops::{Deref, DerefMut};
 use std::process::exit;
 
 use gba::{Cpu, Gba};
-use minifb::Window;
 use util::*;
+
+use crate:: Window;
 
 static mut DEBUGGER: Option<Debugger> = None;
 
 #[allow(dead_code)]
-pub fn init_debugger(gba: *mut Gba) {
+pub fn init_debugger(gba: *mut Gba) -> &'static mut Debugger {
     std::panic::set_hook(Box::new(panic_hook));
     unsafe {
         DEBUGGER = Some(Debugger::new(gba));
         (*gba).set_callback(debugger_callback);
         (*gba).cpu.set_callback(debugger_callback);
+        return &mut *DEBUGGER.as_mut().unwrap();
     }
 }
 fn debugger_callback() {
@@ -40,8 +42,8 @@ fn panic_hook(p: &std::panic::PanicInfo) {
 pub struct Debugger {
     breakpoint: HashSet<u32>,
     command: Vec<String>,
-    buffer: Vec<u32>,
     trace: VecDeque<Cpu>,
+    window: Window,
 
     gba: *mut Gba,
 }
@@ -64,8 +66,8 @@ impl Debugger {
         Self {
             breakpoint: HashSet::new(),
             command: vec![String::from("s")],
-            buffer: vec![0; 256 * 256],
             trace: VecDeque::new(),
+            window: Window::new("Debugger", 256, 256, 2),
 
             gba,
         }
@@ -165,30 +167,27 @@ impl Debugger {
         self.trace.push_back(self.cpu.clone());
     }
 
-    pub fn display_palette(&mut self, window: &mut Window) {
-        for i in 0..0x100 {
-            self.buffer[i] = self.ppu.bg_palette(0, i as u32).to_rgb24();
-        }
-
-        for i in 0..0x100 {
-            self.buffer[i + 0x100] = self.ppu.obj_palette(0, i as u32).to_rgb24();
-        }
-
-        window.update_with_buffer(&self.buffer, 32, 16).unwrap();
+    pub fn display_palette(&mut self) {
+        let Self { window, gba, .. } = self;
+        let palette = unsafe { &(**gba).ppu.palette };
+        window.resize(16, 32);
+        window.update_with_buffer(palette);
     }
 
-    pub fn display_tile(&mut self, index: usize, window: &mut Window) {
-        let palette_num = 0;
+    pub fn display_object(&mut self, index: usize) {
+        let object = self.ppu.decode_sprite(index);
+        let (width, height) = self.ppu.oam.sprite[0].get_dimension();
 
-        for p in 0..(8 * 8) {
-            // 32 bytes per tile
-            let index = index * 32 + p / 2 + 0x10000;
-            let byte = self.ppu.vram[index];
-            let nibble = if p & 1 == 1 { byte >> 4 } else { byte & 0x0f };
+        self.window.resize(width as usize, height as usize);
+        self.window.update_with_buffer(&object);
+    }
 
-            let color = self.ppu.obj_palette(palette_num, nibble as u32);
-
-            self.buffer[p] = color.to_rgb24();
+    pub fn display_vram(&mut self, base: usize) {
+        for i in 0..0x4000 {
+            let v = self.ppu.vram[base * 0x4000 + i] as u32;
+            self.window.buffer[i] = v << 16 | v << 8 | v;
         }
+        self.window.resize(256, 256);
+        self.window.update()
     }
 }

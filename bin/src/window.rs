@@ -4,7 +4,7 @@ pub struct Window {
     inner: minifb::Window,
     width: usize,
     height: usize,
-    buffer: Vec<u32>,
+    pub buffer: Vec<u32>,
 }
 
 impl std::ops::Deref for Window {
@@ -57,11 +57,15 @@ impl Window {
         assert!(self.buffer.len() >= width * height);
     }
 
-    pub fn update_with_buffer(&mut self, buffer: &[u16]) {
-        convert_buffer(buffer, &mut self.buffer);
+    pub fn update(&mut self) {
         self.inner
             .update_with_buffer(&self.buffer, self.width, self.height)
             .unwrap();
+    }
+
+    pub fn update_with_buffer(&mut self, buffer: &[u16]) {
+        convert_buffer(buffer, &mut self.buffer);
+        self.update();
     }
 
     pub fn get_input(&self) -> u16 {
