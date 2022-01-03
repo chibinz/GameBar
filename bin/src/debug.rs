@@ -67,7 +67,7 @@ impl Debugger {
             breakpoint: HashSet::new(),
             command: vec![String::from("s")],
             trace: VecDeque::new(),
-            window: Window::new("Debugger", 256, 256, 2),
+            window: Window::new("Debugger", 64, 64, 4),
 
             gba,
         }
@@ -170,24 +170,24 @@ impl Debugger {
     pub fn display_palette(&mut self) {
         let Self { window, gba, .. } = self;
         let palette = unsafe { &(**gba).ppu.palette };
-        window.resize(16, 32);
+        window.resize(16, 32, 16);
         window.update_with_buffer(palette);
     }
 
     pub fn display_object(&mut self, index: usize) {
         let object = self.ppu.decode_sprite(index);
-        let (width, height) = self.ppu.oam.sprite[0].get_dimension();
+        let (width, height) = self.ppu.oam.sprite[index].get_dimension();
 
-        self.window.resize(width as usize, height as usize);
+        self.window.resize(width as usize, height as usize, 4);
         self.window.update_with_buffer(&object);
     }
 
     pub fn display_vram(&mut self, base: usize) {
+        self.window.resize(256, 256, 2);
         for i in 0..0x4000 {
             let v = self.ppu.vram[base * 0x4000 + i] as u32;
             self.window.buffer[i] = v << 16 | v << 8 | v;
         }
-        self.window.resize(256, 256);
-        self.window.update()
+        self.window.update();
     }
 }

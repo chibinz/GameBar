@@ -2,8 +2,10 @@ use crate::convert_buffer;
 
 pub struct Window {
     inner: minifb::Window,
+    name: &'static str,
     width: usize,
     height: usize,
+    scale: usize,
     pub buffer: Vec<u32>,
 }
 
@@ -20,9 +22,9 @@ impl std::ops::DerefMut for Window {
 }
 
 impl Window {
-    pub fn new(name: &str, width: usize, height: usize, scale: usize) -> Self {
+    pub fn new(name: &'static str, width: usize, height: usize, scale: usize) -> Self {
         let buffer = vec![0; width * height];
-        let scale = match scale {
+        let minifb_scale = match scale {
             1 => minifb::Scale::X1,
             2 => minifb::Scale::X2,
             4 => minifb::Scale::X4,
@@ -35,9 +37,7 @@ impl Window {
             width,
             height,
             minifb::WindowOptions {
-                scale,
-                resize: true,
-                scale_mode: minifb::ScaleMode::UpperLeft,
+                scale: minifb_scale,
                 ..minifb::WindowOptions::default()
             },
         )
@@ -45,16 +45,20 @@ impl Window {
 
         Self {
             inner,
+            name,
             width,
             height,
+            scale,
             buffer,
         }
     }
 
-    pub fn resize(&mut self, width: usize, height: usize) {
-        self.width = width;
-        self.height = height;
-        assert!(self.buffer.len() >= width * height);
+    pub fn resize(&mut self, w: usize, h: usize, s: usize) {
+        let Self { name, width, height, scale, .. } = self;
+
+        if (*width, *height, *scale) != (w, h, s) {
+            *self = Self::new(name, w, h, s);
+        }
     }
 
     pub fn update(&mut self) {
