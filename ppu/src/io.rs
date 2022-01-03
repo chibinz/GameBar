@@ -149,9 +149,8 @@ pub fn map_entry(size_r: u32, tile_y: u32, tile_x: u32) -> u32 {
         n += 0x03e0;
     }
 
-    if tile_y >= 32 && size_r == 0b11
     // 64x64
-    {
+    if tile_y >= 32 && size_r == 0b11 {
         n += 0x0400;
     }
 

@@ -120,6 +120,34 @@ impl Background {
 }
 
 impl Ppu {
+    pub fn decode_text_background(&mut self, index: usize) -> Vec<u16> {
+        let bg = &self.background[index];
+        let mut ret = vec![0; (bg.width * bg.height) as usize];
+
+        for tile_x in 0..(bg.width / 8) {
+            for tile_y in 0..(bg.height / 8) {
+                let tile_entry = self.text_tile_map(bg.map_b, bg.size_r, tile_x, tile_y);
+                let tile_n = tile_entry.bits(9, 0);
+                let hflip = tile_entry.bit(10);
+                let vflip = tile_entry.bit(11);
+                let palette_n = tile_entry.bits(15, 12);
+
+                for y in 0..8 {
+                    for x in 0..8 {
+                        let pixel_x = if hflip { x } else { 7 - x };
+                        let pixel_y = if vflip { y } else { 7 - y };
+                        let palette_entry =
+                            self.tile_data(bg.palette_f, bg.tile_b, tile_n, pixel_x, pixel_y);
+                        let n = (tile_y * 8 + pixel_y) * bg.width + tile_x * 8 + pixel_x;
+                        ret[n as usize] = self.bg_palette(palette_n, palette_entry);
+                    }
+                }
+            }
+        }
+
+        ret
+    }
+
     pub fn draw_text_background(&mut self, index: usize) {
         let bg = &self.background[index];
         let vcount = self.vcount;

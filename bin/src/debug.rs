@@ -174,6 +174,15 @@ impl Debugger {
         window.update_with_buffer(palette);
     }
 
+    pub fn display_background(&mut self, index: usize) {
+        let bg = self.ppu.decode_text_background(index);
+        let width = self.ppu.background[index].width;
+        let height = self.ppu.background[index].height;
+
+        self.window.resize(width as usize, height as usize, 1);
+        self.window.update_with_buffer(&bg);
+    }
+
     pub fn display_object(&mut self, index: usize) {
         let object = self.ppu.decode_sprite(index);
         let (width, height) = self.ppu.oam.sprite[index].get_dimension();

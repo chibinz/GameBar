@@ -21,13 +21,15 @@ fn main() {
 
     let debugger = debug::init_debugger(&mut *gba);
     let mut window = Window::new("GameBar", 240, 160, 2);
+
     window.topmost(true);
+
 
     while window.is_open() {
         gba.step_frame();
         gba.keypad.set_input(window.get_input(), &mut gba.irqcnt);
         window.update_with_buffer(&gba.ppu.buffer);
-        debugger.display_object(2);
+        debugger.display_background(0);
     }
 }
 
