@@ -9,6 +9,20 @@ pub use util::Bus;
 
 use register::{Cpsr, PsrMode};
 
+pub static mut STEP_CALLBACK: Option<fn()> = None;
+
+const LEN: usize = 1024;
+static mut INDEX: usize = 0;
+static mut TRACE: [Cpu; LEN] = [Cpu::new(); 1024];
+#[allow(dead_code)]
+fn push_cpu(c: Cpu) {
+    unsafe {
+        TRACE[INDEX] = c;
+        INDEX += 1;
+        INDEX %= LEN;
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct Cpu {
     ir: u32,      // Next instruction to execute
@@ -64,6 +78,12 @@ impl Cpu {
     }
 
     pub fn step(&mut self, bus: &mut impl Bus) -> i32 {
+        unsafe {
+            if let Some(f) = STEP_CALLBACK {
+                f()
+            }
+        }
+
         // At least one sequential cycle for any instruction
         self.cycles = 1;
 
@@ -72,8 +92,6 @@ impl Cpu {
         } else {
             arm::step(self, bus);
         }
-
-        push_cpu(*self);
 
         self.cycles
     }
@@ -170,7 +188,7 @@ impl Cpu {
     }
 }
 
-use std::{fmt::*};
+use std::fmt::*;
 impl Debug for Cpu {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
@@ -204,17 +222,5 @@ impl Debug for Cpu {
             self.ir,
             Self::disassemble(self.ir, self.in_thumb_mode())
         )
-    }
-}
-
-const LEN: usize = 1024;
-static mut INDEX: usize = 0;
-static mut TRACE: [Cpu; LEN] = [Cpu::new(); 1024];
-#[allow(dead_code)]
-fn push_cpu(c: Cpu) {
-    unsafe {
-        TRACE[INDEX] = c;
-        INDEX += 1;
-        INDEX %= LEN;
     }
 }

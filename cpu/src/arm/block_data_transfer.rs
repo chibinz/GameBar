@@ -64,18 +64,24 @@ pub fn execute(
     if l {
         cpu.set_r(first, Cpu::ldr(addr & !0b11, bus));
     } else {
-        Cpu::str(addr & !0b11, cpu.r(first) + if first == 15 {4} else {0}, bus);
+        Cpu::str(
+            addr & !0b11,
+            cpu.r(first) + if first == 15 { 4 } else { 0 },
+            bus,
+        );
     };
     addr = addr.wrapping_add(4);
 
     // Write back after second cycle
-    if w && !(l && rlist.bit(rn)) { cpu.set_r(rn, final_addr); }
+    if w && !(l && rlist.bit(rn)) {
+        cpu.set_r(rn, final_addr);
+    }
 
     for &r in regs {
         if l {
             cpu.set_r(r, Cpu::ldr(addr & !0b11, bus));
         } else {
-            Cpu::str(addr & !0b11, cpu.r(r) + if r == 15 {4} else {0}, bus);
+            Cpu::str(addr & !0b11, cpu.r(r) + if r == 15 { 4 } else { 0 }, bus);
         };
 
         addr = addr.wrapping_add(4);
@@ -125,7 +131,7 @@ mod tests {
         cpu.set_spsr(cpu.get_cpsr(), false);
 
         for i in 0..16 {
-            bus.store32( i * 4, i as u32);
+            bus.store32(i * 4, i as u32);
         }
         cpu.set_r(0, 0x00);
 

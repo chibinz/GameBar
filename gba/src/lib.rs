@@ -17,6 +17,9 @@ use keypad::Keypad;
 use ppu::Ppu;
 use timer::Timers;
 
+pub use cpu::STEP_CALLBACK;
+pub static mut FRAME_CALLBACK: Option<fn()> = None;
+
 pub struct Gba {
     pub cpu: Cpu,
     pub ppu: Ppu,
@@ -48,6 +51,12 @@ impl Gba {
 
     /// Render a frame
     pub fn step_frame(&mut self) {
+        unsafe {
+            if let Some(f) = FRAME_CALLBACK {
+                f()
+            }
+        }
+
         use interrupt::Irq::*;
         // self.schedule();
         let cpu = &mut self.cpu;

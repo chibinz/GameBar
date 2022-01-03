@@ -142,7 +142,7 @@ impl GbaBus {
             // param:      0x05000400 - 0x05000000
             // vram :      0x06018000 - 0x06000000
             // oam  :      0x07000400 - 0x07000000
-            console: std::ptr::null_mut::<Gba>(),
+            console: std::ptr::null_mut(),
         }
     }
 
@@ -154,7 +154,7 @@ impl GbaBus {
 
     /// Return equivalent base address
     fn mirror(address: usize) -> usize {
-        let a = match address >> 24 {
+        let ret = match address >> 24 {
             0x02 => address % 0x40000,
             0x03 => address % 0x8000,
             0x04 => address % 0x10000,
@@ -176,6 +176,6 @@ impl GbaBus {
             _ => address,
         };
 
-        a as usize
+        ret
     }
 }

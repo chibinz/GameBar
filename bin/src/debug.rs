@@ -1,13 +1,30 @@
 use std::collections::HashSet;
 use std::io::prelude::*;
+use std::ops::{Deref, DerefMut};
 use std::process::exit;
 
 use gba::Gba;
 use minifb::Window;
 use util::*;
 
-static WIDTH: usize = 8;
-static HEIGHT: usize = 8;
+static mut DEBUGGER: Option<Debugger> = None;
+
+pub fn enable_debugger(gba: *mut Gba) {
+    use gba::{STEP_CALLBACK, FRAME_CALLBACK};
+    unsafe {
+        DEBUGGER = Some(Debugger::new(gba));
+        STEP_CALLBACK = Some(debugger_callback);
+        FRAME_CALLBACK = Some(debugger_callback);
+    }
+}
+
+fn debugger_callback() {
+    unsafe {
+        if let Some(ref mut debugger) = DEBUGGER {
+            debugger.step();
+        }
+    }
+}
 
 #[allow(dead_code)]
 pub struct Debugger {
@@ -15,50 +32,38 @@ pub struct Debugger {
     command: Vec<String>,
     buffer: Vec<u32>,
 
-    pub counter: i32,
-    pub console: *mut Gba,
+    gba: *mut Gba,
+}
+
+impl Deref for Debugger {
+    type Target = Gba;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.gba }
+    }
+}
+impl DerefMut for Debugger {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { &mut *self.gba }
+    }
 }
 
 #[allow(dead_code)]
 impl Debugger {
-    pub fn new() -> Self {
+    pub fn new(gba: *mut Gba) -> Self {
         Self {
             breakpoint: HashSet::new(),
             command: vec![String::from("s")],
-            buffer: vec![0; WIDTH * HEIGHT],
+            buffer: vec![0; 256 * 256],
 
-            counter: 0,
-            console: std::ptr::null_mut::<Gba>(),
-        }
-    }
-
-    #[inline]
-    pub fn c(&mut self) -> &mut Gba {
-        unsafe { &mut *self.console }
-    }
-
-    pub fn run(&mut self) {
-        // let mut window =
-        // Window::new
-        // (
-        //     "Debug",
-        //     WIDTH,
-        //     HEIGHT,
-        //     minifb::WindowOptions
-        //     {
-        //         scale: minifb::Scale::X16,
-        //         ..minifb::WindowOptions::default()
-        //     }
-        // ).unwrap();
-
-        loop {
-            self.step();
+            gba
         }
     }
 
     pub fn step(&mut self) {
-        // self.c().cpu.print();
-        // dbg!(&self.c().timers.timer[3]);
+        if self.breakpoint_hit() {
+            self.prompt();
+        }
     }
 
     pub fn prompt(&mut self) {
@@ -79,9 +84,8 @@ impl Debugger {
 
     pub fn dispatch(&mut self) {
         match self.command[0].as_str() {
-            "s" => self.c().step(),
-            // "p" => self.c().print(),
-            "c" => self.continue_run(),
+            "s" => self.step(),
+            "c" => (),
             "b" => self.insert_breakpoint(),
             "d" => self.delete_breakpoint(),
             "l" => self.list_breakpoint(),
@@ -89,12 +93,6 @@ impl Debugger {
             // "dp" => self.display_palette(),
             "q" => exit(0),
             _ => println!("Invalid input"),
-        }
-    }
-
-    fn continue_run(&mut self) {
-        while !self.breakpoint_hit() {
-            self.c().step()
         }
     }
 
@@ -131,7 +129,7 @@ impl Debugger {
     }
 
     fn breakpoint_hit(&mut self) -> bool {
-        true // self.breakpoint.contains(&(self.c().cpu.r(15)))
+        self.breakpoint.contains(&(self.cpu.r(15)))
     }
 
     fn examine_memory(&mut self) {
@@ -140,7 +138,7 @@ impl Debugger {
         for i in 0..16 {
             print!("{:08x}:   ", address + i * 16);
             for j in 0..16 {
-                let value = self.c().bus.load8(address + i * 16 + j);
+                let value = self.bus.load8(address + i * 16 + j);
 
                 print!("{:02x} ", value);
             }
@@ -150,11 +148,11 @@ impl Debugger {
 
     pub fn display_palette(&mut self, window: &mut Window) {
         for i in 0..0x100 {
-            self.buffer[i] = self.c().ppu.bg_palette(0, i as u32).to_rgb24();
+            self.buffer[i] = self.ppu.bg_palette(0, i as u32).to_rgb24();
         }
 
         for i in 0..0x100 {
-            self.buffer[i + 0x100] = self.c().ppu.obj_palette(0, i as u32).to_rgb24();
+            self.buffer[i + 0x100] = self.ppu.obj_palette(0, i as u32).to_rgb24();
         }
 
         window.update_with_buffer(&self.buffer, 32, 16).unwrap();
@@ -166,16 +164,12 @@ impl Debugger {
         for p in 0..(8 * 8) {
             // 32 bytes per tile
             let index = index * 32 + p / 2 + 0x10000;
-            let byte = self.c().ppu.vram[index];
+            let byte = self.ppu.vram[index];
             let nibble = if p & 1 == 1 { byte >> 4 } else { byte & 0x0f };
 
-            let color = self.c().ppu.obj_palette(palette_num, nibble as u32);
+            let color = self.ppu.obj_palette(palette_num, nibble as u32);
 
             self.buffer[p] = color.to_rgb24();
         }
-
-        window
-            .update_with_buffer(&self.buffer, WIDTH, HEIGHT)
-            .unwrap();
     }
 }
