@@ -1,16 +1,25 @@
-use minifb::Window;
-use minifb::WindowOptions;
-
 use crate::convert_buffer;
 
-pub struct Frame {
-    pub window: Window,
+pub struct Window {
+    inner: minifb::Window,
     width: usize,
     height: usize,
     buffer: Vec<u32>,
 }
 
-impl Frame {
+impl std::ops::Deref for Window {
+    type Target = minifb::Window;
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+impl std::ops::DerefMut for Window {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
+    }
+}
+
+impl Window {
     pub fn new(name: &str, width: usize, height: usize, scale: usize) -> Self {
         let buffer = vec![0; width * height];
         let scale = match scale {
@@ -21,21 +30,21 @@ impl Frame {
             16 => minifb::Scale::X16,
             _ => minifb::Scale::X1,
         };
-        let window = Window::new(
+        let inner = minifb::Window::new(
             name,
             width,
             height,
-            WindowOptions {
+            minifb::WindowOptions {
                 scale,
                 resize: true,
                 scale_mode: minifb::ScaleMode::UpperLeft,
-                ..WindowOptions::default()
+                ..minifb::WindowOptions::default()
             },
         )
         .unwrap();
 
         Self {
-            window,
+            inner,
             width,
             height,
             buffer,
@@ -50,8 +59,22 @@ impl Frame {
 
     pub fn update_with_buffer(&mut self, buffer: &[u16]) {
         convert_buffer(buffer, &mut self.buffer);
-        self.window
+        self.inner
             .update_with_buffer(&self.buffer, self.width, self.height)
             .unwrap();
+    }
+
+    pub fn get_input(&self) -> u16 {
+        use minifb::Key::*;
+        let mut ret = 0x3ff;
+        let keys = [X, Z, Backspace, Enter, Right, Left, Up, Down, S, A];
+
+        for (i, k) in keys.iter().enumerate() {
+            if self.is_key_down(*k) {
+                ret &= !(1 << (i as u16));
+            }
+        }
+
+        ret
     }
 }
