@@ -9,21 +9,33 @@ pub use util::Bus;
 
 use register::{Cpsr, PsrMode};
 
-pub static mut STEP_CALLBACK: Option<fn()> = None;
+// const LEN: usize = 1024;
+// static mut INDEX: usize = 0;
+// static mut TRACE: [Cpu; LEN] = [Cpu::new(); 1024];
+// #[allow(dead_code)]
+// fn push_cpu(c: Cpu) {
+//     unsafe {
+//         TRACE[INDEX] = c;
+//         INDEX += 1;
+//         INDEX %= LEN;
+//     }
+// }
 
-const LEN: usize = 1024;
-static mut INDEX: usize = 0;
-static mut TRACE: [Cpu; LEN] = [Cpu::new(); 1024];
-#[allow(dead_code)]
-fn push_cpu(c: Cpu) {
-    unsafe {
-        TRACE[INDEX] = c;
-        INDEX += 1;
-        INDEX %= LEN;
-    }
-}
+// pub fn backtrace_on_panic(&self) {
+//     std::panic::set_hook(Box::new(Self::panic_hook));
+// }
 
-#[derive(Clone, Copy)]
+// fn panic_hook(p: &std::panic::PanicInfo) {
+//     unsafe {
+//         for i in 0..LEN {
+//             let c = &TRACE[(INDEX + i) % LEN];
+//             util::error!("{:?}", c,);
+//         }
+//         util::error!("{}", p);
+//     }
+// }
+
+#[derive(Clone)]
 pub struct Cpu {
     ir: u32,      // Next instruction to execute
     r: [u32; 16], // General purpose registers
@@ -38,12 +50,13 @@ pub struct Cpu {
     // 18 - 20: R13_abt, R14_abt, SPSR_abt
     // 21 - 23: R13_irq, R14_irq, SPSR_irq
     // 24 - 26: R13_und, R14_und, SPSR_und
-    pub cycles: i32,    // Ticks consumed for current instruction
-    pub remaining: i32, // Remaining ticks till run finish,
+    pub cycles: i32,            // Ticks consumed for current instruction
+    pub remaining: i32,         // Remaining ticks till run finish,
+    pub callback: Option<fn()>, // Callback before an instruction is executed
 }
 
 impl Cpu {
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             ir: 0,
             r: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
@@ -56,6 +69,7 @@ impl Cpu {
 
             cycles: 0,
             remaining: 0,
+            callback: None,
         }
     }
 
@@ -78,10 +92,8 @@ impl Cpu {
     }
 
     pub fn step(&mut self, bus: &mut impl Bus) -> i32 {
-        unsafe {
-            if let Some(f) = STEP_CALLBACK {
-                f()
-            }
+        if let Some(f) = self.callback {
+            f();
         }
 
         // At least one sequential cycle for any instruction
@@ -173,18 +185,8 @@ impl Cpu {
         }
     }
 
-    pub fn backtrace_on_panic(&self) {
-        std::panic::set_hook(Box::new(Self::panic_hook));
-    }
-
-    fn panic_hook(p: &std::panic::PanicInfo) {
-        unsafe {
-            for i in 0..LEN {
-                let c = &TRACE[(INDEX + i) % LEN];
-                util::error!("{:?}", c,);
-            }
-            util::error!("{}", p);
-        }
+    pub fn set_callback(&mut self, f: fn()) {
+        self.callback = Some(f);
     }
 }
 

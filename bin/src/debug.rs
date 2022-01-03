@@ -9,12 +9,12 @@ use util::*;
 
 static mut DEBUGGER: Option<Debugger> = None;
 
-pub fn enable_debugger(gba: *mut Gba) {
-    use gba::{STEP_CALLBACK, FRAME_CALLBACK};
+#[allow(dead_code)]
+pub fn init_debugger(gba: *mut Gba) {
     unsafe {
         DEBUGGER = Some(Debugger::new(gba));
-        STEP_CALLBACK = Some(debugger_callback);
-        FRAME_CALLBACK = Some(debugger_callback);
+        (*gba).set_callback(debugger_callback);
+        (*gba).cpu.set_callback(debugger_callback);
     }
 }
 
@@ -26,7 +26,6 @@ fn debugger_callback() {
     }
 }
 
-#[allow(dead_code)]
 pub struct Debugger {
     breakpoint: HashSet<u32>,
     command: Vec<String>,

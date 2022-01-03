@@ -10,15 +10,13 @@ mod timer;
 
 use bus::GbaBus;
 use cart::Cart;
-use cpu::Cpu;
 use dma::Dma;
 use interrupt::IrqController;
 use keypad::Keypad;
 use ppu::Ppu;
 use timer::Timers;
 
-pub use cpu::STEP_CALLBACK;
-pub static mut FRAME_CALLBACK: Option<fn()> = None;
+pub use cpu::Cpu;
 
 pub struct Gba {
     pub cpu: Cpu,
@@ -29,6 +27,8 @@ pub struct Gba {
     pub irqcnt: IrqController,
     pub keypad: Keypad,
     pub cart: Cart,
+
+    pub callback: Option<fn()>,
 }
 
 impl Gba {
@@ -42,6 +42,8 @@ impl Gba {
             keypad: Keypad::new(),
             bus: GbaBus::new(),
             cart: Cart::with_rom(Vec::new()),
+
+            callback: None,
         }
     }
 
@@ -51,14 +53,12 @@ impl Gba {
 
     /// Render a frame
     pub fn step_frame(&mut self) {
-        unsafe {
-            if let Some(f) = FRAME_CALLBACK {
-                f()
-            }
+        use interrupt::Irq::*;
+
+        if let Some(f) = self.callback {
+            f();
         }
 
-        use interrupt::Irq::*;
-        // self.schedule();
         let cpu = &mut self.cpu;
         let ppu = &mut self.ppu;
         let bus = &mut self.bus;
@@ -123,8 +123,7 @@ impl Gba {
         timers.run(t, irqcnt);
     }
 
-    /// Single step CPU, for debugging purpose
-    pub fn step(&mut self) {
-        self.cpu.step(&mut self.bus);
+    pub fn set_callback(&mut self, f: fn()) {
+        self.callback = Some(f);
     }
 }
