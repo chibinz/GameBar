@@ -1,15 +1,13 @@
 mod debug;
 mod window;
 
-use std::env;
-
-pub use window::Window;
+use window::Window;
 
 fn main() {
     env_logger::init();
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = std::env::args().collect();
     if args.len() != 2 {
-       return usage();
+        return usage();
     }
 
     let rom = std::fs::read(&args[1]).unwrap();

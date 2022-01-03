@@ -1,3 +1,5 @@
+#![allow(clippy::new_without_default)]
+
 mod alu;
 mod arm;
 mod bus;

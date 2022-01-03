@@ -54,7 +54,13 @@ impl Window {
     }
 
     pub fn resize(&mut self, w: usize, h: usize, s: usize) {
-        let Self { name, width, height, scale, .. } = self;
+        let Self {
+            name,
+            width,
+            height,
+            scale,
+            ..
+        } = self;
 
         if (*width, *height, *scale) != (w, h, s) {
             *self = Self::new(name, w, h, s);

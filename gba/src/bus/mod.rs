@@ -154,7 +154,7 @@ impl GbaBus {
 
     /// Return equivalent base address
     fn mirror(address: usize) -> usize {
-        let ret = match address >> 24 {
+        match address >> 24 {
             0x02 => address % 0x40000,
             0x03 => address % 0x8000,
             0x04 => address % 0x10000,
@@ -174,8 +174,6 @@ impl GbaBus {
             0x08..=0x0d => address % 0x01000000, // Should be length of rom instead
             0x0e => address % 0x10000,
             _ => address,
-        };
-
-        ret
+        }
     }
 }

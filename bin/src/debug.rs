@@ -6,7 +6,7 @@ use std::process::exit;
 use gba::{Cpu, Gba};
 use util::*;
 
-use crate:: Window;
+use crate::Window;
 
 static mut DEBUGGER: Option<Debugger> = None;
 
