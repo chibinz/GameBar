@@ -1,9 +1,9 @@
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 use std::io::prelude::*;
 use std::ops::{Deref, DerefMut};
 use std::process::exit;
 
-use gba::Gba;
+use gba::{Cpu, Gba};
 use minifb::Window;
 use util::*;
 
@@ -11,17 +11,28 @@ static mut DEBUGGER: Option<Debugger> = None;
 
 #[allow(dead_code)]
 pub fn init_debugger(gba: *mut Gba) {
+    std::panic::set_hook(Box::new(panic_hook));
     unsafe {
         DEBUGGER = Some(Debugger::new(gba));
         (*gba).set_callback(debugger_callback);
         (*gba).cpu.set_callback(debugger_callback);
     }
 }
-
 fn debugger_callback() {
     unsafe {
         if let Some(ref mut debugger) = DEBUGGER {
             debugger.step();
+        }
+    }
+}
+fn panic_hook(p: &std::panic::PanicInfo) {
+    unsafe {
+        if let Some(ref mut debugger) = DEBUGGER {
+            for c in debugger.trace.iter() {
+                util::error!("{:?}", c);
+            }
+            util::error!("{:#?}", p);
+            util::error!("\n{:?}", backtrace::Backtrace::new());
         }
     }
 }
@@ -30,13 +41,13 @@ pub struct Debugger {
     breakpoint: HashSet<u32>,
     command: Vec<String>,
     buffer: Vec<u32>,
+    trace: VecDeque<Cpu>,
 
     gba: *mut Gba,
 }
 
 impl Deref for Debugger {
     type Target = Gba;
-
     fn deref(&self) -> &Self::Target {
         unsafe { &*self.gba }
     }
@@ -54,12 +65,14 @@ impl Debugger {
             breakpoint: HashSet::new(),
             command: vec![String::from("s")],
             buffer: vec![0; 256 * 256],
+            trace: VecDeque::new(),
 
-            gba
+            gba,
         }
     }
 
     pub fn step(&mut self) {
+        self.save_trace();
         if self.breakpoint_hit() {
             self.prompt();
         }
@@ -143,6 +156,13 @@ impl Debugger {
             }
             println!();
         }
+    }
+
+    fn save_trace(&mut self) {
+        if self.trace.len() == 4096 {
+            self.trace.pop_front();
+        }
+        self.trace.push_back(self.cpu.clone());
     }
 
     pub fn display_palette(&mut self, window: &mut Window) {

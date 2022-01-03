@@ -5,35 +5,8 @@ mod register;
 mod shifter;
 mod thumb;
 
-pub use util::Bus;
-
 use register::{Cpsr, PsrMode};
-
-// const LEN: usize = 1024;
-// static mut INDEX: usize = 0;
-// static mut TRACE: [Cpu; LEN] = [Cpu::new(); 1024];
-// #[allow(dead_code)]
-// fn push_cpu(c: Cpu) {
-//     unsafe {
-//         TRACE[INDEX] = c;
-//         INDEX += 1;
-//         INDEX %= LEN;
-//     }
-// }
-
-// pub fn backtrace_on_panic(&self) {
-//     std::panic::set_hook(Box::new(Self::panic_hook));
-// }
-
-// fn panic_hook(p: &std::panic::PanicInfo) {
-//     unsafe {
-//         for i in 0..LEN {
-//             let c = &TRACE[(INDEX + i) % LEN];
-//             util::error!("{:?}", c,);
-//         }
-//         util::error!("{}", p);
-//     }
-// }
+use util::Bus;
 
 #[derive(Clone)]
 pub struct Cpu {
