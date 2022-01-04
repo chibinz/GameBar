@@ -68,13 +68,13 @@ impl Ppu {
         self.vram16(index * 0x800 + offset)
     }
 
-    //     #[inline]
-    //     pub fn affine_tile_map(&self, index: u32, size_r: u32, tile_x: u32, tile_y: u32) -> u8
-    //     {
-    //         let offset = tile_y * (16 << size_r) + tile_x;
+    #[inline]
+    pub fn affine_tile_map(&self, index: u32, size_r: u32, tile_x: u32, tile_y: u32) -> u8
+    {
+        let offset = tile_y * (16 << size_r) + tile_x;
 
-    //         self.vram8(index * 0x800 + offset)
-    //     }
+        self.vram8(index * 0x800 + offset)
+    }
 }
 
 /// Palette memory access

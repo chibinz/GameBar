@@ -29,7 +29,7 @@ fn main() {
         gba.step_frame();
         gba.keypad.set_input(window.get_input(), &mut gba.irqcnt);
         window.update_with_buffer(&gba.ppu.buffer);
-        debugger.display_background(0);
+        debugger.display_background(2);
     }
 }
 

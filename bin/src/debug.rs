@@ -175,12 +175,17 @@ impl Debugger {
     }
 
     pub fn display_background(&mut self, index: usize) {
-        let bg = self.ppu.decode_text_background(index);
-        let width = self.ppu.background[index].width;
-        let height = self.ppu.background[index].height;
+        let (width, height) = self.ppu.get_background_dimension(index);
+        let bg_buffer = if self.ppu.is_background_affine(index) {
+            self.ppu.decode_affine_background(index)
+        } else {
+            self.ppu.decode_text_background(index)
+        };
 
-        self.window.resize(width as usize, height as usize, 1);
-        self.window.update_with_buffer(&bg);
+        if self.ppu.dispcnt.bit(8 + index as u32) {
+            self.window.resize(width as usize, height as usize, 1);
+            self.window.update_with_buffer(&bg_buffer);
+        }
     }
 
     pub fn display_object(&mut self, index: usize) {
