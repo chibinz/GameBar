@@ -188,7 +188,7 @@ impl Debugger {
         }
     }
 
-    pub fn display_object(&mut self, index: usize) {
+    pub fn display_sprite(&mut self, index: usize) {
         let object = self.ppu.decode_sprite(index);
         let (width, height) = self.ppu.oam.sprite[index].get_dimension();
 

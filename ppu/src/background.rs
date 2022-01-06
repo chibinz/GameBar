@@ -1,5 +1,7 @@
 use util::*;
 
+use crate::TRANSPARENT;
+
 use super::Ppu;
 
 #[derive(Clone, Copy)]
@@ -263,7 +265,7 @@ impl Ppu {
             let palette_entry =
                 vram[(bg.tile_b * 0x4000 + tile_n * 64 + pixel_y * 8 + pixel_x) as usize];
 
-            let color = self.palette[palette_entry as usize];
+            let color = if palette_entry == 0 { TRANSPARENT } else { self.palette[palette_entry as usize]};
 
             let layer = &mut self.layer[bg.priority as usize];
             layer.paint(i, color, window, index);
