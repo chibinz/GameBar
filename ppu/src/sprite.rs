@@ -167,7 +167,7 @@ impl Ppu {
                 for pixel_y in 0..8 {
                     for pixel_x in 0..8 {
                         let t = self.tile_data(sprite.palette_f, tile_b, tile_n, pixel_x, pixel_y);
-                        let p = self.obj_palette(sprite.palette_n, t);
+                        let p = self.obj_palette(if sprite.palette_f {0} else {sprite.palette_n} , t);
                         let n = (tile_y * 8 + pixel_y) * width + tile_x * 8 + pixel_x;
                         ret[n as usize] = p;
                     }
@@ -206,7 +206,7 @@ impl Ppu {
 
             // Sprite tile data starts at 4 * 0x4000 = 0x10000
             let tile_b = 4;
-            let tile_n = sprite.tile_n + tile_y * w + tile_x;
+            let tile_n = if sprite.palette_f {sprite.tile_n / 2} else { sprite.tile_n } + tile_y * w + tile_x;
 
             let palette_entry = self.tile_data(sprite.palette_f, tile_b, tile_n, pixel_x, pixel_y);
 

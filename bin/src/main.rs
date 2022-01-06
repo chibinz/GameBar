@@ -19,7 +19,7 @@ fn main() {
     gba.bus.bios = bios;
     gba.cart.rom = rom;
 
-    let debugger = debug::init_debugger(&mut *gba);
+    // let debugger = debug::init_debugger(&mut *gba);
     let mut window = Window::new("GameBar", 240, 160, 2);
     window.topmost(true);
 
@@ -27,7 +27,7 @@ fn main() {
         gba.step_frame();
         gba.keypad.set_input(window.get_input(), &mut gba.irqcnt);
         window.update_with_buffer(&gba.ppu.buffer);
-        debugger.display_sprite(6);
+        // debugger.display_sprite(6);
     }
 }
 
