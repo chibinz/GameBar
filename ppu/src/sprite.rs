@@ -23,7 +23,7 @@ pub struct Sprite {
     pub affine_f: bool,  // Rotational / scaling flag
     pub double_f: bool,  // Double size flag
     pub mosaic_f: bool,  // Mosaic flag
-    pub palette_f: bool, // Palette type, 1 - 256, 2 - 16
+    pub palette_f: bool, // Palette type, 0 - 16/16, 1 - 256/1
     pub hflip: bool,     // Horizontal flip bit
     pub vflip: bool,     // Vertical flip bit
     pub affine_i: u32,   // Rotation / scaling data index
@@ -210,9 +210,10 @@ impl Ppu {
 
             let palette_entry = self.tile_data(sprite.palette_f, tile_b, tile_n, pixel_x, pixel_y);
 
+
             // Horizontal wrap around
             let x = (sprite.xcoord + i) % 512;
-            let color = self.obj_palette(sprite.palette_n, palette_entry);
+            let color = self.obj_palette(if sprite.palette_f {0} else {sprite.palette_n}, palette_entry);
 
             let layer = &mut self.layer[sprite.priority as usize];
             layer.paint(x, color, window, 4);

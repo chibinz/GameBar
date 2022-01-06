@@ -191,6 +191,7 @@ impl Debugger {
     pub fn display_sprite(&mut self, index: usize) {
         let object = self.ppu.decode_sprite(index);
         let (width, height) = self.ppu.oam.sprite[index].get_dimension();
+        dbg!(&self.ppu.oam.sprite[index]);
 
         self.window.resize(width as usize, height as usize, 4);
         self.window.update_with_buffer(&object);
