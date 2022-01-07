@@ -86,21 +86,25 @@ impl Background {
     }
 
     pub fn set_x_l(&mut self, value: u16) {
-        self.coord.0 = ((self.coord.0 as u32) & 0xffff0000) as i32;
+        self.coord.0 &= ((self.coord.0 as u32) & 0xffff0000) as i32;
         self.coord.0 |= value as i32;
+        self.internal.0 = self.coord.0;
     }
 
     pub fn set_x_h(&mut self, value: u16) {
         self.coord.0 &= 0x0000ffff;
         self.coord.0 |= ((value as u32) << 16) as i32;
+        self.internal.0 = self.coord.0;
     }
     pub fn set_y_l(&mut self, value: u16) {
         self.coord.1 = ((self.coord.0 as u32) & 0xffff0000) as i32;
         self.coord.1 |= value as i32;
+        self.internal.1 = self.coord.1;
     }
     pub fn set_y_h(&mut self, value: u16) {
         self.coord.1 &= 0x0000ffff;
         self.coord.1 |= ((value as u32) << 16) as i32;
+        self.internal.1 = self.coord.1;
     }
 }
 
