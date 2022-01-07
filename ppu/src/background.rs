@@ -1,7 +1,5 @@
 use util::*;
 
-use crate::TRANSPARENT;
-
 use super::Ppu;
 
 #[derive(Clone, Copy)]
@@ -227,15 +225,10 @@ impl Ppu {
     }
 
     pub fn draw_affine_background(&mut self, index: usize) {
+        let bg = &self.background[index];
         let vram = &self.vram;
-        let vcount = self.vcount;
         let window = &self.window;
         let (width, height) = self.get_background_dimension(index);
-        let bg = &mut self.background[index];
-
-        if vcount == 0 {
-            bg.internal = bg.coord
-        }
 
         for i in 0..width {
             let mut text_x = (bg.matrix.0 * i as i32 + bg.internal.0) >> 8;
@@ -266,17 +259,12 @@ impl Ppu {
             // Can't use self.tile_data() due to borrow checker
             let offset = tile_y * (16 << bg.size_r) + tile_x;
             let tile_n = vram[(bg.map_b * 0x800 + offset) as usize] as u32;
-            let palette_entry =
-                vram[(bg.tile_b * 0x4000 + tile_n * 64 + pixel_y * 8 + pixel_x) as usize];
-
-            let color = if palette_entry == 0 { TRANSPARENT } else { self.palette[palette_entry as usize]};
+            let palette_entry = self.tile_data(true, bg.tile_b, tile_n, pixel_x, pixel_y);
+            let color = self.bg_palette(true, 0, palette_entry);
 
             let layer = &mut self.layer[bg.priority as usize];
             layer.paint(i, color, window, index);
         }
-
-        bg.internal.0 += bg.matrix.1;
-        bg.internal.1 += bg.matrix.3;
     }
 
     pub fn draw_bitmap_3(&mut self) {

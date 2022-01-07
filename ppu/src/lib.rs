@@ -90,6 +90,10 @@ impl Ppu {
 
     pub fn hblank(&mut self) -> bool {
         self.dispstat |= 0b10;
+        self.background.iter_mut().for_each(|b| {
+            b.internal.0 += b.matrix.1;
+            b.internal.1 += b.matrix.3;
+        });
 
         self.dispstat.bit(4)
     }
@@ -115,6 +119,9 @@ impl Ppu {
         assert_eq!(self.vcount, 228);
         self.dispstat &= !0b11;
         self.vcount = 0;
+        self.background
+            .iter_mut()
+            .for_each(|b| b.internal = b.coord);
     }
 
     pub fn combine_layers(&mut self) {
