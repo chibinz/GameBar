@@ -87,21 +87,23 @@ impl Ppu {
 
     /// Take index to palette, return 0RGD u32 color.
     #[inline]
-    pub fn bg_palette(&self, palette_n: u32, index: u32) -> u16 {
+    pub fn bg_palette(&self, palette_f: bool, palette_n: u32, index: u32) -> u16 {
         if index == 0 {
             return TRANSPARENT;
         }
 
-        self.palette[(palette_n << 4 | index) as usize]
+        let offset = if palette_f { index } else { palette_n << 4 | index } as usize;
+        self.palette[offset]
     }
 
     #[inline]
-    pub fn obj_palette(&self, palette_n: u32, index: u32) -> u16 {
+    pub fn obj_palette(&self, palette_f: bool, palette_n: u32, index: u32) -> u16 {
         if index == 0 {
             return TRANSPARENT;
         }
 
-        self.palette[(palette_n << 4 | index) as usize + 0x100]
+        let offset = if palette_f { index } else { palette_n << 4 | index } as usize;
+        self.palette[0x100 + offset]
     }
 
     #[inline]

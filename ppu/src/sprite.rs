@@ -162,12 +162,17 @@ impl Ppu {
         for tile_y in 0..(height / 8) {
             for tile_x in 0..(width / 8) {
                 let tile_b = 4;
-                let tile_n = sprite.tile_n + (tile_y * stride + tile_x);
+                let tile_n = if sprite.palette_f {
+                    sprite.tile_n / 2
+                } else {
+                    sprite.tile_n
+                } + tile_y * stride
+                    + tile_x;
 
                 for pixel_y in 0..8 {
                     for pixel_x in 0..8 {
                         let t = self.tile_data(sprite.palette_f, tile_b, tile_n, pixel_x, pixel_y);
-                        let p = self.obj_palette(if sprite.palette_f {0} else {sprite.palette_n} , t);
+                        let p = self.obj_palette(sprite.palette_f, sprite.palette_n, t);
                         let n = (tile_y * 8 + pixel_y) * width + tile_x * 8 + pixel_x;
                         ret[n as usize] = p;
                     }
@@ -206,14 +211,18 @@ impl Ppu {
 
             // Sprite tile data starts at 4 * 0x4000 = 0x10000
             let tile_b = 4;
-            let tile_n = if sprite.palette_f {sprite.tile_n / 2} else { sprite.tile_n } + tile_y * w + tile_x;
+            let tile_n = if sprite.palette_f {
+                sprite.tile_n / 2
+            } else {
+                sprite.tile_n
+            } + tile_y * w
+                + tile_x;
 
             let palette_entry = self.tile_data(sprite.palette_f, tile_b, tile_n, pixel_x, pixel_y);
 
-
             // Horizontal wrap around
             let x = (sprite.xcoord + i) % 512;
-            let color = self.obj_palette(if sprite.palette_f {0} else {sprite.palette_n}, palette_entry);
+            let color = self.obj_palette(sprite.palette_f, sprite.palette_n, palette_entry);
 
             let layer = &mut self.layer[sprite.priority as usize];
             layer.paint(x, color, window, 4);
@@ -270,12 +279,17 @@ impl Ppu {
             let pixel_y = text_y as u32 % 8;
 
             let tile_b = 4;
-            let tile_n = sprite.tile_n + tile_y * w + tile_x;
+            let tile_n = if sprite.palette_f {
+                sprite.tile_n / 2
+            } else {
+                sprite.tile_n
+            } + tile_y * w
+                + tile_x;
 
             let palette_entry = self.tile_data(sprite.palette_f, tile_b, tile_n, pixel_x, pixel_y);
 
             let i = (xcenter + x) as u32;
-            let color = self.obj_palette(sprite.palette_n, palette_entry);
+            let color = self.obj_palette(sprite.palette_f, sprite.palette_n, palette_entry);
 
             let layer = &mut self.layer[sprite.priority as usize];
             layer.paint(i, color, window, 4);

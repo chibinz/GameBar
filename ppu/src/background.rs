@@ -149,7 +149,7 @@ impl Ppu {
                         let palette_entry =
                             self.tile_data(bg.palette_f, bg.tile_b, tile_n, pixel_x, pixel_y);
                         let n = (tile_y * 8 + pixel_y) * width + tile_x * 8 + pixel_x;
-                        ret[n as usize] = self.bg_palette(palette_n, palette_entry);
+                        ret[n as usize] = self.bg_palette(bg.palette_f, palette_n, palette_entry);
                     }
                 }
             }
@@ -215,7 +215,7 @@ impl Ppu {
 
             // Horizontal wrap around
             let x = i.wrapping_sub(bg.hscroll as u32) % width;
-            let color = self.bg_palette(palette_n, palette_entry);
+            let color = self.bg_palette(bg.palette_f, palette_n, palette_entry);
 
             let layer = &mut self.layer[bg.priority as usize];
             layer.paint(x, color, window, index);
@@ -291,7 +291,7 @@ impl Ppu {
 
         for x in 0..240 {
             let palette_entry = self.vram8(start + line_n * 240 + x);
-            let color = self.bg_palette(0, palette_entry as u32);
+            let color = self.bg_palette(true, 0, palette_entry as u32);
             self.layer[0].paint(x, color, &self.window, 2);
         }
     }
