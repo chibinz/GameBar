@@ -1,7 +1,10 @@
 //! Helper functions for bitwise operations and extracting bitfields
 use std::convert::TryInto;
 
+mod bitwise;
+
 pub use log::*;
+
 
 pub trait BitField {
     fn bit(self, b: u32) -> bool;
