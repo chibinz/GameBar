@@ -5,7 +5,6 @@ mod bitwise;
 
 pub use log::*;
 
-
 pub trait BitField {
     fn bit(self, b: u32) -> bool;
     fn bits(self, hi: u32, lo: u32) -> u32;

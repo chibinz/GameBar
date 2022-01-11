@@ -69,8 +69,7 @@ impl Ppu {
     }
 
     #[inline]
-    pub fn affine_tile_map(&self, index: u32, size_r: u32, tile_x: u32, tile_y: u32) -> u8
-    {
+    pub fn affine_tile_map(&self, index: u32, size_r: u32, tile_x: u32, tile_y: u32) -> u8 {
         let offset = tile_y * (16 << size_r) + tile_x;
 
         self.vram8(index * 0x800 + offset)
@@ -92,7 +91,11 @@ impl Ppu {
             return TRANSPARENT;
         }
 
-        let offset = if palette_f { index } else { palette_n << 4 | index } as usize;
+        let offset = if palette_f {
+            index
+        } else {
+            palette_n << 4 | index
+        } as usize;
         self.palette[offset]
     }
 
@@ -102,7 +105,11 @@ impl Ppu {
             return TRANSPARENT;
         }
 
-        let offset = if palette_f { index } else { palette_n << 4 | index } as usize;
+        let offset = if palette_f {
+            index
+        } else {
+            palette_n << 4 | index
+        } as usize;
         self.palette[0x100 + offset]
     }
 

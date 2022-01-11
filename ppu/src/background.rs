@@ -118,7 +118,10 @@ impl Ppu {
     }
 
     pub fn get_background_dimension(&self, index: usize) -> (u32, u32) {
-        match (self.is_background_affine(index) as u32, self.background[index].size_r) {
+        match (
+            self.is_background_affine(index) as u32,
+            self.background[index].size_r,
+        ) {
             (0, 0) => (256, 256),
             (0, 1) => (512, 256),
             (0, 2) => (256, 512),
