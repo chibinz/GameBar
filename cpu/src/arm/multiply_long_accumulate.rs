@@ -39,21 +39,19 @@ pub fn execute(
     cpu: &mut Cpu,
     (u, a, s, rdhi, rdlo, rs, rm): (bool, bool, bool, u32, u32, u32, u32),
 ) {
-    let mut result: u64;
-
     // 0 for u means unsigned
-    if !u {
+    let mut result = if !u {
         let operand1 = cpu.r(rm) as u64;
         let operand2 = cpu.r(rs) as u64;
 
-        result = operand1 * operand2;
+        operand1 * operand2
     } else {
         // Operands are sign extended to 64 bits. `i32` is necessary for sign extension.
         let operand1 = cpu.r(rm) as i32 as i64;
         let operand2 = cpu.r(rs) as i32 as i64;
 
-        result = (operand1 * operand2) as u64;
-    }
+        (operand1 * operand2) as u64
+    };
 
     if a {
         let hi = (cpu.r(rdhi) as u64) << 32;
